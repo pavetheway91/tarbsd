@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# PROVIDE: tarbsdinit
+# REQUIRE: LOGIN cleanvar
+# BEFORE: dropbear
+
+. /etc/rc.subr
+
+name=tarbsdinit
+desc="init things specific to tarbsd"
+rcvar=tarbsdinit_enable
+
+load_rc_config $name
+
+start_cmd="${name}_start"
+
+tarbsdinit_start()
+{
+    if [ -f /usr/local/bin/dropbearconvert ]; then
+        mkdir /var/run/dropbear
+        /usr/local/bin/dropbearconvert openssh dropbear /etc/ssh/ssh_host_ed25519_key /var/run/dropbear/dropbear_ed25519_host_key
+        /usr/local/bin/dropbearconvert openssh dropbear /etc/ssh/ssh_host_rsa_key /var/run/dropbear/dropbear_rsa_host_key
+        /usr/local/bin/dropbearconvert openssh dropbear /etc/ssh/ssh_host_ecdsa_key /var/run/dropbear/dropbear_ecdsa_host_key
+    fi
+}
+
+run_rc_command "$1"

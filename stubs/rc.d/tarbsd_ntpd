@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+#
+
+# PROVIDE: tarbsd-ntpd
+# REQUIRE: DAEMON FILESYSTEMS devfs
+# BEFORE:  LOGIN
+# KEYWORD: nojail resume shutdown
+
+. /etc/rc.subr
+
+name=tarbsd_ntpd
+desc="busybox ntpd"
+rcvar=tarbsd_ntpd_enable
+load_rc_config $name
+start_cmd="${name}_start"
+
+tarbsd_ntpd_start()
+{
+    if [ -f /bin/busybox ]; then
+        /bin/busybox ntpd -p pool.ntp.org
+    fi
+}
+
+run_rc_command "$1"

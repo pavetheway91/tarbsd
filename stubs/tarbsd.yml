@@ -1,0 +1,23 @@
+root_pwhash: null
+root_sshkey: null
+backup: true
+busybox: true
+ssh: dropbear
+features:
+    zfs: false
+    geli: false
+    pf: true
+    ipfw: false
+    wireguard: false
+    wifi: false
+    bhyve: false
+    jails: false
+    ntpd: false
+modules:
+    early:
+    late:
+        - ipmi
+packages:
+    - tmux
+    - nano
+    - htop

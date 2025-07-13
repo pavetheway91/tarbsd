@@ -1,0 +1,6 @@
+/vendor
+/wrk
+/out
+/tarbsd
+/tarbsd.yml
+/*.php

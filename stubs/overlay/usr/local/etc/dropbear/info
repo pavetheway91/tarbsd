@@ -1,0 +1,7 @@
+
+/etc/ssh is the place for your ssh host keys no
+matter which ssh program you use. We do some
+tricks here to automatically convert openssh's
+keys to dropbear's format. This allows you to
+change between the two without re-keying clients.
+
