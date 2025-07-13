@@ -145,11 +145,11 @@ CONSTS);
         {
             $output->write("adding files for " . $package . ' ');
             [$added, $skipped] = $cb();
-            $output->writeln(
+            $output->writeln(sprintf(
                 "%d added, %d skipped",
                 count($added),
                 count($skipped)
-            );
+            ));
         }
 
         $phar->compressFiles(Phar::GZ);
