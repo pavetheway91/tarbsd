@@ -35,7 +35,7 @@ class App extends Application implements EventSubscriberInterface
     {
         static $date;
 
-        if (TARBSD_BUILD_ID)
+        if (TARBSD_BUILD_ID && null === $date)
         {
             $date = DateTimeImmutable::createFromFormat(
                 'U',
