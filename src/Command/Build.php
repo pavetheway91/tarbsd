@@ -24,7 +24,7 @@ use DateTimeImmutable;
 class Build extends AbstractCommand
 {
     const KNOWN_FORMATS = [
-        'img', 'qcow2', 'qcow', 'cow', 'vdi', 'vmdk', 'vhdx', 'vpc'
+        'img', 'qcow2', 'qcow', 'cow', 'vdi', 'vmdk', 'vhdx', 'vpc', 'parallels'
     ];
 
     public function __invoke(
@@ -77,7 +77,7 @@ class Build extends AbstractCommand
             catch(\Exception $e)
             {
                 throw new \Exception(
-                    "please install qemu-tools package to use weird image formats\n"
+                    "please install qemu-tools package to use random image formats\n"
                     . "pkg install qemu-tools \n"
                     . "tools flavour of emulators/qemu in ports"
                 );

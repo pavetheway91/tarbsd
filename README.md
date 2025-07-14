@@ -16,7 +16,6 @@ Please note that this is an early version and things might change. Don't expect 
 ## Installing the builder tool ##
 
 Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, pcntl and either mbstring or iconv extensions. Zopfli enables slightly better kernel compression, but it is optional.
-
 ```
 pkg install php84 php84-phar php84-zlib php84-pcntl php84-mbstring zopfli
 
@@ -44,14 +43,14 @@ tarbsd build --distfiles /path/to/dist/files
 
 It extracts base.txz and kernel txz on the first run, so it might take a while. Subsequent builds however, are quicker. It uses in-memory zfs pool for building, so everyting is snappy and there's no unnecesary writes to your storage medium. ZFS also allows builder to use snapshots to restore the image to a an earlier state before each build. The pool is 2 gigs and there's no way to configure this at the moment.
 
-When in hurry, pass --quick option to the builder. You'll get the image quicker, but it will be bigger and require more memory to boot. For small images, size diference might not be huge, but it gets bigger as /usr gets bigger.
+When in hurry, pass --quick option to the builder. You'll get the image quicker, but it will be bigger and require more memory to boot. For small images, size difference might not be huge, but it gets bigger as /usr gets bigger.
 ```
 tarbsd build --quick
 ```
 
 Raw .img (for bhyve, kvm and real computers) is always generated. If you have qemu-tools installed, it can also be converted to all sorts of random formats.
 ```
-tarbsd build cow qcow qcow2 vdi vmdk vhdx vpc
+tarbsd build cow qcow qcow2 vdi vmdk vhdx vpc parallels
 ```
 
 Verbose output doesn't quite show every single little detail yet, but if you like tar -v and pkg install being streamed to your console, you can have them.
@@ -68,7 +67,7 @@ tarbsd build -v
 Backup tarbsd.yml as well as the overlay directory inside the image. If you loose the computer, which created the image, you've got backup inside the image itself assuming it runs on another computer and you haven't lost that one too.
 
 ### busybox ###
-Replaces many applications with [busybox](https://en.wikipedia.org/wiki/BusyBox).
+Replaces many applications with [busybox](https://en.wikipedia.org/wiki/BusyBox). Might break some shell scripts and some commands might have slightly different behaviour than what you're used to.
 
 ### ssh (dropbear|openssh|null) ###
 Dropbear is slightly smaller. tarBSD does some tricks here to share the host keys between the two, so you can switch easily without re-keying clients.
