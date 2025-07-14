@@ -50,7 +50,7 @@ tarbsd build --quick
 
 Raw .img (for bhyve, kvm and real computers) is always generated. If you have qemu-tools installed, it can also be converted to all sorts of random formats.
 ```
-tarbsd build cow qcow qcow2 vdi vmdk vhdx vpc parallels
+tarbsd build qcow qcow2 vdi vmdk vhdx vpc parallels
 ```
 
 Verbose output doesn't quite show every single little detail yet, but if you like tar -v and pkg install being streamed to your console, you can have them.
@@ -76,7 +76,7 @@ Dropbear is slightly smaller. tarBSD does some tricks here to share the host key
 Things such as ZFS, bhyve and wireguard etc that are only needed by some and thus, are opt-in. Depending on feature, it will include relevant kernel modules, userland tools and sometimes packages. Please, suggest new ones (or send pr) if you think something is missing.
 
 ### modules ###
-Two lists (early and late) of kernel modules to be included in the image. Early modules are loaded right at the boot, while the late ones will be available later.
+Two lists (early and late) of kernel modules to be included in the image. Early modules are loaded immediately upon boot, while the late ones will be available later.
 
 ### packages ###
 List of packages to be installed.

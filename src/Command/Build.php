@@ -24,7 +24,7 @@ use DateTimeImmutable;
 class Build extends AbstractCommand
 {
     const KNOWN_FORMATS = [
-        'img', 'qcow2', 'qcow', 'cow', 'vdi', 'vmdk', 'vhdx', 'vpc', 'parallels'
+        'img', 'qcow2', 'qcow', 'vdi', 'vmdk', 'vhdx', 'vpc', 'parallels'
     ];
 
     public function __invoke(
