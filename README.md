@@ -15,7 +15,7 @@ Please note that this is an early version and things might change. Don't expect 
 
 ## Installing the builder tool ##
 
-Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, pcntl and either mbstring or iconv extensions. Zopfli enables slightly better kernel compression, but it is optional.
+Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, pcntl and either mbstring or iconv extensions. Zopfli enables slightly better kernel compression, but it is optional. Alternatively, you can clone the repo and follow instructions in the bottom of this document.
 ```
 pkg install php84 php84-phar php84-zlib php84-pcntl php84-mbstring zopfli
 
