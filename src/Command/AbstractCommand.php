@@ -5,16 +5,15 @@ use TarBSD\Builder;
 use TarBSD\App;
 
 use Symfony\Component\Console\Command\Command as SfCommand;
-use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use DateTimeImmutable;
 
 abstract class AbstractCommand extends SfCommand
 {
-    const CHECK = ' <info>✔</>';
+    const CHECK = ' <g>✔</>';
 
-    const ERR = ' <fg=red>‼️</>';
+    const ERR = ' <r>‼️</>';
 
     const LOGO = <<<LOGO
 <r>               ,       ,       </>
@@ -40,9 +39,6 @@ LOGO;
 
     protected function showLogo(OutputInterface $output) : void
     {
-        $output->getFormatter()->setStyle('r', new OutputFormatterStyle('red'));
-        $output->getFormatter()->setStyle('b', new OutputFormatterStyle('blue'));
-        $output->getFormatter()->setStyle('g', new OutputFormatterStyle('green'));
         $output->writeln(self::LOGO);
     }
 

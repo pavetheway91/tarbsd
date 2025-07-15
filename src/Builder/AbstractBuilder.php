@@ -24,9 +24,9 @@ abstract class AbstractBuilder implements EventSubscriberInterface
 
     use Traits\Utils;
 
-    const CHECK = ' <info>✔</>';
+    const CHECK = ' <g>✔</>';
 
-    const ERR = ' <fg=red>‼️</>';
+    const ERR = ' <r>‼️</>';
 
     protected readonly string $wrk;
 

@@ -1,8 +1,10 @@
 <?php declare(strict_types=1);
 namespace TarBSD;
 
+
 use Symfony\Component\Cache\Adapter\FilesystemAdapter as FilesystemCache;
 use Symfony\Component\Console\Command\HelpCommand as SymfonyHelpCommand;
+use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\ConsoleEvents;
@@ -19,15 +21,18 @@ class App extends Application implements EventSubscriberInterface
 {
     private readonly FilesystemCache $cache;
 
-    private EventDispatcher $dispatcher;
+    private readonly EventDispatcher $dispatcher;
 
     public function __construct()
     {
-        set_time_limit(0);
+        Util\PlatformCheck::run();
+
         parent::__construct();
+
         $this->setDispatcher(
             $this->dispatcher = new EventDispatcher
         );
+
         $this->dispatcher->addSubscriber($this);
     }
 
@@ -48,15 +53,26 @@ class App extends Application implements EventSubscriberInterface
 
     public function commandEvent(ConsoleCommandEvent $event) : void
     {
-        if (!in_array($name = $event->getCommand()->getName(), ['list', 'help']))
+        $output = $event->getOutput();
+
+        foreach(['red', 'green', 'blue'] as $colour)
         {
-            if (!static::amIRoot())
-            {
-                throw new \Exception(sprintf(
-                    'tarBSD builder needs root privileges for %s command',
-                    $name
-                ));
-            }
+            $output->getFormatter()->setStyle(
+                $colour[0],
+                new OutputFormatterStyle($colour)
+            );
+        }
+
+        if (
+            !in_array($name = $event->getCommand()->getName(), ['list', 'help'])
+            && !static::amIRoot()
+        ){
+            $output->writeln(sprintf(
+                "%s tarBSD builder needs root privileges for %s command",
+                Command\AbstractCommand::ERR,
+                $event->getCommand()->getName()
+            ));
+            $event->disableCommand();
         }
     }
 
