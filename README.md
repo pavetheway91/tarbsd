@@ -67,7 +67,7 @@ tarbsd build -v
 Backup tarbsd.yml as well as the overlay directory inside the image. If you loose the computer, which created the image, you've got backup inside the image itself assuming it runs on another computer and you haven't lost that one too.
 
 ### busybox ###
-Replaces many applications with [busybox](https://en.wikipedia.org/wiki/BusyBox). Might break some shell scripts and some commands might have slightly different behaviour than what you're used to.
+Replaces many applications with [busybox](https://en.wikipedia.org/wiki/BusyBox). Might break some shell scripts and some commands might not behave exactly in a way you're used to.
 
 ### ssh (dropbear|openssh|null) ###
 Dropbear is slightly smaller. tarBSD does some tricks here to share the host keys between the two, so you can switch easily without re-keying clients.
@@ -88,7 +88,7 @@ tarbsd self-update
 ## Other miscellaneous things ##
 * tarBSD lives in memory. If you need non-volatile storage, you need to have it in another storage medium. If you mount something in /usr (which is read-only), make a corressponding empty directory to tarbsd/usr, so it can be mounted.
 * Many executables might be missing, but libraries are mostly there. Vast majority of packages should just work.
-* tarBSD requires [tarfs](https://man.freebsd.org/cgi/man.cgi?tarfs(5)), which was introuduced in 14.2. Older releases are not supported.
+* tarBSD requires [tarfs](https://man.freebsd.org/cgi/man.cgi?tarfs(5)), which was introduced in 14.2. Older releases are not supported.
 * Builder will automatically add fstab line for following pseudo filesystems if the kernel module is present either through a feature or manual include:
   * procfs
   * fdescfs
