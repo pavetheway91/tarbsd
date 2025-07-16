@@ -15,7 +15,7 @@ Please note that this is an early version and things might change. Don't expect 
 
 ## Installing the builder tool ##
 
-Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, pcntl and either mbstring or iconv extensions. Zopfli enables slightly better kernel compression, but it is optional. Alternatively, you can clone the repo and follow instructions in the bottom of this document.
+Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, pcntl and either mbstring or iconv extensions. Zopfli enables slightly better kernel compression, but it is optional. Alternatively, you can clone the repo and follow instructions at the bottom of this document.
 ```
 pkg install php84 php84-phar php84-zlib php84-pcntl php84-mbstring zopfli
 
@@ -86,7 +86,7 @@ List of packages to be installed.
 tarbsd self-update
 ```
 ## Other miscellaneous things ##
-* tarBSD lives in memory. If you need non-volatile storage, you need to have it in another storage medium. If you mount something in /usr (which is read-only), make a corressponding empty directory to tarbsd/usr, so it can be mounted.
+* tarBSD lives in memory. If you need non-volatile storage, you need to mount it. If you mount something in /usr (which is read-only), make a corressponding empty directory to tarbsd/usr, so it can be mounted.
 * Many executables might be missing, but libraries are mostly there. Vast majority of packages should just work.
 * tarBSD requires [tarfs](https://man.freebsd.org/cgi/man.cgi?tarfs(5)), which was introduced in 14.2. Older releases are not supported.
 * Builder will automatically add fstab line for following pseudo filesystems if the kernel module is present either through a feature or manual include:
@@ -97,7 +97,7 @@ tarbsd self-update
 * SSH is on by default unless there's no SSH program. You can disable it by setting sshd_enabled="NO" or dropbear_enable="NO" in etc/rc.conf.
 * Compressed kernels and modules are cached at /var/cache/tarbsd and this cache is shared across all tarbsd projects you might have. At the moment, other things such as packages and extracted freebsd distributions are cached locally at the project up until next boot.
 * Random reads across various places in /usr might be slightly slow due to obvious reason. Depending on applications, this might or might not be noticeable. Usually however, services are started at boot and that's it, so I guess this doesn't matter much for most. There are some tunables in tar, which might help, but I haven't researched them extremely closely yet.
-* Known bug: pkg coredumps aren't detected. I've encountered 260m coredump inside an image, which was supposed to be small. This has however, only happened once.
+* Known bug: pkg coredumps aren't detected. I've encountered a 260 meg dump inside an image, which was supposed to be small. This has however, happened only once.
 
 ## Contributing ##
 There are some questions in the source code. One way to contribute is by giving input on them.
