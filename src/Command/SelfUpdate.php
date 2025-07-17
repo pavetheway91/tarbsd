@@ -118,7 +118,7 @@ class SelfUpdate extends AbstractCommand
 
                     $output->writeln(sprintf(
                         self::CHECK . " tarBSD builder was updated to a version published\n   at %s",
-                        $latest[2]->format('Y-m-D H:i:s \\U\\T\\C')
+                        $latest[2]->format('Y-m-d H:i:s \\U\\T\\C')
                     ));
                 }
                 else
