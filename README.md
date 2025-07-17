@@ -16,7 +16,7 @@ Please note that this is an early version and things might change. Don't expect 
 ## Design princibles ##
 * Easy to approach. There's just one configuration file and an overlay directory, which contents don't need an explanation. No need to figure which piece configuration goes to which file, which directory that file is in or if that particular piece of configuration is an command line option instead.
 * Because image building could take several attempts, cache things as much as possible.
-* Budle cross-related things to "features" that can be turned on. If you want to run bhyve, youll likely want the kmod and relevant userland tools too.
+* Bundle cross-related things to "features" that can be turned on. If you want to run bhyve, youll likely want the kmod and relevant userland tools too.
 * While doing stuff, it can provide a bit of fun too.
 
 ## Installing the builder tool ##
