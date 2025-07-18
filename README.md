@@ -13,12 +13,6 @@ Please note that this is an early version and things might change. Don't expect 
 * all the above in a one box
 * a remote FreeBSD installer with SSH
 
-## Design princibles ##
-* Easy to approach. There's just one configuration file and an overlay directory, which contents don't need an explanation. No need to figure which piece configuration goes to which file, which directory that file is in or if that particular piece of configuration is an command line option instead.
-* Because image building could take several attempts, cache things as much as possible.
-* Bundle cross-related things to "features" that can be turned on. If you want to run bhyve, you'll likely want the kmod and relevant userland tools too.
-* While doing stuff, it can provide a bit of fun too.
-
 ## Installing the builder tool ##
 
 Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, pcntl and either mbstring or iconv extensions. Zopfli enables slightly better kernel compression, but it is optional. Alternatively, you can clone the repo and follow instructions at the bottom of this document.
