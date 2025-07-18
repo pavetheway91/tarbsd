@@ -56,6 +56,18 @@ trait Installer
                 });
                 $progressIndicator->finish($file . ' extracted');
             }
+
+            // if ([ is 14.2 or 14.3 ])
+            {
+                $this->runFreeBSDUpdate($output, $verboseOutput);
+            }
+            /*
+            else // 15+
+            {
+                // $this->runPKGBaseUpdate($output, $verboseOutput);
+            }
+            */
+
             $this->fs->mkdir($this->root . '/var/cache/pkg');
             $this->fs->mkdir($this->root . '/usr/local/etc/pkg');
             $this->fs->remove($varTmp = $this->root . '/var/tmp');
@@ -158,6 +170,85 @@ DEFAULTS);
         return Process::fromShellCommandline(
             'umount -f ' . $pkgCache
         );
+    }
+
+    final protected function runFreeBSDUpdate(OutputInterface $output, OutputInterface $verboseOutput) : void
+    {
+        $getv = function() : string
+        {
+            return trim(
+                Process::fromShellCommandline('bin/freebsd-version', $this->root)->mustRun()->getOutput(),
+                "\n"
+            );
+        };
+
+        $v = $getv();
+        $this->fs->mkdir($updateDir = $this->wrk . '/cache/freebsd-update');
+
+        $fetch = sprintf(
+            "freebsd-update -b %s -d %s --currently-running %s --not-running-from-cron fetch",
+            $this->root,
+            $updateDir,
+            $v
+        );
+        $install = sprintf(
+            "freebsd-update -b %s -d %s --currently-running %s --not-running-from-cron install",
+            $this->root,
+            $updateDir,
+            $v
+        );
+
+        $progressIndicator = $this->progressIndicator($output);
+        $progressIndicator->start('running freebsd-update');
+        Process::fromShellCommandline(
+            $fetch, null, null, null, 1800
+        )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+        {
+            $progressIndicator->advance();
+            $verboseOutput->write($buffer);
+        });
+
+        $runInstall = function() use ($install, $progressIndicator, $verboseOutput) : bool
+        {
+            try
+            {
+                Process::fromShellCommandline(
+                    $install, null, null, null, 1800
+                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                {
+                    $progressIndicator->advance();
+                    $verboseOutput->write($buffer);
+                });
+            }
+            catch (\Exception $e)
+            {
+                if (str_contains($e->getMessage(), 'No updates are available'))
+                {
+                    // ok
+                    return false;
+                }
+                else
+                {
+                    throw $e;
+                }
+            }
+            return true;
+        };
+
+        // there could be 0, 1 or 2 installs to be run
+        $installedSomething = $runInstall();
+
+        if ($installedSomething)
+        {
+            $runInstall();
+            $progressIndicator->finish('updated to ' . $getv());
+        }
+        else
+        {
+            $progressIndicator->finish('no updates to install');
+        }
+
+        $this->fs->remove($updateDir);
     }
 
     /******************************************
