@@ -41,7 +41,7 @@ Now you can build the image. If you have a FreeBSD installation medium mounted a
 tarbsd build --distfiles /path/to/dist/files
 ```
 
-It extracts base.txz and kernel txz on the first run, so it might take a while. Subsequent builds however, are quicker. It uses in-memory zfs pool for building, so everyting is snappy and there's no unnecesary writes to your storage medium. ZFS also allows builder to use snapshots to restore the image to a an earlier state before each build. The pool is 2 gigs and there's no way to configure this at the moment.
+It extracts base.txz, kernel txz and runs freebsd-update on the first run, so it might take a while. Subsequent builds however, are quicker. It uses in-memory zfs pool for building, so everyting is snappy and there's no unnecesary writes to your storage medium. ZFS also allows builder to use snapshots to restore the image to a an earlier state before each build. The pool is 2 gigs and there's no way to configure this at the moment.
 
 When in hurry, pass --quick option to the builder. You'll get the image quicker, but it will be bigger and require more memory to boot. For small images, size difference might not be huge, but it gets bigger as /usr gets bigger.
 ```
