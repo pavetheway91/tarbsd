@@ -7,7 +7,7 @@ use Symfony\Component\Finder\Finder;
 use TarBSD\Util\Fstab;
 
 /**
- * MFS image has sort two images actually.
+ * MFS image has sort of two images actually.
  * "Outer" image contains just the kernel
  * tarfs.ko and perhaps some other modules.
  * It loads the "inner" image to the memory.
