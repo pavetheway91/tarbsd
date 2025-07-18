@@ -1,3 +1,4 @@
-## 2025-07-nn ##
-* freebsd-update after extraction
-* various code changes without extepced changes to functionality
+## 2025-07-18 ##
+* freebsd-update after release extraction
+* fix date formatting in self-update
+* various code changes without expected changes to functionality
