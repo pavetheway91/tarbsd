@@ -27,7 +27,7 @@ mv tarbsd /usr/local/sbin/tarbsd
 ```
 
 ## Usage ##
-Start by creating a project directory and issuing tarbsd bootstrap command there.
+Start by creating a project directory and using tarbsd bootstrap command there.
 
 ```
 mkdir myproject
@@ -36,14 +36,14 @@ tarbsd bootstrap
 ```
 It'll ask few questions, create a configuration file as well as an overlay directory, which contents will be recursively copied to the image. You'll likely want to edit tarbsd.yml and tarbsd/etc/rc.conf at least.
 
-Now you can build the image. If you have a FreeBSD installation medium mounted at /mnt, /media or /cdrom, distribution tarballs (base.txz and kernel.txz) are automatically used from there unless otherwise specified with --distfiles option. You can also download them from [here](https://download.freebsd.org/ftp/releases/amd64/).
+Now you can build the image. If you have a FreeBSD installation disk mounted at /mnt, /media or /cdrom, distribution tarballs (base.txz and kernel.txz) are automatically used from there unless otherwise specified with --distfiles option. You can also download them from [here](https://download.freebsd.org/ftp/releases/amd64/).
 ```
 tarbsd build --distfiles /path/to/dist/files
 ```
 
 It extracts base.txz, kernel txz and runs freebsd-update on the first run, so it might take a while. Subsequent builds however, are quicker. It uses in-memory zfs pool for building, so everyting is snappy and there's no unnecesary writes to your storage medium. ZFS also allows builder to use snapshots to restore the image to a an earlier state before each build. The pool is 2 gigs and there's no way to configure this at the moment.
 
-When in hurry, pass --quick option to the builder. You'll get the image quicker, but it will be bigger and require more memory to boot. For small images, size difference might not be huge, but it gets bigger as /usr gets bigger.
+When in hurry, pass --quick option to the builder. You'll get the image quicker, but it will be bigger and require more memory to boot. For small images, size difference might not be huge, but it gets bigger as /usr gets bigger. Useful for builds that are intended to be just prototypes anyway.
 ```
 tarbsd build --quick
 ```
@@ -87,7 +87,7 @@ tarbsd self-update
 ```
 ## Other miscellaneous things ##
 * tarBSD lives in memory. If you need non-volatile storage, you need to mount it. If you mount something in /usr (which is read-only), make a corressponding empty directory to tarbsd/usr, so it can be mounted.
-* Many executables might be missing, but libraries are mostly there. Vast majority of packages should just work.
+* Many applications might be missing, but libraries are mostly there. Vast majority of packages should just work.
 * tarBSD requires [tarfs](https://man.freebsd.org/cgi/man.cgi?tarfs(5)), which was introduced in 14.2. Older releases are not supported.
 * Builder will automatically add fstab line for following pseudo filesystems if the kernel module is present either through a feature or manual include:
   * procfs
