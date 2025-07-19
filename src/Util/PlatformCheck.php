@@ -24,6 +24,10 @@ class PlatformCheck
             {
                 $issues[] = 'PHP >= 8.2.0 required, you are running ' . PHP_VERSION;
             }
+            if (!extension_loaded('zlib'))
+            {
+                $issues[] = 'PHP extension zlib required';
+            }
             if (!extension_loaded('pcntl'))
             {
                 $issues[] = 'PHP extension pcntl required';

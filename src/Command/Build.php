@@ -14,6 +14,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\StreamOutput;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use DateTimeImmutable;
 
@@ -105,20 +106,16 @@ class Build extends AbstractCommand
         }
 
         $cache = $doNotCache ? new NullCache : $this->getApplication()->getCache();
+        $fs = new Filesystem;
 
         $builder = new MfsBuilder(
-            Configuration::get(),
+            $conf = Configuration::get(),
             $cache,
             $distFiles,
             $this->getApplication()->getDispatcher()
         );
 
-        /*
-            $logDir = $cwd . '/log';
-            $time = (new DateTimeImmutable('now'))->format('Y-m-d\TH:i:s');
-            $logFile = fopen($logDir . '/' . $time . '.log', 'w');
-            $verboseOutput = new StreamOutput($logFile);
-        */
+        $logFile = null;
 
         if ($output->isVerbose())
         {
@@ -129,7 +126,25 @@ class Build extends AbstractCommand
         {
             $this->showLogo($output);
             $this->showBuildTime($output, false);
-            $verboseOutput = new NullOutput;
+
+            if (!$fs->exists($logDir = $conf->getDir() . '/log'))
+            {
+                $fs->mkdir($logDir);
+            }
+
+            $time = (new DateTimeImmutable('now'))->format('Y-m-d\TH:i:s');
+            $logFile = fopen($logFilePath = $logDir . '/' . $time . '.log.deflate', 'w');
+
+            if (!$logFile)
+            {
+                throw new \Exception('failed to open logfile: ' . $logFilePath);
+            }
+
+            stream_filter_append($logFile, 'zlib.deflate', STREAM_FILTER_WRITE, [
+                'level' => 9, 'window' => 15, 'memory' => 9
+            ]);
+
+            $verboseOutput = new StreamOutput($logFile);
         }
 
         $img = $builder->build(
@@ -137,6 +152,11 @@ class Build extends AbstractCommand
             $verboseOutput,
             $quick
         );
+
+        if ($logFile)
+        {
+            fclose($logFile);
+        }
 
         foreach($formats as $format)
         {

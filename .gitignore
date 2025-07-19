@@ -1,6 +1,7 @@
 /vendor
 /wrk
 /out
+/log
 /tarbsd
 /tarbsd.yml
 /*.php
