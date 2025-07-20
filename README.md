@@ -97,7 +97,6 @@ tarbsd self-update
 * SSH is on by default unless there's no SSH program. You can disable it by setting sshd_enabled="NO" or dropbear_enable="NO" in etc/rc.conf.
 * Compressed kernels and modules are cached at /var/cache/tarbsd and this cache is shared across all tarbsd projects you might have. At the moment, other things such as packages and extracted freebsd distributions are cached locally at the project up until next boot.
 * Random reads across various places in /usr might be slightly slow due to obvious reason. Depending on applications, this might or might not be noticeable. Usually however, services are started at boot and that's it, so I guess this doesn't matter much for most. There are some tunables in tar, which might help, but I haven't researched them extremely closely yet.
-* Known bug: pkg coredumps aren't detected. I've encountered a 260 meg dump inside an image, which was supposed to be small. This has however, happened only once.
 
 ## Contributing ##
 There are some questions in the source code. One way to contribute is by giving input on them.
