@@ -22,7 +22,7 @@ pkg install php84 php84-phar php84-zlib php84-pcntl php84-mbstring zopfli
 # make tarbsd builder executable
 chmod +x tarbsd
 
-# move it to /usr/local/sbin
+# move it to /usr/local/bin
 mv tarbsd /usr/local/bin/tarbsd
 ```
 
