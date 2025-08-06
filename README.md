@@ -23,7 +23,7 @@ pkg install php84 php84-phar php84-zlib php84-pcntl php84-mbstring zopfli
 chmod +x tarbsd
 
 # move it to /usr/local/sbin
-mv tarbsd /usr/local/sbin/tarbsd
+mv tarbsd /usr/local/bin/tarbsd
 ```
 
 ## Usage ##
