@@ -14,7 +14,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Application;
-
+use Symfony\Component\Process\Process;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
@@ -36,6 +36,7 @@ class Compiler extends Command
 
     public function __invoke(
         OutputInterface $output,
+        #[Option('Ports edition without self-update command')] bool $ports = false,
         #[Option('Signature key file')] ?string $key = null,
         #[Option('Signature key password')] ?string $pw = null,
         #[Option('Mock Github api')] bool $mockGh = false
@@ -44,14 +45,6 @@ class Compiler extends Command
         {
             throw new \Exception(
                 "Please set phar.readonly=0 in /usr/local/etc/php.ini"
-            );
-        }
-
-        if (!App::amIRoot())
-        {
-            throw new \Exception(
-                "Files in stubs/rc.d and stubs/overlay must be"
-                . " root-owned. You must be root while doing this."
             );
         }
 
@@ -67,9 +60,6 @@ class Compiler extends Command
         }
 
         $fs = new Filesystem;
-
-        $rootFiles = (new Finder)->in([__DIR__ . '/rc.d', __DIR__ . '/overlay']);
-        $fs->chown($rootFiles, 0);
 
         $phar = new Phar(
             $tmpFile = '/tmp/tarbsd_' . bin2hex(random_bytes(6)) . '.phar',
@@ -91,20 +81,35 @@ class Compiler extends Command
             );
         }
 
-        if ($mockGh)
+        $constants = [];
+        $constants['TARBSD_GITHUB_API'] = $mockGh ? 'http://localhost:8080' : 'https://api.github.com';
+        $constants['TARBSD_SELF_UPDATE'] = ($ports || !$key) ? false : true;
+        $constants['TARBSD_PORTS'] = $ports;
+
+        $constantsStr = "<?php\nconst TARBSD_STUBS = __DIR__;\n";
+
+        foreach($constants as $k => $v)
         {
-            $phar->addFromString('stubs/constants.php', <<<CONSTS
-<?php
-const TARBSD_GITHUB_API = 'http://localhost:8080';
-const TARBSD_STUBS = __DIR__;
-CONSTS);
+            switch(gettype($v))
+            {
+                case 'boolean':
+                    $v = $v ? 'true' : 'false';
+                    break;
+                case 'int':
+                    $v = strval($v);
+                    break;
+                case 'string':
+                    $v = sprintf("'%s'", $v);
+                    break;
+            }
+
+            $constantsStr .= sprintf(
+                "const %s = %s;\n",
+                $k, $v
+            );
         }
-        else
-        {
-            $phar->addFromString('stubs/constants.php', file_get_contents(
-                __DIR__ . '/constants.php'
-            ));
-        }
+
+        $phar->addFromString('stubs/constants.php', $constantsStr);
 
         if ($key)
         {
@@ -198,8 +203,17 @@ CONSTS);
                 $sigFile,
                 base64_encode($sig)
             );
+
+            Process::fromShellCommandline(
+                "tar -v --zstd --options zstd:compression-level=19 -cf out/src-with-dependencies.tar "
+                . "src stubs vendor LICENSE composer.json composer.lock",
+                $this->root,
+            )->mustRun(function ($type, $buffer)
+            {
+            });
         }
 
+        $fs->chmod($tmpFile, 0555);
         $fs->rename($tmpFile, $finalName);
         $fs->dumpFile(
             $finalName . '.sig.sha256',

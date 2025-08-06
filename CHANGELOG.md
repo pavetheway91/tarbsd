@@ -1,6 +1,10 @@
-## upcoming, 2025-07-nn ##
+## upcoming, 2025-08-nn ##
+* feature-specific prunelists replaced by feature-specific preservelists, because multiple features could depend on the same file
+
+## upcoming, 2025-08-06 ##
 * verbose output written to a log file unless requested to console
-* feature-specific prunelists replaced by feature-specific preservelists, because multiple features could depend on the same file (not pushed to repo yet)
+* display all PHP warnings
+* preparations for a ports/pkg distribution at some point in the future
 
 ## 2025-07-18 ##
 * freebsd-update after release extraction

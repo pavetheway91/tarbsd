@@ -33,7 +33,7 @@ class SelfUpdate extends AbstractCommand
     {
         parent::__construct();
 
-        if (!file_exists(TARBSD_STUBS . '/isRelease'))
+        if (!TARBSD_SELF_UPDATE)
         {
             $this->setHidden(true);
         }
@@ -41,6 +41,15 @@ class SelfUpdate extends AbstractCommand
 
     protected function execute(InputInterface $input, OutputInterface $output) : int
     {
+        if (!TARBSD_SELF_UPDATE)
+        {
+            $output->writeln(sprintf(
+                "%s self-update command is not available in pkg/ports distribution of tarBSD builder",
+                self::ERR
+            ));
+            return 0;
+        }
+
         if ($currentBuildDate = App::getBuildDate())
         {
             $guzzle = new Guzzle;
@@ -52,7 +61,7 @@ class SelfUpdate extends AbstractCommand
                 $question = new Question(sprintf(
                     "   There <info>is</> a new version available, you might\n   want to check what has changed first"
                     . "\n   %s\n   Proceed?",
-                    'https://github.com/' . self::REPO . '/releases'
+                    'https://github.com/' . self::REPO . '/blob/main/CHANGELOG.md'
                 ));
 
                 $question->setValidator(function ($value) : bool
@@ -143,7 +152,7 @@ class SelfUpdate extends AbstractCommand
     {
         $res = $guzzle->request(
             'GET',
-            TARBSD_GITHUB_API . '/repos/' . self::REPO . '/releases?per_page=5',
+            TARBSD_GITHUB_API . '/repos/' . self::REPO . '/releases?per_page=20',
             [
                 'headers' => [
                     'accept' => 'application/vnd.github+json',

@@ -44,6 +44,11 @@ LOGO;
 
     protected function showBuildTime(OutputInterface $output, bool $always) : void
     {
+        if (TARBSD_PORTS)
+        {
+            return;
+        }
+
         $show = $always;
 
         if ($buidDate = App::getBuildDate())
