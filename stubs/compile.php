@@ -203,14 +203,6 @@ class Compiler extends Command
                 $sigFile,
                 base64_encode($sig)
             );
-
-            Process::fromShellCommandline(
-                "tar -v --zstd --options zstd:compression-level=19 -cf out/src-with-dependencies.tar "
-                . "src stubs vendor LICENSE composer.json composer.lock",
-                $this->root,
-            )->mustRun(function ($type, $buffer)
-            {
-            });
         }
 
         $fs->chmod($tmpFile, 0555);
@@ -235,7 +227,6 @@ if (!(PHP_VERSION_ID >= 80200)) \$issues[] = 'PHP >= 8.2.0 required, you are run
 if (!extension_loaded('phar')) \$issues[] = 'PHP extension phar required';
 if (!extension_loaded('zlib')) \$issues[] = 'PHP extension zlib required';
 if (!extension_loaded('pcntl')) \$issues[] = 'PHP extension pcntl required';
-if (!extension_loaded('mbstring') && !extension_loaded('iconv')) \$issues[] = 'Eighter PHP extension mbstring or iconv required';
 if (\$issues) exit("\\n\\ttarBSD builder cannot run due to following issues:\\n\\t\\t" . implode("\\n\\t\\t", \$issues) . "\\n\\n");
 const TARBSD_BUILD_ID = '%s';
 Phar::mapPhar(TARBSD_BUILD_ID);

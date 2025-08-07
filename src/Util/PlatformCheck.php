@@ -35,10 +35,6 @@ class PlatformCheck
             {
                 $issues[] = 'PHP extension pcntl required';
             }
-            if (!extension_loaded('mbstring') && !extension_loaded('iconv'))
-            {
-                $issues[] = 'Eighter PHP extension mbstring or iconv required';
-            }
             if ($issues)
             {
                 exit("\n\ttarBSD builder cannot run due to following issues:\n\t\t"
