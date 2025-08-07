@@ -1,7 +1,7 @@
 ## upcoming, 2025-08-nn ##
 * feature-specific prunelists replaced by feature-specific preservelists, because multiple features could depend on the same file
 
-## 2025-08-08 ##
+## 2025-08-07 ##
 * strict requirement for mbstring or iconv was dropped
 
 ## 2025-08-06 ##
