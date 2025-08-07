@@ -14,6 +14,12 @@ Please note that this is an early version and things might change. Don't expect 
 * a remote FreeBSD installer with SSH
 
 ## Installing the builder tool ##
+### pkg ###
+Available on latest repo already, quarterly to follow in October. Prefix the package name with a php version of your choosing.
+```
+pkg install php84-tarbsd-builder
+```
+### GitHub release ###
 Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib and pcntl extensions. Downloaded app can be updated with the self-update command. Alternatively, you can clone the repo and follow instructions at the bottom of this document.
 ```
 # make tarbsd builder executable
@@ -26,6 +32,9 @@ pkg install php84-phar php84-zlib php84-pcntl
 
 # (optional) zopfli for better kernel compression
 pkg install zopfli
+
+# (optional) to export the image to all sorts of random hypervisor formats
+pkg install qemu-tools
 
 # (optional) these might provide some tiny performace benefits
 pkg install php84-mbstring php84-intl
