@@ -14,16 +14,21 @@ Please note that this is an early version and things might change. Don't expect 
 * a remote FreeBSD installer with SSH
 
 ## Installing the builder tool ##
-
-Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, pcntl and either mbstring or iconv extensions. Zopfli enables slightly better kernel compression, but it is optional. Alternatively, you can clone the repo and follow instructions at the bottom of this document.
+Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib and pcntl extensions. Downloaded app can be updated with the self-update command. Alternatively, you can clone the repo and follow instructions at the bottom of this document.
 ```
-pkg install php84 php84-phar php84-zlib php84-pcntl php84-mbstring zopfli
-
 # make tarbsd builder executable
+# and move it to /usr/local/bin
 chmod +x tarbsd
-
-# move it to /usr/local/bin
 mv tarbsd /usr/local/bin/tarbsd
+
+# dependencies
+pkg install php84-phar php84-zlib php84-pcntl
+
+# (optional) zopfli for better kernel compression
+pkg install zopfli
+
+# (optional) these might provide some tiny performace benefits
+pkg install php84-mbstring php84-intl
 ```
 
 ## Usage ##
@@ -81,10 +86,6 @@ Two lists (early and late) of kernel modules to be included in the image. Early 
 ### packages ###
 List of packages to be installed.
 
-## Updating tarBSD builder to a new version ##
-```
-tarbsd self-update
-```
 ## Other miscellaneous things ##
 * tarBSD lives in memory. If you need non-volatile storage, you need to mount it. If you mount something in /usr (which is read-only), make a corressponding empty directory to tarbsd/usr, so it can be mounted.
 * Many applications might be missing, but libraries are mostly there. Vast majority of packages should just work.
@@ -99,9 +100,8 @@ tarbsd self-update
 * Random reads across various places in /usr might be slightly slow due to obvious reason. Depending on applications, this might or might not be noticeable. Usually however, services are started at boot and that's it, so I guess this doesn't matter much for most. There are some tunables in tar, which might help, but I haven't researched them extremely closely yet.
 
 ## Contributing ##
-There are some questions in the source code. One way to contribute is by giving input on them.
 
-For development, you'll need [Composer](https://www.freshports.org/devel/php-composer/) to install PHP dependencies. There's a compiler in the stubs directory. It spits out the executable, which is a [phar archive](https://www.php.net/manual/en/intro.phar.php). During development, you can just require vendor/autoload.php, create TarBSD\App and run that, but do at least occasional testing with a phar app too.
+There's a compiler in the stubs directory. It spits out the executable, which is a [phar archive](https://www.php.net/manual/en/intro.phar.php). During development, you can just require vendor/autoload.php, create TarBSD\App and run that, but do at least occasional testing with a phar app too.
 
 If you're not familiar with Symfony components, [here's the docs](https://symfony.com/doc/current/index.html). Relevant parts here are console, process, filesystem and finder.
 
