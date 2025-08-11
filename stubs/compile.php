@@ -60,9 +60,12 @@ class Compiler extends Command
         }
 
         $fs = new Filesystem;
+        $fs->mkdir($out = dirname(__DIR__) . '/out');
+        $fs->remove((new Finder)->in($out));
+        $buildDir = $ports ? $out : '/tmp';
 
         $phar = new Phar(
-            $tmpFile = '/tmp/tarbsd_' . bin2hex(random_bytes(6)) . '.phar',
+            $tmpFile = $buildDir . '/tarbsd_' . bin2hex(random_bytes(6)) . '.phar',
             0,
             $id = uuid_create(UUID_TYPE_TIME)
         );
@@ -161,8 +164,6 @@ class Compiler extends Command
         $phar->compressFiles(Phar::GZ);
 
         $fs->chmod($tmpFile, 0770);
-        $fs->mkdir($out = dirname(__DIR__) . '/out');
-        $fs->remove((new Finder)->in($out));
 
         $finalName = $phar = $out . '/tarbsd';
 
