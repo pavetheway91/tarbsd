@@ -164,9 +164,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
 
     final protected function prune(OutputInterface $output, OutputInterface $verboseOutput) : void
     {
-        $pruneList = [
-            'rescue'// should this be a feature?
-        ];
+        $pruneList = [];
 
         foreach(explode("\n", file_get_contents(TARBSD_STUBS . '/prunelist')) as $line)
         {
