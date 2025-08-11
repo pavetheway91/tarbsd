@@ -133,16 +133,18 @@ class Build extends AbstractCommand
             }
 
             $time = (new DateTimeImmutable('now'))->format('Y-m-d\TH:i:s');
-            $logFile = fopen($logFilePath = $logDir . '/' . $time . '.log.deflate', 'w');
+            $logFile = fopen($logFilePath = $logDir . '/' . $time . '.log', 'w');
 
             if (!$logFile)
             {
                 throw new \Exception('failed to open logfile: ' . $logFilePath);
             }
 
+            /*
             stream_filter_append($logFile, 'zlib.deflate', STREAM_FILTER_WRITE, [
                 'level' => 9, 'window' => 15, 'memory' => 9
             ]);
+            */
 
             $verboseOutput = new StreamOutput($logFile);
         }
