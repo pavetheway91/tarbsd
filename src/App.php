@@ -64,7 +64,7 @@ class App extends Application implements EventSubscriberInterface
         }
 
         if (
-            !in_array($name = $event->getCommand()->getName(), ['list', 'help'])
+            !in_array($name = $event->getCommand()->getName(), ['list', 'help', 'diagnose'])
             && !static::amIRoot()
         ){
             $output->writeln(sprintf(
@@ -148,6 +148,7 @@ class App extends Application implements EventSubscriberInterface
             new Command\Build,
             new Command\Bootstrap,
             new Command\SelfUpdate,
+            new Command\Diagnose,
             new Command\SelfCheckSig
         ];
     }
