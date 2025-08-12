@@ -31,9 +31,6 @@ pkg install php84-phar php84-zlib php84-pcntl
 # (optional) zopfli for better kernel compression
 pkg install zopfli
 
-# (optional) to export the image to all sorts of random hypervisor formats
-pkg install qemu-tools
-
 # (optional) these might provide some tiny performace benefits
 pkg install php84-mbstring php84-intl
 ```
