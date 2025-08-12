@@ -140,8 +140,7 @@ class SelfUpdate extends AbstractCommand
             }
             else
             {
-                $this->showLogo($output);
-                $output->writeln('You are already using the latest available version');
+                $output->writeln(self::CHECK . ' You are already using the latest available version');
             }
         }
 
