@@ -31,7 +31,7 @@ pkg install php84-phar php84-zlib php84-pcntl
 # (optional) zopfli for better kernel compression
 pkg install zopfli
 
-# (optional) these might provide some tiny performace benefits
+# (optional) these might provide some tiny performance benefits
 pkg install php84-mbstring php84-intl
 ```
 
