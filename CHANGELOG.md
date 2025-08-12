@@ -1,5 +1,7 @@
-## upcoming, 2025-08-nn ##
-* feature-specific prunelists replaced by feature-specific preservelists, because multiple features could depend on the same file
+## upcoming ##
+* Feature-specific prunelists to be replaced by feature-specific preservelists, because multiple features could depend on the same file.
+* Pkgbase support (needed for FreeBSD 15). Possibly with automatic download.
+* Global application config in /usr/local/etc to configure things such as the build pool size and output colours.
 
 ## 2025-08-12 ##
 * /rescue is now a feature
