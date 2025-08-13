@@ -11,15 +11,14 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
 use GuzzleHttp\Client as Guzzle;
-
-use Composer\Autoload\ClassLoader;
+use GuzzleHttp\Promise;
 
 use DateTimeImmutable;
-use Reflectionclass;
 
 #[AsCommand(
     name: 'self-update',
@@ -39,27 +38,64 @@ class SelfUpdate extends AbstractCommand
         }
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output) : int
+    public function __invoke(
+        InputInterface $input,
+        OutputInterface $output,
+        #[Option('Accept pre-release')] bool $preRelease = false
+    ) : int
     {
         if (!TARBSD_SELF_UPDATE)
         {
             $output->writeln(sprintf(
-                "%s self-update command is not available in pkg/ports distribution of tarBSD builder",
+                "%s self-update command is only available on GitHub release version of tarBSD builder",
                 self::ERR
             ));
-            return 0;
+            return self::FAILURE;
         }
+
+        $self = realpath($_SERVER['SCRIPT_FILENAME']);
+
+        if (!is_writable($self))
+        {
+            $output->writeln(sprintf(
+                "%s  %s is not writable",
+                self::ERR,
+                $self
+            ));
+            return self::FAILURE;
+        }
+
+        if (!is_int($perms = fileperms($self)))
+        {
+            $output->writeln(sprintf(
+                '%s  There was an unexplainable error, tarbsd builder'
+                . ' wasn\'t able to figure it\'s own file permissions',
+                self::ERR,
+            ));
+            return self::FAILURE;
+        }
+
+        $currentSHA256 = hash_file('sha256', $self);
 
         if ($currentBuildDate = App::getBuildDate())
         {
             $guzzle = new Guzzle;
 
-            if ($latest = $this->getLatest($guzzle, $currentBuildDate))
-            {    
+            $latest = $this->getLatest(
+                $guzzle,
+                $currentBuildDate,
+                $currentSHA256,
+                $preRelease
+            );
+
+            if ($latest)
+            {
+                [$releaseName, $phar, $size, $sig, $pub] = $latest;
+
                 $helper = $this->getHelper('question');
 
                 $question = new Question(sprintf(
-                    "   There <info>is</> a new version available, you might\n   want to check what has changed first"
+                    "   There <g>is</> a new version available, you might\n   want to check what has changed first"
                     . "\n   %s\n   Proceed?",
                     'https://github.com/' . self::REPO . '/blob/main/CHANGELOG.md'
                 ));
@@ -83,60 +119,44 @@ class SelfUpdate extends AbstractCommand
                 }
                 $section->clear();
 
-                $phar = $guzzle->request('GET', $latest[0], [
-                    'sink' => $tmpFile = '/tmp/' . 'tarbsd_update_' . bin2hex(random_bytes(8))
-                ]);
-                if ($phar->getStatusCode() !== 200)
-                {
-                    throw new \Exception('Download failed, status code: ' . $res->getStatusCode());
-                }
+                $promises = [
+                    'phar' => $guzzle->getAsync($phar, [
+                        'sink' => $tmpFile = '/tmp/' . 'tarbsd_update_' . bin2hex(random_bytes(8))
+                    ]),
+                    'sig'   => $guzzle->getAsync($sig),
+                ];
 
-                $sig = $guzzle->request('GET', $latest[1]);
-                if ($sig->getStatusCode() !== 200)
-                {
-                    throw new \Exception('Signature download failed, status code: ' . $res->getStatusCode());
-                }
+                $responses = Promise\Utils::unwrap($promises);
 
-                if (!SignatureChecker::validateEC($tmpFile, $sig->getBody()->getContents()))
-                {
+                if (!SignatureChecker::validateEC(
+                    $tmpFile,
+                    $responses['sig']->getBody()->getContents())
+                ) {
                     throw new \Exception('Signature didn\'t match!');
                 }
                 $output->writeln(self::CHECK . ' signature ok');
 
                 $fs = new Filesystem;
-                $perms = fileperms($self = $_SERVER['SCRIPT_FILENAME']);
 
-                if ($perms !== false)
-                {
-                    $fs->chmod($tmpFile, $perms);
-                    $output->writeln(self::CHECK . ' checking file permissions');
+                $fs->chmod($tmpFile, $perms);
+                $output->writeln(self::CHECK . ' file permissions');
 
-                    /**
-                     * To make sure that there aren't any
-                     * ugly read errors, we'll load
-                     * every class, interface and trait
-                     * in the current phar archive before
-                     * it gets overriden.
-                     */
-                    $this->loadAllClasses();
-                    $output->writeln(self::CHECK . ' making sure nothing ugly happens during update');
+                /**
+                 * To make sure that there aren't any
+                 * ugly read errors, we'll load
+                 * every class, interface and trait
+                 * in the current phar archive before
+                 * it gets overriden.
+                 */
+                $this->loadAllClasses();
+                $output->writeln(self::CHECK . ' making sure nothing ugly happens during the update');
 
-                    $fs->rename($tmpFile, $self, true);
+                $fs->rename($tmpFile, $self, true);
 
-                    //$this->showLogo($output);
-
-                    $output->writeln(sprintf(
-                        self::CHECK . " tarBSD builder was updated to a version published\n   at %s",
-                        $latest[2]->format('Y-m-d H:i:s \\U\\T\\C')
-                    ));
-                }
-                else
-                {
-                    throw new \Exception(
-                        'There was an unexplainable error, tarbsd builder'
-                        . ' wasn\'t able to figure it\'s own file permissions'
-                    );
-                }
+                $output->writeln(sprintf(
+                    self::CHECK . " tarBSD builder was updated to %s",
+                    $releaseName
+                ));
             }
             else
             {
@@ -147,8 +167,12 @@ class SelfUpdate extends AbstractCommand
         return self::SUCCESS;
     }
 
-    protected function getLatest(Guzzle $guzzle, DateTimeImmutable $currentBuildDate) : ?array
-    {
+    protected function getLatest(
+        Guzzle $guzzle,
+        DateTimeImmutable $currentBuildDate,
+        string $currentSHA256,
+        bool $preRelease
+    ) : ?array {
         $res = $guzzle->request(
             'GET',
             TARBSD_GITHUB_API . '/repos/' . self::REPO . '/releases?per_page=20',
@@ -170,29 +194,43 @@ class SelfUpdate extends AbstractCommand
 
         foreach($payload as $release)
         {
-            $pub = new DateTimeImmutable($release['published_at']);
+            $pub = new DateTimeImmutable($release['created_at']);
+            $name = $release['name'];
 
-            if ($pub->modify('-1 hour') > $currentBuildDate)
-            {
+            if (
+                $pub > $currentBuildDate
+                && (!$release['prerelease'] || $preRelease)
+            ) {
                 $phar = null;
-    
+
+                $size = null;
+
                 $sig = null;
+
+                $sha256 = null;
 
                 foreach($release['assets'] as $asset)
                 {
-                    if ($asset['name'] === 'tarbsd')
-                    {
+                    if (
+                        $asset['name'] === 'tarbsd'
+                        && preg_match('/sha256:([a-z0-9]{64})/', $asset['digest'], $m)
+                    ) {
                         $phar = $asset['browser_download_url'];
+                        $size = $asset['size'];
+                        $sha256 = $m[1];
                     }
                     if ($asset['name'] === 'tarbsd.sig.secp384r1')
                     {
                         $sig = $asset['browser_download_url'];
                     }
                 }
-                if ($phar && $sig)
+    
+                if ($phar && $sig && $sha256 !== $currentSHA256)
                 {
                     return [
+                        $name,
                         $phar,
+                        $size,
                         $sig,
                         $pub
                     ];
@@ -204,10 +242,7 @@ class SelfUpdate extends AbstractCommand
 
     protected function loadAllClasses() : void
     {
-        $ref = new Reflectionclass(ClassLoader::class);
-        $file = $ref->getFileName();
-
-        $classLoader = require dirname(dirname($file)) . '/autoload.php';
+        $classLoader = require TARBSD_STUBS . '/../vendor/autoload.php';
 
         foreach($classLoader->getPrefixesPsr4() as $ns => $dirs)
         {
