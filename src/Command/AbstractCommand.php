@@ -11,7 +11,7 @@ use DateTimeImmutable;
 
 abstract class AbstractCommand extends SfCommand
 {
-    const CHECK = ' <g>✔</>';
+    const CHECK = ' <info>✔</>';
 
     const ERR = ' <r>‼️</>';
 
