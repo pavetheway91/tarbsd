@@ -16,7 +16,7 @@ class ListCmds extends AbstractCommand
     public function __invoke(OutputInterface $output) : int
     {
         $this->showLogo($output);
-        $this->showBuildTime($output, true);
+        $this->showVersion($output);
 
         $cmds = [];
         $maxCmdLen = 0;

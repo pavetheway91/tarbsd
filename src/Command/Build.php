@@ -125,7 +125,7 @@ class Build extends AbstractCommand
         else
         {
             $this->showLogo($output);
-            $this->showBuildTime($output, false);
+            $this->showVersion($output);
 
             if (!$fs->exists($logDir = $conf->getDir() . '/log'))
             {

@@ -42,38 +42,31 @@ LOGO;
         $output->writeln(self::LOGO);
     }
 
-    protected function showBuildTime(OutputInterface $output, bool $always) : void
+    protected function showVersion(OutputInterface $output) : void
     {
-        if (TARBSD_PORTS)
+        $style = '';
+        $v = 'dev';
+
+        if (TARBSD_VERSION)
         {
-            return;
-        }
+            $v = (TARBSD_PORTS ? 'ports ' : '') . TARBSD_VERSION;
 
-        $show = $always;
-
-        if ($buidDate = App::getBuildDate())
-        {
-            $style = '';
-
-            if ($buidDate < new DateTimeImmutable('-2 weeks'))
+            if (TARBSD_SELF_UPDATE)
             {
-                /**
-                 * Friendly reminder to check if there's
-                 * an update available.
-                 */
-                $style = '<bg=yellow;options=bold>';
-                $show = true;
-            }
+                $buidDate = App::getBuildDate();
 
-            if ($show)
-            {
-                $output->writeln(sprintf(
-                    'This version of tarBSD builder was built at %s%s%s',
-                    $style,
-                    $buidDate->format('Y-m-d H:i:s \\U\\T\\C'),
-                    $style ? '</>' : ''
-                ));
+                if ($buidDate < new DateTimeImmutable('-3 weeks'))
+                {
+                    $style = '<bg=yellow;options=bold>';
+                }
             }
         }
+
+        $output->writeln(sprintf(
+            'version: %s%s%s',
+            $style,
+            $v,
+            $style ? '</>' : ''
+        ));
     }
 }

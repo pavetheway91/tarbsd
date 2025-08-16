@@ -32,7 +32,7 @@ class App extends Application implements EventSubscriberInterface
     {
         Util\PlatformCheck::run();
 
-        parent::__construct();
+        parent::__construct('', TARBSD_VERSION ?: 'dev');
 
         $this->setDispatcher(
             $this->dispatcher = new EventDispatcher
