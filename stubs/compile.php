@@ -40,9 +40,11 @@ class Compiler extends Command
         #[Option('Version tag')] ?string $versionTag = null,
         #[Option('Signature key file')] ?string $key = null,
         #[Option('Signature key password')] ?string $pw = null,
-        #[Option('Leave iconv polyfill out')] bool $noIconv = false,
+        #[Option('Leave iconv polyfill out')] bool $npIconv = false,
         #[Option('Mock Github api')] bool $mockGh = false
     ) {
+        $start = time();
+
         if (ini_get('phar.readonly'))
         {
             throw new \Exception(
@@ -52,13 +54,29 @@ class Compiler extends Command
 
         if ($key)
         {
+            if ($npIconv)
+            {
+                throw new \Exception(
+                    "Don't build a release without iconv polyfill"
+                );
+            }
+
             $key = openssl_pkey_get_private('file://' . $key, $pw);
+
             if (false == ($key instanceof OpenSSLAsymmetricKey))
             {
                 throw new \Exception(
                     "failed to read the signature key"
                 );
             }
+            $versionTag = $versionTag ?: gmdate('y.m.d');
+        }
+
+        if ($ports && !$versionTag)
+        {
+            throw new \Exception(
+                "ports edition needs a version tag"
+            );
         }
 
         $fs = new Filesystem;
@@ -72,7 +90,7 @@ class Compiler extends Command
             $id = uuid_create(UUID_TYPE_TIME)
         );
 
-        $phar->setStub($this->genStub($id, $noIconv));
+        $phar->setStub($this->genStub($id, $npIconv));
 
         $rootlen = strlen($this->root);
 
@@ -91,38 +109,10 @@ class Compiler extends Command
         $constants['TARBSD_SELF_UPDATE'] = ($ports || !$key) ? false : true;
         $constants['TARBSD_PORTS'] = $ports;
         $constants['TARBSD_VERSION'] = $versionTag;
+        $constantsStr = $this->stringifyConstants($constants);
 
-        $constantsStr = "<?php\nconst TARBSD_STUBS = __DIR__;\n";
-
-        foreach($constants as $k => $v)
-        {
-            switch(gettype($v))
-            {
-                case 'boolean':
-                    $v = $v ? 'true' : 'false';
-                    break;
-                case 'int':
-                    $v = strval($v);
-                    break;
-                case 'string':
-                    $v = sprintf("'%s'", $v);
-                    break;
-                case 'null';
-                    $v = 'null';
-            }
-
-            $constantsStr .= sprintf(
-                "const %s = %s;\n",
-                $k, $v
-            );
-        }
-
-        $phar->addFromString('stubs/constants.php', $constantsStr);
-
-        if ($key)
-        {
-            $phar->addFromString('stubs/isRelease', '');
-        }
+        $phar->addFromString('stubs/constants.php', "<?php\n" . $constantsStr);
+        $output->write($constantsStr);
 
         $phar->addFile(__DIR__ . '/../LICENSE', 'LICENSE');
 
@@ -135,6 +125,7 @@ class Compiler extends Command
                 file_get_contents($file)
             );
         }
+
         foreach(
             (new Finder)->directories()->in(__DIR__)->depth('0')
             as $dir
@@ -146,10 +137,6 @@ class Compiler extends Command
                 {
                     $phar->addFile($file, $relativeFile);
                 }
-                else
-                {
-                    $phar->addEmptyDir($relativeFile);
-                }
             }
         }
 
@@ -159,7 +146,7 @@ class Compiler extends Command
         $packages = 0;
         foreach($this->addPackages($phar) as $package => $cb)
         {
-            if ($package == 'symfony/polyfill-iconv' && $noIconv)
+            if ($package == 'symfony/polyfill-iconv' && $npIconv)
             {
                 $phar->addFromString('vendor/symfony/polyfill-iconv/bootstrap.php', '<?php');
                 $output->write("skipping " . $package . "\n");
@@ -179,13 +166,12 @@ class Compiler extends Command
             $packages++;
         }
 
-        $phar->addFromString('vendor/files.added', implode("\n", $allAdded));
         $phar->addFromString('vendor/files.skipped', implode("\n", $allSkipped));
 
         $output->writeln(sprintf(
             "%d files added, %d skipped across %s packages",
             count($allAdded),
-            count($skipped),
+            count($allSkipped),
             $packages
         ));
 
@@ -242,13 +228,45 @@ class Compiler extends Command
         );
 
         $output->writeln(sprintf(
-            "generated %s\nid: %s",
+            "generated %s\ntime: %s seconds\nid: %s\ntag: %s",
             $finalName,
-            $id
+            time() - $start,
+            $id,
+            $versionTag
         ));
     }
 
-    protected function genStub(string $buildId, bool $noIconv)
+    protected function stringifyConstants(array $constants) : string
+    {
+        $out = "const TARBSD_STUBS = __DIR__;\n";
+
+        foreach($constants as $k => $v)
+        {
+            switch(gettype($v))
+            {
+                case 'boolean':
+                    $v = $v ? 'true' : 'false';
+                    break;
+                case 'int':
+                    $v = strval($v);
+                    break;
+                case 'string':
+                    $v = sprintf("'%s'", $v);
+                    break;
+                case 'NULL';
+                    $v = 'null';
+                    break;
+            }
+
+            $out .= sprintf(
+                "const %s = %s;\n",
+                $k, $v
+            );
+        }
+        return $out;
+    }
+
+    protected function genStub(string $buildId, bool $npIconv)
     {
         $stub = <<<STUB
 #!/usr/bin/env php
@@ -293,7 +311,7 @@ NOICONV;
         return sprintf(
             $stub,
             $license,
-            $noIconv ? $noIconvTest : '',
+            $npIconv ? $noIconvTest : '',
             $buildId
         );
     }
