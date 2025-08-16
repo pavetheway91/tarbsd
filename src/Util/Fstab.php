@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace TarBsd\Util;
+namespace TarBSD\Util;
 
 use RuntimeException;
 use Stringable;
