@@ -63,7 +63,7 @@ LOGO;
         }
 
         $output->writeln(sprintf(
-            "version: %s%s%s\n",
+            "version: %s%s%s",
             $style,
             $v,
             $style ? '</>' : ''
