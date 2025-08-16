@@ -37,8 +37,10 @@ class Compiler extends Command
     public function __invoke(
         OutputInterface $output,
         #[Option('Ports edition without self-update command')] bool $ports = false,
+        #[Option('Version tag')] ?string $versionTag = null,
         #[Option('Signature key file')] ?string $key = null,
         #[Option('Signature key password')] ?string $pw = null,
+        #[Option('Leave iconv polyfill out')] bool $noIconv = false,
         #[Option('Mock Github api')] bool $mockGh = false
     ) {
         if (ini_get('phar.readonly'))
@@ -70,7 +72,7 @@ class Compiler extends Command
             $id = uuid_create(UUID_TYPE_TIME)
         );
 
-        $phar->setStub($this->genStub($id));
+        $phar->setStub($this->genStub($id, $noIconv));
 
         $rootlen = strlen($this->root);
 
@@ -88,6 +90,7 @@ class Compiler extends Command
         $constants['TARBSD_GITHUB_API'] = $mockGh ? 'http://localhost:8080' : 'https://api.github.com';
         $constants['TARBSD_SELF_UPDATE'] = ($ports || !$key) ? false : true;
         $constants['TARBSD_PORTS'] = $ports;
+        $constants['TARBSD_VERSION'] = $versionTag;
 
         $constantsStr = "<?php\nconst TARBSD_STUBS = __DIR__;\n";
 
@@ -104,6 +107,8 @@ class Compiler extends Command
                 case 'string':
                     $v = sprintf("'%s'", $v);
                     break;
+                case 'null';
+                    $v = 'null';
             }
 
             $constantsStr .= sprintf(
@@ -150,16 +155,39 @@ class Compiler extends Command
 
         $this->addAutoloaderFiles($phar);
 
+        $allAdded = $allSkipped = [];
+        $packages = 0;
         foreach($this->addPackages($phar) as $package => $cb)
         {
-            $output->write("adding files for " . $package . ' ');
-            [$added, $skipped] = $cb();
-            $output->writeln(sprintf(
-                "%d added, %d skipped",
-                count($added),
-                count($skipped)
-            ));
+            if ($package == 'symfony/polyfill-iconv' && $noIconv)
+            {
+                $phar->addFromString('vendor/symfony/polyfill-iconv/bootstrap.php', '<?php');
+                $output->write("skipping " . $package . "\n");
+            }
+            else
+            {
+                $output->write("adding files for " . $package . ' ');
+                [$added, $skipped] = $cb();
+                $output->writeln(sprintf(
+                    "%d added, %d skipped",
+                    count($added),
+                    count($skipped)
+                ));
+                $allAdded = array_merge($allAdded, $added);
+                $allSkipped = array_merge($allSkipped, $skipped);
+            }
+            $packages++;
         }
+
+        $phar->addFromString('vendor/files.added', implode("\n", $allAdded));
+        $phar->addFromString('vendor/files.skipped', implode("\n", $allSkipped));
+
+        $output->writeln(sprintf(
+            "%d files added, %d skipped across %s packages",
+            count($allAdded),
+            count($skipped),
+            $packages
+        ));
 
         $phar->compressFiles(Phar::GZ);
 
@@ -213,10 +241,14 @@ class Compiler extends Command
             hash_file('sha256', $finalName)
         );
 
-        $output->writeln('generated ' . $finalName);
+        $output->writeln(sprintf(
+            "generated %s\nid: %s",
+            $finalName,
+            $id
+        ));
     }
 
-    protected function genStub(string $buildId)
+    protected function genStub(string $buildId, bool $noIconv)
     {
         $stub = <<<STUB
 #!/usr/bin/env php
@@ -227,7 +259,7 @@ if ((\$os = php_uname('s')) !== 'FreeBSD') \$issues[] = 'Unsupported operating s
 if (!(PHP_VERSION_ID >= 80200)) \$issues[] = 'PHP >= 8.2.0 required, you are running ' . PHP_VERSION;
 if (!extension_loaded('phar')) \$issues[] = 'PHP extension phar required';
 if (!extension_loaded('zlib')) \$issues[] = 'PHP extension zlib required';
-if (!extension_loaded('pcntl')) \$issues[] = 'PHP extension pcntl required';
+if (!extension_loaded('pcntl')) \$issues[] = 'PHP extension pcntl required';%s
 if (\$issues) exit("\\n\\ttarBSD builder cannot run due to following issues:\\n\\t\\t" . implode("\\n\\t\\t", \$issues) . "\\n\\n");
 const TARBSD_BUILD_ID = '%s';
 Phar::mapPhar(TARBSD_BUILD_ID);
@@ -253,7 +285,17 @@ STUB;
         $license = "\n *  " . preg_replace('/\n/', "\n *  ", $license);
         $license = '/' . $stars . $license . "\n " . $stars . '/';
 
-        return sprintf($stub, $license, $buildId);
+$noIconvTest = <<<NOICONV
+
+if (!extension_loaded('iconv') && !extension_loaded('mbstring')) \$issues[] = 'PHP extension mbstring or iconv required';
+NOICONV;
+
+        return sprintf(
+            $stub,
+            $license,
+            $noIconv ? $noIconvTest : '',
+            $buildId
+        );
     }
 
     protected function addAutoloaderFiles(Phar $phar)
@@ -365,6 +407,17 @@ STUB;
                         . 'Redis|Couchbase|CouchDB|Memcached|Mongo|DynamoDb'
                         . '|Zookeeper|Apcu|Pdo|Sql|FirePHP|IFTTT|Elastic'
                         . '|Combined|Factory|Traceable|Apcu'
+                    . ')/',
+                    $file
+                )) {
+                    return false;
+                }
+                break;
+            case 'symfony/http-client':
+                if (preg_match(
+                    '/('
+                        . 'Amp|Caching|Httplug|PrivateNetwork|Retryable'
+                        . '|Scoping|Throttling|Traceable'
                     . ')/',
                     $file
                 )) {

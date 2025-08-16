@@ -18,6 +18,7 @@ class Diagnose extends AbstractCommand
     ) {
         $output->writeln('  uname: ' . php_uname());
         $output->writeln('  build id: ' . TARBSD_BUILD_ID);
+        $output->writeln('  version: ' . TARBSD_VERSION);
         $output->writeln('  ports: ' . (TARBSD_PORTS ? 'yep' : 'nope'));
         $output->writeln('  gh: ' . (TARBSD_SELF_UPDATE ? 'yep' : 'nope'));
         $output->writeln('  php: ' . PHP_VERSION);
