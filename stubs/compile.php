@@ -1,5 +1,5 @@
 #!/usr/bin/env php
-<?php
+<?php declare(strict_types=1);
 namespace TarBSD;
 /****************************************************
  * 
@@ -94,14 +94,17 @@ class Compiler extends Command
 
         $rootlen = strlen($this->root);
 
+        $srcFiles = 0;
         foreach(
             (new Finder)->files()->in($this->root . '/src')
             as $file
         ) {
+            $file = (string) $file;
             $phar->addFromString(
                 substr($file, $rootlen + 1),
                 file_get_contents($file)
             );
+            $srcFiles++;
         }
 
         $constants = [];
@@ -110,35 +113,45 @@ class Compiler extends Command
         $constants['TARBSD_PORTS'] = $ports;
         $constants['TARBSD_VERSION'] = $versionTag;
         $constantsStr = $this->stringifyConstants($constants);
-
         $phar->addFromString('stubs/constants.php', "<?php\n" . $constantsStr);
         $output->write($constantsStr);
-
         $phar->addFile(__DIR__ . '/../LICENSE', 'LICENSE');
 
+        $stubFiles = 0;
         foreach(
             (new Finder)->files()->in(__DIR__)->depth('0')->notname('*.php')->sortByName()->reverseSorting()
             as $file
         ) {
+            $file = (string) $file;
             $phar->addFromString(
                 substr($file, $rootlen + 1),
                 file_get_contents($file)
             );
+            $stubFiles++;
         }
 
         foreach(
             (new Finder)->directories()->in(__DIR__)->depth('0')
             as $dir
         ) {
+            $dir = (string) $dir;
             foreach((new Finder)->in($dir) as $file)
             {
-                $relativeFile = substr($file, $rootlen + 1);
                 if ($file->isFile())
                 {
+                    $file = (string) $file;
+                    $relativeFile = substr($file, $rootlen + 1);
                     $phar->addFile($file, $relativeFile);
+                    $stubFiles++;
                 }
             }
         }
+
+        $output->writeln(sprintf(
+            "%d src files\n%d stub files",
+            $srcFiles,
+            $stubFiles
+        ));
 
         $this->addAutoloaderFiles($phar);
 
@@ -153,7 +166,7 @@ class Compiler extends Command
             }
             else
             {
-                $output->write("adding files for " . $package . ' ');
+                $output->write("    adding files for " . $package . ' ');
                 [$added, $skipped] = $cb();
                 $output->writeln(sprintf(
                     "%d added, %d skipped",
@@ -169,7 +182,7 @@ class Compiler extends Command
         $phar->addFromString('vendor/files.skipped', implode("\n", $allSkipped));
 
         $output->writeln(sprintf(
-            "%d files added, %d skipped across %s packages",
+            "    %d files added, %d skipped across %s packages",
             count($allAdded),
             count($allSkipped),
             $packages
@@ -336,6 +349,7 @@ NOICONV;
 
         foreach($f as $file)
         {
+            $file = (string) $file;
             $phar->addFromString(
                 substr($file, $rootlen + 1),
                 php_strip_whitespace($file)
@@ -391,13 +405,14 @@ NOICONV;
                     (new Finder)->files()->in($path)
                     as $file
                 ) {
+                    $file = (string) $file;
                     $relativeFile = substr($file, $rootlen + 1);
 
                     if ($this->accept($name, $relativeFile))
                     {
                         $phar->addFromString(
                             $relativeFile,
-                            $file->getExtension() == 'php'
+                            pathinfo($file, PATHINFO_EXTENSION) == 'php'
                                 ? php_strip_whitespace($file)
                                 : file_get_contents($file)
                         );
