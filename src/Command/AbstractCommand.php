@@ -49,7 +49,7 @@ LOGO;
 
         if (TARBSD_VERSION)
         {
-            $v = (TARBSD_PORTS ? 'ports ' : '') . TARBSD_VERSION;
+            $v = (TARBSD_PORTS ? 'ports-' : '') . TARBSD_VERSION;
 
             if (TARBSD_SELF_UPDATE)
             {
@@ -63,7 +63,7 @@ LOGO;
         }
 
         $output->writeln(sprintf(
-            'version: %s%s%s',
+            "version: %s%s%s\n",
             $style,
             $v,
             $style ? '</>' : ''
