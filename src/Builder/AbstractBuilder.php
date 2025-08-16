@@ -3,6 +3,7 @@ namespace TarBSD\Builder;
 
 use TarBSD\Configuration;
 use TarBSD\Util\Fstab;
+use TarBSD\Util\WrkFs;
 use TarBSD\App;
 
 use Symfony\Component\Cache\Adapter\AdapterInterface as CacheInterface;
@@ -98,25 +99,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
         $this->bootPruned = false;
         $this->modules = null;
 
-        // todo: do this somewhere else and have a way to configure the pool size
-        try
-        {
-            Process::fromShellCommandline('zfs get all ' . $this->fsId)->mustRun();
-        }
-        catch (\Exception $e)
-        {
-            $this->fs->mkdir($this->wrk);
-            $md = trim(
-                Process::fromShellCommandline('mdconfig -s 2g')->mustRun()->getOutput(),
-                "\n"
-            );
-            Process::fromShellCommandline(
-                'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -m '
-                . $this->wrk . ' ' . $this->fsId . ' /dev/' . $md . "\n"
-                . 'zfs create -o compression=lz4 -o recordsize=4m '.  $this->fsId . "/root\n"
-                . 'zfs snapshot -r ' . $this->fsId . "/root@empty \n"
-            )->mustRun();
-        }
+        WrkFs::init($this->config->getDir());
 
         $f = (new Finder)->files()->in($this->wrk)->name(['*.img', 'tarbsd.*']);
         $this->fs->remove($f);
