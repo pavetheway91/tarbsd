@@ -13,6 +13,9 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\HttpClient\HttpClient;
+
 use Symfony\Component\Process\Process;
 
 use DateTimeImmutable;
@@ -22,6 +25,8 @@ class App extends Application implements EventSubscriberInterface
     private readonly FilesystemCache $cache;
 
     private readonly EventDispatcher $dispatcher;
+
+    private readonly HttpClientInterface $httpClient;
 
     public function __construct()
     {
@@ -95,6 +100,15 @@ class App extends Application implements EventSubscriberInterface
             );
         }
         return $this->cache;
+    }
+
+    public function getHttpClient() : HttpClientInterface
+    {
+        if (!isset($this->httpClient))
+        {
+            $this->httpClient = HttpClient::create();
+        }
+        return $this->httpClient;
     }
 
     public function getDispatcher() : EventDispatcher

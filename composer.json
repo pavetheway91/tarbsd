@@ -16,8 +16,8 @@
         "symfony/cache": "^7.4-dev",
         "symfony/yaml": "^7.4-dev",
         "symfony/event-dispatcher": "^7.4-dev",
+        "symfony/http-client": "^7.4-dev",
         "symfony/polyfill-uuid": "^1.32",
-        "symfony/polyfill-iconv": "^1.32",
-        "guzzlehttp/guzzle": "^7.9"
+        "symfony/polyfill-iconv": "^1.32"
     }
 }
