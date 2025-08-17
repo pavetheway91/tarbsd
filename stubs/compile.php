@@ -148,6 +148,8 @@ class Compiler extends Command
             }
         }
 
+        $phar->addFile(__DIR__ . '/filter.php', 'stubs/filter.php');
+
         $output->writeln(sprintf(
             "%d src files\n%d stub files",
             $srcFiles,
