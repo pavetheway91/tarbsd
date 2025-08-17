@@ -41,6 +41,7 @@ class Compiler extends Command
         #[Option('Signature key file')] ?string $key = null,
         #[Option('Signature key password')] ?string $pw = null,
         #[Option('Leave iconv polyfill out')] bool $npIconv = false,
+        #[Option('Leave all polyfills out, cuts compile time to ≈ 1/3')] bool $np = false,
         #[Option('Mock Github api')] bool $mockGh = false
     ) {
         $start = time();
@@ -54,10 +55,10 @@ class Compiler extends Command
 
         if ($key)
         {
-            if ($npIconv)
+            if ($npIconv || $np)
             {
                 throw new \Exception(
-                    "Don't build a release without iconv polyfill"
+                    "Don't build a release without polyfills"
                 );
             }
 
@@ -90,7 +91,7 @@ class Compiler extends Command
             $id = uuid_create(UUID_TYPE_TIME)
         );
 
-        $phar->setStub($this->genStub($id, $npIconv));
+        $phar->setStub($this->genStub($id, $npIconv, $np));
 
         $rootlen = strlen($this->root);
 
@@ -159,9 +160,11 @@ class Compiler extends Command
         $packages = 0;
         foreach($this->addPackages($phar) as $package => $cb)
         {
-            if ($package == 'symfony/polyfill-iconv' && $npIconv)
-            {
-                $phar->addFromString('vendor/symfony/polyfill-iconv/bootstrap.php', '<?php');
+            if (
+                ($package == 'symfony/polyfill-iconv' && $npIconv)
+                || (str_starts_with($package, 'symfony/polyfill-') && $np)
+            ) {
+                $phar->addFromString('vendor/' . $package . '/bootstrap.php', '<?php');
                 $output->write("skipping " . $package . "\n");
             }
             else
@@ -279,7 +282,7 @@ class Compiler extends Command
         return $out;
     }
 
-    protected function genStub(string $buildId, bool $npIconv)
+    protected function genStub(string $buildId, bool $npIconv, bool $np)
     {
         $stub = <<<STUB
 #!/usr/bin/env php
@@ -315,16 +318,30 @@ STUB;
         $stars = str_repeat('*', 72);
         $license = "\n *  " . preg_replace('/\n/', "\n *  ", $license);
         $license = '/' . $stars . $license . "\n " . $stars . '/';
+        $variableTests = '';
 
-$noIconvTest = <<<NOICONV
+        if ($np)
+        {
+$variableTests = <<<TESTS
+
+if (!extension_loaded('mbstring')) \$issues[] = 'PHP extension mbstring required';
+if (!extension_loaded('intl')) \$issues[] = 'PHP extension intl required';
+if (!extension_loaded('ctype')) \$issues[] = 'PHP extension ctype required';
+if (!extension_loaded('uuid')) \$issues[] = 'PHP extension uuid required';
+TESTS;
+        }
+        elseif($npIconv)
+        {
+$variableTests = <<<NOICONV
 
 if (!extension_loaded('iconv') && !extension_loaded('mbstring')) \$issues[] = 'PHP extension mbstring or iconv required';
 NOICONV;
+        }
 
         return sprintf(
             $stub,
             $license,
-            $npIconv ? $noIconvTest : '',
+            $variableTests,
             $buildId
         );
     }
