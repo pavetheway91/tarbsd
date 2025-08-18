@@ -15,7 +15,7 @@ Please note that this is an early version and things might change. Don't expect 
 
 ## Installing the builder tool ##
 ### pkg ###
-...soon
+...[soon](https://www.freshports.org/sysutils/tarbsd-builder)
 
 ### GitHub release ###
 Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib and pcntl extensions. Downloaded app can be updated with the self-update command. Alternatively, you can clone the repo and follow instructions at the bottom of this document.
