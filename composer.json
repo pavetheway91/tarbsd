@@ -4,8 +4,7 @@
             "TarBSD\\" : "src"
         },
         "files": [
-            "stubs/constants.php",
-            "stubs/filter.php"
+            "stubs/constants.php"
         ]
     },
     "require": {

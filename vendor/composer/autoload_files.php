@@ -15,5 +15,4 @@ return array(
     'def43f6c87e4f8dfd0c9e1b1bab14fe8' => $vendorDir . '/symfony/polyfill-iconv/bootstrap.php',
     '09f6b20656683369174dd6fa83b7e5fb' => $vendorDir . '/symfony/polyfill-uuid/bootstrap.php',
     'd42703b55624106be50579447610593c' => $baseDir . '/stubs/constants.php',
-    'c6507e4b2303000ec3b97c56fd2ba7de' => $baseDir . '/stubs/filter.php',
 );

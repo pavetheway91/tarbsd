@@ -148,8 +148,6 @@ class Compiler extends Command
             }
         }
 
-        $phar->addFile(__DIR__ . '/filter.php', 'stubs/filter.php');
-
         $output->writeln(sprintf(
             "%d src files\n%d stub files",
             $srcFiles,
@@ -207,17 +205,8 @@ class Compiler extends Command
         if ($key)
         {
             $sigFile = $finalName . '.sig';
-
             $details = openssl_pkey_get_details($key);
-
-            if (isset($details['ec']))
-            {
-                $sigFile .= '.' . $details['ec']['curve_name'];
-            }
-            elseif (isset($details['rsa']))
-            {
-                $sigFile .= '.rsa';
-            }
+            $sigFile .= '.' . $details['ec']['curve_name'];
 
             $success = openssl_sign(
                 file_get_contents($tmpFile),
@@ -240,10 +229,6 @@ class Compiler extends Command
 
         $fs->chmod($tmpFile, 0555);
         $fs->rename($tmpFile, $finalName);
-        $fs->dumpFile(
-            $finalName . '.sig.sha256',
-            hash_file('sha256', $finalName)
-        );
 
         $output->writeln(sprintf(
             "generated %s\ntime: %s seconds\nid: %s\ntag: %s",
@@ -295,8 +280,13 @@ if ((\$os = php_uname('s')) !== 'FreeBSD') \$issues[] = 'Unsupported operating s
 if (!(PHP_VERSION_ID >= 80200)) \$issues[] = 'PHP >= 8.2.0 required, you are running ' . PHP_VERSION;
 if (!extension_loaded('phar')) \$issues[] = 'PHP extension phar required';
 if (!extension_loaded('zlib')) \$issues[] = 'PHP extension zlib required';
-if (!extension_loaded('pcntl')) \$issues[] = 'PHP extension pcntl required';%s
-if (\$issues) exit("\\n\\ttarBSD builder cannot run due to following issues:\\n\\t\\t" . implode("\\n\\t\\t", \$issues) . "\\n\\n");
+if (!extension_loaded('pcntl')) \$issues[] = 'PHP extension pcntl required';
+if (!extension_loaded('filter')) \$issues[] = 'PHP extension filter required';%s
+if (\$issues)
+{
+    echo "\\n\\ttarBSD builder cannot run due to following issues:\\n\\t\\t" . implode("\\n\\t\\t", \$issues) . "\\n\\n";
+    exit(1);
+}
 const TARBSD_BUILD_ID = '%s';
 Phar::mapPhar(TARBSD_BUILD_ID);
 require 'phar://' . TARBSD_BUILD_ID . '/vendor/autoload.php';
