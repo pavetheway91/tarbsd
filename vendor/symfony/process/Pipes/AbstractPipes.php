@@ -52,14 +52,26 @@ abstract class AbstractPipes implements PipesInterface
 
     /**
      * Returns true if a system call has been interrupted.
+     *
+     * stream_select() returns false when the `select` system call is interrupted by an incoming signal.
      */
     protected function hasSystemCallBeenInterrupted(): bool
     {
         $lastError = $this->lastError;
         $this->lastError = null;
 
-        // stream_select returns false when the `select` system call is interrupted by an incoming signal
-        return null !== $lastError && false !== stripos($lastError, 'interrupted system call');
+        if (null === $lastError) {
+            return false;
+        }
+
+        if (false !== stripos($lastError, 'interrupted system call')) {
+            return true;
+        }
+
+        // on applications with a different locale than english, the message above is not found because
+        // it's translated. So we also check for the SOCKET_EINTR constant which is defined under
+        // Windows and UNIX-like platforms (if available on the platform).
+        return \defined('SOCKET_EINTR') && str_starts_with($lastError, 'stream_select(): Unable to select ['.\SOCKET_EINTR.']');
     }
 
     /**
