@@ -18,7 +18,7 @@ Please note that this is an early version and things might change. Don't expect 
 [sysutils/tarbsd-builder](https://www.freshports.org/sysutils/tarbsd-builder) has started to appear on latest repositories. Depending on cpu type and FreeBSD version, it might or might not be available already. Quarterly to follow in October.
 
 ### GitHub release ###
-Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib and pcntl extensions. Downloaded app can be updated with the self-update command. Alternatively, you can clone the repo and follow instructions at the bottom of this document.
+Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, filter and pcntl extensions. Downloaded app can be updated with the self-update command. Alternatively, you can clone the repo and follow instructions at the bottom of this document.
 ```
 # make tarbsd builder executable
 # and move it to /usr/local/bin
@@ -26,7 +26,7 @@ chmod +x tarbsd
 mv tarbsd /usr/local/bin/tarbsd
 
 # dependencies
-pkg install php84-phar php84-zlib php84-pcntl
+pkg install php84-phar php84-zlib php84-filter php84-pcntl
 
 # (optional) zopfli for better kernel compression
 pkg install zopfli
