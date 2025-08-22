@@ -2,6 +2,7 @@
 namespace TarBSD\Command;
 
 use TarBSD\Builder\MfsBuilder;
+use TarBSD\Util\BaseRelease;
 use TarBSD\Configuration;
 
 use Symfony\Component\Cache\Adapter\NullAdapter as NullCache;
@@ -31,10 +32,20 @@ class Build extends AbstractCommand
     public function __invoke(
         OutputInterface $output,
         #[Option('Distribution files (base.txz and kernel.txz) location')] ?string $distfiles = null,
+        #[Option('FreeBSD release')] ?string $release = null,
         #[Option('Loosen compression settings')] bool $quick = false,
         #[Argument('Output image formats')] array $formats = [],
         #[Option('Skip cache (for testing)')] bool $doNotCache = false
     ) : int {
+
+        if (
+            ($release && $distfiles)
+            || (!$release && !$distfiles)
+        ) {
+            throw new \Exception(
+                'Please provide eighter release or distfiles option (but not both)'
+            );
+        }
 
         $distFilesInput = $distfiles;
         $distFiles = null;
@@ -49,60 +60,14 @@ class Build extends AbstractCommand
                 ));
             }
         }
-
-        if (!$distFiles)
+        else
         {
-            foreach(['/mnt', '/media', '/cdrom'] as $dir)
-            {
-                if (null !== $distFiles = $this->findDistributionFiles($dir))
-                {
-                    break;
-                }
-            }
-            if (!$distFiles)
-            {
-                throw new \Exception(
-                    'Cannot find kernel.txz and base.txz from /cdrom or /mnt'
-                    . ', please provide their location with --distfiles=/location'
-                    . ' option'
-                );
-            }
+            $release = new BaseRelease($release);
         }
 
         if (0 < count($formats))
         {
-            try
-            {
-                Process::fromShellCommandline('which qemu-img')->mustRun();
-            }
-            catch(\Exception $e)
-            {
-                throw new \Exception(
-                    "please install qemu-tools package to use random image formats\n"
-                    . "pkg install qemu-tools \n"
-                    . "tools flavour of emulators/qemu in ports"
-                );
-            }
-            $notfound = [];
-            foreach($formats as $index => $format)
-            {
-                if (false === array_search($format, self::KNOWN_FORMATS))
-                {
-                    $notfound[] = $format;
-                }
-                if ($format == 'img')
-                {
-                    unset($formats[$index]);
-                }
-            }
-            if ($notfound)
-            {
-                throw new \Exception(sprintf(
-                    'unknown image format%s: %s',
-                    count($notfound) > 1 ? "s" : "",
-                    implode(", ", $notfound)
-                ));
-            }
+            $formats = $this->filterFormats($formats);
         }
 
         $cache = $doNotCache ? new NullCache : $this->getApplication()->getCache();
@@ -111,8 +76,9 @@ class Build extends AbstractCommand
         $builder = new MfsBuilder(
             $conf = Configuration::get(),
             $cache,
-            $distFiles,
-            $this->getApplication()->getDispatcher()
+            $release ?: $distFiles,
+            $this->getApplication()->getDispatcher(),
+            $this->getApplication()->getHttpClient()
         );
 
         $logFile = null;
@@ -158,6 +124,10 @@ class Build extends AbstractCommand
         if ($logFile)
         {
             fclose($logFile);
+            $fs->symlink(
+                $logFilePath,
+                $logDir . '/latest'
+            );
         }
 
         foreach($formats as $format)
@@ -189,5 +159,42 @@ class Build extends AbstractCommand
             }
         }
         return null;
+    }
+
+    protected function filterFormats(array $formats) : array
+    {
+        try
+        {
+            Process::fromShellCommandline('which qemu-img')->mustRun();
+        }
+        catch(\Exception $e)
+        {
+            throw new \Exception(
+                "please install qemu-tools package to use random image formats\n"
+                . "pkg install qemu-tools \n"
+                . "tools flavour of emulators/qemu in ports"
+            );
+        }
+        $notfound = [];
+        foreach($formats as $index => $format)
+        {
+            if (false === array_search($format, self::KNOWN_FORMATS))
+            {
+                $notfound[] = $format;
+            }
+            if ($format == 'img')
+            {
+                unset($formats[$index]);
+            }
+        }
+        if ($notfound)
+        {
+            throw new \Exception(sprintf(
+                'unknown image format%s: %s',
+                count($notfound) > 1 ? "s" : "",
+                implode(", ", $notfound)
+            ));
+        }
+        return $formats;
     }
 }

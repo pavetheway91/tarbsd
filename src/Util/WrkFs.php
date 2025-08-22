@@ -69,7 +69,7 @@ class WrkFs
                         public function destroy() : void
                         {
                             Process::fromShellCommandline(sprintf(
-                                "zpool destroy %s && mdconfig -d -u %s",
+                                "zpool destroy -f %s && mdconfig -d -u %s",
                                 $this->id, $this->md
                             ))->mustRun();
                         }

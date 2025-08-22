@@ -2,6 +2,7 @@
 namespace TarBSD\Builder;
 
 use TarBSD\Configuration;
+use TarBSD\Util\BaseRelease;
 use TarBSD\Util\Fstab;
 use TarBSD\Util\WrkFs;
 use TarBSD\App;
@@ -10,6 +11,7 @@ use Symfony\Component\Cache\Adapter\AdapterInterface as CacheInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
@@ -43,6 +45,10 @@ abstract class AbstractBuilder implements EventSubscriberInterface
 
     protected readonly Filesystem $fs;
 
+    private readonly string $distributionFiles;
+
+    private readonly BaseRelease $baseRelease;
+
     abstract protected function genFsTab() : Fstab;
 
     abstract protected function prepare(
@@ -60,13 +66,23 @@ abstract class AbstractBuilder implements EventSubscriberInterface
     final public function __construct(
         private readonly Configuration $config,
         private readonly CacheInterface $cache,
-        private readonly string $distributionFiles,
-        private readonly EventDispatcher $dispatcher
+        private string|BaseRelease $distFilesOrBaseRelease,
+        private readonly EventDispatcher $dispatcher,
+        private readonly HttpClientInterface $httpClient
     ) {
         $this->wrk = $config->getDir() . '/wrk';
         $this->root = $this->wrk . '/root';
         $this->filesDir = $config->getDir() . '/tarbsd';
-        $this->fsId = 'tarbsd_' . substr(md5($this->wrk), 0, 8);
+        $this->fsId = WrkFs::getId($this->config->getDir());
+
+        if ($distFilesOrBaseRelease instanceof BaseRelease)
+        {
+            $this->baseRelease = $distFilesOrBaseRelease;
+        }
+        else
+        {
+            $this->distributionFiles = $distFilesOrBaseRelease;
+        }
 
         /**
          * todo: decorate this in a way
@@ -106,7 +122,14 @@ abstract class AbstractBuilder implements EventSubscriberInterface
 
         $this->ensureSSHkeysExist($output, $verboseOutput);
 
-        $this->installFreeBSD($output, $verboseOutput);
+        if (isset($this->baseRelease))
+        {
+            $this->installPkgBase($output, $verboseOutput);
+        }
+        else
+        {
+            $this->installTarBalls($output, $verboseOutput);
+        }
 
         $this->installPKGs($output, $verboseOutput);
 

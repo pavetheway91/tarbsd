@@ -4,11 +4,174 @@ namespace TarBSD\Builder\Traits;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
-use GuzzleHttp\Client as Guzzle;
 
 trait Installer
 {
-    final protected function installFreeBSD(OutputInterface $output, OutputInterface $verboseOutput) : void
+    final protected function installPkgBase(OutputInterface $output, OutputInterface $verboseOutput) : void
+    {
+        /**
+         * Due to lack of testing others
+         */
+        $arch = 'amd64';
+
+        $rootId = $this->fsId . '/root';
+
+        switch($this->baseRelease->stability)
+        {
+            case 'RELEASE':
+                $baseRelease = 'base_release_' . $this->baseRelease->minor;
+                break;
+            default:
+                throw new \Exception;
+        }
+
+        $abi = sprintf(
+            'FreeBSD:%s:%s',
+            $this->baseRelease->major,
+            $arch
+        );
+
+        $distFileHash = hash('xxh128', json_encode([$abi, $baseRelease]));
+
+        if (!is_dir($pkgCache = '/var/cache/tarbsd/pkgbase'))
+        {
+            $this->fs->mkdir($pkgCache);
+        }
+
+        if (
+            !file_exists($distFileHashFile = $this->wrk . '/distFileHash')
+            || file_get_contents($distFileHashFile) !== $distFileHash
+        ) {
+            Process::fromShellCommandline('zfs destroy -r ' . $rootId . '@installed')->run();
+        }
+
+        try
+        {
+            Process::fromShellCommandline('zfs get all ' . $rootId . '@installed')->mustRun();
+            $output->writeln(self::CHECK . $msg = ' base system unchanged, using snapshot');
+            $verboseOutput->writeln($msg);
+        }
+        catch (\Exception $e)
+        {
+            $this->rollback('empty');
+
+            $res = $this->httpClient->request('GET', sprintf(
+                'https://pkg.freebsd.org/%s/%s/',
+                $abi,
+                $baseRelease
+            ));
+
+            switch($res->getStatusCode())
+            {
+                case 200:
+                    break;
+                case 404;
+                    throw new \Exception(sprintf(
+                        'Seems like %s doesn\'t exist',
+                        $this->baseRelease
+                    ));
+                default:
+                    throw new \Exception(sprintf(
+                        'Seems like there\'s something wrong in pkg.freebsd.org, status code: %s',
+                        $res->getStatusCode()
+                    ));
+            }
+
+            $baseConf = sprintf(
+                file_get_contents(TARBSD_STUBS . '/FreeBSD-base.conf'),
+                $baseRelease
+            );
+            $this->fs->dumpFile(
+                $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',
+                $baseConf
+            );
+            $this->fs->mirror(
+                $pkgKeys = '/usr/share/keys/pkg',
+                $this->root . $pkgKeys
+            );
+
+            $this->fs->mkdir($localPkgCache = $this->root . '/var/cache/pkg');
+
+            $umountPkgCache = $this->preparePKG($pkgCache);
+
+            try
+            {
+                $pkg = sprintf(
+                    'pkg --rootdir %s --repo-conf-dir %s -o IGNORE_OSVERSION=yes -o ABI=%s ',
+                    $this->root,
+                    dirname($pkgConf),
+                    $abi
+                );
+
+                Process::fromShellCommandline(
+                    $pkg . ' update', null, null, null, 1800
+                )->mustRun();
+
+                $p = Process::fromShellCommandline($pkg . ' search Free')->mustRun();
+
+                $pkgs = ['FreeBSD-kernel-generic'];
+
+                foreach(explode("\n", $p->getOutput()) as $line)
+                {
+                    if ($line)
+                    {
+                        list($pkgName, $desc) = explode(" ", $line);
+                        $pkgName = explode('-', $pkgName);
+                        if ($pkgName)
+                        {
+                            array_pop($pkgName);
+                            $pkgName = implode('-', $pkgName);
+                            if (!preg_match(
+                                '/-(lib|dbg|man|kernel|tests|toolchain|clang|sendmail|src)/',
+                                $pkgName
+                            )) {
+                                $pkgs[] = $pkgName;
+                            }
+                        }
+                    }
+                }
+
+                $progressIndicator = $this->progressIndicator($output);
+                $progressIndicator->start('downloading base packages');
+                Process::fromShellCommandline(
+                    $pkg . ' install -U -F -y ' . implode(' ', $pkgs), null, null, null, 1800
+                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                {
+                    $progressIndicator->advance();
+                    $verboseOutput->write($buffer);
+                });
+                $progressIndicator->finish('base packages downloaded');
+
+                $progressIndicator = $this->progressIndicator($output);
+                $progressIndicator->start('installing base packages');
+                Process::fromShellCommandline(
+                    $pkg . ' install -U -y ' . implode(' ', $pkgs), null, null, null, 1800
+                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                {
+                    $progressIndicator->advance();
+                    $verboseOutput->write($buffer);
+                });
+                $progressIndicator->finish(sprintf(
+                    "%s installed",
+                    $this->getInstalledVersion()
+                ));
+
+                $umountPkgCache->mustRun();
+                $this->fs->remove($pkgConf);
+
+                $this->finalizeInstall();
+                file_put_contents($distFileHashFile, $distFileHash);
+                $this->snapshot('installed');
+            }
+            catch (\Exception $e)
+            {
+                $umountPkgCache->mustRun();
+                throw $e;
+            }
+        }
+    }
+
+    final protected function installTarBalls(OutputInterface $output, OutputInterface $verboseOutput) : void
     {
         $rootId = $this->fsId . '/root';
         $distFiles = [];
@@ -57,27 +220,26 @@ trait Installer
                 $progressIndicator->finish($file . ' extracted');
             }
 
-            // if ([ is 14.2 or 14.3 ])
-            {
-                $this->runFreeBSDUpdate($output, $verboseOutput);
-            }
-            /*
-            else // 15+
-            {
-                // $this->runPKGBaseUpdate($output, $verboseOutput);
-            }
-            */
+            $this->runFreeBSDUpdate($output, $verboseOutput);
+            $this->finalizeInstall();
+            file_put_contents($distFileHashFile, $distFileHash);
+            $this->snapshot('installed');
+        }
+    }
 
-            $this->fs->mkdir($this->root . '/var/cache/pkg');
-            $this->fs->mkdir($this->root . '/usr/local/etc/pkg');
-            $this->fs->remove($varTmp = $this->root . '/var/tmp');
-            $this->fs->symlink('../tmp', $varTmp);
-            $this->fs->appendToFile($this->root. '/etc/ssh/sshd_config', <<<SSH
+    final protected function finalizeInstall() : void
+    {
+        $this->fs->mkdir($this->root . '/boot/modules');
+        $this->fs->mkdir($this->root . '/var/cache/pkg');
+        $this->fs->mkdir($this->root . '/usr/local/etc/pkg');
+        $this->fs->remove($varTmp = $this->root . '/var/tmp');
+        $this->fs->symlink('../tmp', $varTmp);
+        $this->fs->appendToFile($this->root. '/etc/ssh/sshd_config', <<<SSH
 PasswordAuthentication no
 PermitRootLogin yes
 
 SSH);
-            $this->fs->appendToFile($this->root. '/etc/defaults/rc.conf', <<<DEFAULTS
+        $this->fs->appendToFile($this->root. '/etc/defaults/rc.conf', <<<DEFAULTS
 entropy_boot_file="NO"
 entropy_file="NO"
 clear_tmp_X="NO"
@@ -85,9 +247,6 @@ varmfs="NO"
 tarbsdinit_enable="YES"
 
 DEFAULTS);
-            file_put_contents($distFileHashFile, $distFileHash);
-            $this->snapshot('installed');
-        }
     }
 
     final protected function installPKGs(OutputInterface $output, OutputInterface $verboseOutput) : void
@@ -130,7 +289,7 @@ DEFAULTS);
                 $this->tarStream($pkgConfigDir, $target, $verboseOutput);
             }
 
-            $umountPkgCache = $this->preparePKG();
+            $umountPkgCache = $this->preparePKG($this->wrk . '/cache/pkg');
 
             try
             {
@@ -157,14 +316,14 @@ DEFAULTS);
         }
     }
 
-    final protected function preparePKG() : Process
+    final protected function preparePKG(string $cacheLocation) : Process
     {
         $pkgCache = $this->root . '/var/cache/pkg';
 
         $this->fs->mkdir($this->wrk . '/cache/pkg');
 
         Process::fromShellCommandline(
-            'mount_nullfs -o rw ' . $this->wrk . '/cache/pkg ' . $pkgCache
+            'mount_nullfs -o rw ' . $cacheLocation . ' ' . $pkgCache
         )->mustRun();
 
         return Process::fromShellCommandline(
@@ -174,15 +333,7 @@ DEFAULTS);
 
     final protected function runFreeBSDUpdate(OutputInterface $output, OutputInterface $verboseOutput) : void
     {
-        $getv = function() : string
-        {
-            return trim(
-                Process::fromShellCommandline('bin/freebsd-version', $this->root)->mustRun()->getOutput(),
-                "\n"
-            );
-        };
-
-        $v = $getv();
+        $v = $this->getInstalledVersion();
         $this->fs->mkdir($updateDir = $this->wrk . '/cache/freebsd-update');
 
         $fetch = sprintf(
@@ -241,7 +392,7 @@ DEFAULTS);
         if ($installedSomething)
         {
             $runInstall();
-            $progressIndicator->finish('updated to ' . $getv());
+            $progressIndicator->finish('updated to ' . $this->getInstalledVersion());
         }
         else
         {
@@ -251,54 +402,11 @@ DEFAULTS);
         $this->fs->remove($updateDir);
     }
 
-    /******************************************
-     * To be used with pkgbase.
-     * 
-     * Fetches pkgbase's package catalog and parses
-     * it. Based on result, we'll somehow figure if
-     * update is available. Saves time compared to
-     * invoking pkg just for this little piece
-     * of info.
-     ******************************************/
-    final public static function fetchPKGBase(string $arch, string $release) : array
+    final protected function getInstalledVersion() : string
     {
-        $guzzle = new Guzzle;
-
-        [$version, $branch] = explode('-', $release);
-
-        [$major, $minor] = explode('.', $version);
-
-        $uri = 'https://pkg.freebsd.org/FreeBSD:';
-
-        switch($branch)
-        {
-            case 'RELEASE':
-                $uri .= sprintf(
-                    '%d:%s/base_release_%d/',
-                    $major,
-                    $arch,
-                    $minor
-                );
-                break;
-        }
-
-        $res = $guzzle->request('GET', $uri . 'data.pkg');
-
-        if ($res->getStatusCode() == 200)
-        {
-            /**
-             * It's just tarred json
-             */
-            $p = Process::fromShellCommandline(
-                'tar -xO - data',
-                null,
-                null,
-                $res->getBody()->getContents(),
-            )->mustRun();
-
-            $data = json_decode($p->getOutput(), true, 512, JSON_THROW_ON_ERROR);
-
-            return $data['packages'];
-        }
+        return trim(
+            Process::fromShellCommandline('bin/freebsd-version', $this->root)->mustRun()->getOutput(),
+            "\n"
+        );
     }
 }
