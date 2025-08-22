@@ -3,6 +3,7 @@ namespace TarBSD\Command;
 
 use TarBSD\Builder;
 use TarBSD\App;
+use Phar;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -22,6 +23,7 @@ class Diagnose extends AbstractCommand
         $output->writeln('  ports: ' . (TARBSD_PORTS ? 'yep' : 'nope'));
         $output->writeln('  gh: ' . (TARBSD_SELF_UPDATE ? 'yep' : 'nope'));
         $output->writeln('  php: ' . PHP_VERSION);
+        $output->writeln('  phar: ' . Phar::running(false));
         $output->writeln('  extensions: ' . implode(',', get_loaded_extensions()));
     }
 }

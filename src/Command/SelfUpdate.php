@@ -19,6 +19,7 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 use DateTimeImmutable;
+use Phar;
 
 #[AsCommand(
     name: 'self-update',
@@ -53,7 +54,7 @@ class SelfUpdate extends AbstractCommand
             return self::FAILURE;
         }
 
-        $self = realpath($_SERVER['SCRIPT_FILENAME']);
+        $self = Phar::running(false);
 
         if (!is_writable($self))
         {
