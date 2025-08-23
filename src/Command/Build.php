@@ -92,26 +92,20 @@ class Build extends AbstractCommand
         {
             $this->showLogo($output);
             $this->showVersion($output);
-
             if (!$fs->exists($logDir = $conf->getDir() . '/log'))
             {
                 $fs->mkdir($logDir);
             }
-
             $time = (new DateTimeImmutable('now'))->format('Y-m-d\TH:i:s');
             $logFile = fopen($logFilePath = $logDir . '/' . $time . '.log', 'w');
-
             if (!$logFile)
             {
                 throw new \Exception('failed to open logfile: ' . $logFilePath);
             }
-
-            /*
-            stream_filter_append($logFile, 'zlib.deflate', STREAM_FILTER_WRITE, [
-                'level' => 9, 'window' => 15, 'memory' => 9
-            ]);
-            */
-
+            $fs->symlink(
+                $logFilePath,
+                $logDir . '/latest'
+            );
             $verboseOutput = new StreamOutput($logFile);
         }
 
@@ -124,10 +118,6 @@ class Build extends AbstractCommand
         if ($logFile)
         {
             fclose($logFile);
-            $fs->symlink(
-                $logFilePath,
-                $logDir . '/latest'
-            );
         }
 
         foreach($formats as $format)
