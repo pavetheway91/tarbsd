@@ -2,8 +2,9 @@
 namespace TarBSD\Command;
 
 use TarBSD\Builder\MfsBuilder;
-use TarBSD\Util\BaseRelease;
+use TarBSD\Util\FreeBSDRelease;
 use TarBSD\Configuration;
+use TarBSD\GlobalConfiguration;
 
 use Symfony\Component\Cache\Adapter\NullAdapter as NullCache;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,6 +18,7 @@ use Symfony\Component\Console\Output\NullOutput;
 use Symfony\Component\Console\Output\StreamOutput;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Finder\Finder;
 use DateTimeImmutable;
 
 #[AsCommand(
@@ -62,7 +64,7 @@ class Build extends AbstractCommand
         }
         else
         {
-            $release = new BaseRelease($release);
+            $release = new FreeBSDRelease($release);
         }
 
         if (0 < count($formats))
@@ -70,7 +72,10 @@ class Build extends AbstractCommand
             $formats = $this->filterFormats($formats);
         }
 
-        $cache = $doNotCache ? new NullCache : $this->getApplication()->getCache();
+        $cache = $doNotCache
+            ? new NullCache
+            : $this->getApplication()->getCache();
+
         $fs = new Filesystem;
 
         $builder = new MfsBuilder(
@@ -81,6 +86,7 @@ class Build extends AbstractCommand
             $this->getApplication()->getHttpClient()
         );
 
+        $globalConfig = $this->getApplication()->getGlobalConfig();
         $logFile = null;
 
         if ($output->isVerbose())
@@ -118,6 +124,7 @@ class Build extends AbstractCommand
         if ($logFile)
         {
             fclose($logFile);
+            $this->logRotate($logDir, $globalConfig, $fs);
         }
 
         foreach($formats as $format)
@@ -186,5 +193,24 @@ class Build extends AbstractCommand
             ));
         }
         return $formats;
+    }
+
+    protected function logRotate(string $dir, GlobalConfiguration $config) : void
+    {
+        if ($config->logRotate)
+        {
+            $f = (new Finder)
+                ->files()->in($dir)
+                ->name(['*.log', '*.log.*'])
+                ->sortByChangedTime();
+
+            $arr = iterator_to_array(iterator_to_array($f));
+
+            while(count($arr) > $config->logRotate)
+            {
+                $rm = array_shift($arr);
+                unlink($rm->getPathName());
+            }
+        }
     }
 }

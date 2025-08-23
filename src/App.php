@@ -28,6 +28,8 @@ class App extends Application implements EventSubscriberInterface
 
     private readonly HttpClientInterface $httpClient;
 
+    private readonly GlobalConfiguration $globalConfig;
+
     public function __construct()
     {
         Util\PlatformCheck::run();
@@ -39,6 +41,7 @@ class App extends Application implements EventSubscriberInterface
         );
 
         $this->dispatcher->addSubscriber($this);
+        $this->globalConfig = new GlobalConfiguration;
     }
 
     public static function getBuildDate() : ?DateTimeImmutable
@@ -83,9 +86,21 @@ class App extends Application implements EventSubscriberInterface
 
     public function terminateEvent(ConsoleTerminateEvent $event) : void
     {
-        if (42 == random_int(0, 49))
+        if (self::amIRoot())
         {
-            $this->getCache()->prune();
+            $cache = $this->getCache();
+
+            if (42 == random_int(0, 49))
+            {
+                $cache->prune();
+            }
+            else
+            {
+                /**
+                 * todo: cleanup old packages
+                 * from /var/cache/tarbsd/pkgbase
+                 */
+            }
         }
     }
 
@@ -114,6 +129,11 @@ class App extends Application implements EventSubscriberInterface
     public function getDispatcher() : EventDispatcher
     {
         return $this->dispatcher;
+    }
+
+    public function getGlobalConfig() : GlobalConfiguration
+    {
+        return $this->globalConfig;
     }
 
     public static function getSubscribedEvents() : array

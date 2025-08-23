@@ -2,7 +2,7 @@
 namespace TarBSD\Builder;
 
 use TarBSD\Configuration;
-use TarBSD\Util\BaseRelease;
+use TarBSD\Util\FreeBSDRelease;
 use TarBSD\Util\Fstab;
 use TarBSD\Util\WrkFs;
 use TarBSD\App;
@@ -47,7 +47,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
 
     private readonly string $distributionFiles;
 
-    private readonly BaseRelease $baseRelease;
+    private readonly FreeBSDRelease $baseRelease;
 
     abstract protected function genFsTab() : Fstab;
 
@@ -66,7 +66,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
     final public function __construct(
         private readonly Configuration $config,
         private readonly CacheInterface $cache,
-        private string|BaseRelease $distFilesOrBaseRelease,
+        private string|FreeBSDRelease $distFilesOrBaseRelease,
         private readonly EventDispatcher $dispatcher,
         private readonly HttpClientInterface $httpClient
     ) {
@@ -75,7 +75,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
         $this->filesDir = $config->getDir() . '/tarbsd';
         $this->fsId = WrkFs::getId($this->config->getDir());
 
-        if ($distFilesOrBaseRelease instanceof BaseRelease)
+        if ($distFilesOrBaseRelease instanceof FreeBSDRelease)
         {
             $this->baseRelease = $distFilesOrBaseRelease;
         }

@@ -16,22 +16,15 @@ trait Installer
 
         $rootId = $this->fsId . '/root';
 
-        switch($this->baseRelease->stability)
-        {
-            case 'RELEASE':
-                $baseRelease = 'base_release_' . $this->baseRelease->minor;
-                break;
-            default:
-                throw new \Exception;
-        }
-
         $abi = sprintf(
             'FreeBSD:%s:%s',
             $this->baseRelease->major,
             $arch
         );
 
-        $distFileHash = hash('xxh128', json_encode([$abi, $baseRelease]));
+        $distFileHash = hash('xxh128', json_encode([
+            $abi, $this->baseRelease->getBaseRepo()
+        ]));
 
         if (!is_dir($pkgCache = '/var/cache/tarbsd/pkgbase'))
         {
@@ -58,7 +51,7 @@ trait Installer
             $res = $this->httpClient->request('GET', sprintf(
                 'https://pkg.freebsd.org/%s/%s/',
                 $abi,
-                $baseRelease
+                $this->baseRelease->getBaseRepo()
             ));
 
             switch($res->getStatusCode())
@@ -79,7 +72,7 @@ trait Installer
 
             $baseConf = sprintf(
                 file_get_contents(TARBSD_STUBS . '/FreeBSD-base.conf'),
-                $baseRelease
+                $this->baseRelease->getBaseRepo()
             );
             $this->fs->dumpFile(
                 $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',

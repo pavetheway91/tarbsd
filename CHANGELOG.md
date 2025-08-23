@@ -6,6 +6,7 @@
 * Pkgbase support with automatic download.
 * Due to having two FreeBSD installation methods now, automatic discovery of tarballs was removed.
 * Latest build log file is now symlinked to log/latest.
+* Log rotation (defaults to 10). Can be configured in a new /usr/local/etc/tarbsd, which will also house other pieces of application (rather than a project) configuration in future releases.
 
 ## 2025-08-17 ##
 * Recue typo has been fixed.
