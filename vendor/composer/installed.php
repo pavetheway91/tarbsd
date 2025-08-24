@@ -3,7 +3,7 @@
         'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '2d951e388be124d788701f8d8d1ddfa30225fe7f',
+        'reference' => '4add42c6af94c6c397c76ff9ff6c93e7e757f473',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         '__root__' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '2d951e388be124d788701f8d8d1ddfa30225fe7f',
+            'reference' => '4add42c6af94c6c397c76ff9ff6c93e7e757f473',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -124,7 +124,7 @@
         'symfony/console' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '72155db73b541f2274e75dde02024092e46a492b',
+            'reference' => '263db9fc861af7e6b5953e101f2ccbe6b163435b',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/console',
             'aliases' => array(),
