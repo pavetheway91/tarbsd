@@ -10,8 +10,15 @@ class PlatformCheck
             ini_set('display_errors', 1);
             ini_set('display_startup_errors', 1);
             error_reporting(E_ALL);
-            set_time_limit(0);
         }
+
+        /**
+         * Shouldn't have practical effect, since
+         * most of the time gets spent by other
+         * prgrams such as pkg and tar, but just in
+         * case user has set it to 1 or something.
+         */
+        set_time_limit(0);
 
         /**
          * Phar archive starts with similiar checks
