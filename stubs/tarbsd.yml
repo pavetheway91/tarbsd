@@ -13,6 +13,7 @@ features:
     bhyve: false
     jails: false
     ntpd: false
+    rescue: false
 modules:
     early:
     late:
