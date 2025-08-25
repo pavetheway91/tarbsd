@@ -15,7 +15,7 @@ Please note that this is an early version and things might change. Don't expect 
 
 ## Installing the builder tool ##
 ### pkg ###
-[sysutils/tarbsd-builder](https://www.freshports.org/sysutils/tarbsd-builder) is now available from the latest repositories. Quarterly to follow in October. This installation method comes with a convinience of updating automatically as you update your system otherwise and pkg will also take care of dependencies and possible changes to them.
+[sysutils/tarbsd-builder](https://www.freshports.org/sysutils/tarbsd-builder) is now available from the latest repositories. Quarterly to follow in October. This installation method comes with a convenience of updating automatically as you update your system otherwise and pkg will also take care of dependencies and possible changes to them.
 
 ### GitHub release ###
 Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need PHP >= 8.2 with phar, zlib, filter and pcntl extensions. GitHub version can be updated with the self-update command.
