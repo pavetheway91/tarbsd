@@ -32,6 +32,7 @@ pkg install php84-phar php84-zlib php84-filter php84-pcntl
 pkg install zopfli
 
 # (optional) these might provide some tiny performance benefits
+# intl however, a performance hit on systems with a slow storage
 pkg install php84-mbstring php84-intl
 ```
 
