@@ -284,6 +284,11 @@ DEFAULTS);
 
             $umountPkgCache = $this->preparePKG($this->wrk . '/cache/pkg');
 
+            $this->fs->copy(
+                TARBSD_STUBS . '/overlay/etc/resolv.conf',
+                $this->root . '/etc/resolv.conf'
+            );
+
             try
             {
                 $progressIndicator = $this->progressIndicator($output);
