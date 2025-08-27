@@ -1,6 +1,10 @@
 ## upcoming (no specific time table but during 2025) ##
 * Feature-specific prunelists to be replaced by feature-specific preservelists, because multiple features could depend on the same file.
-* option for MINIMAL kernel with pkgbase
+* Option for MINIMAL kernel with pkgbase.
+
+## 2025-08-27 ##
+* "Installing packages" step might have failed on some systems and this has been fixed now.
+* A deprecation notice on PHP85 has been fixed.
 
 ## 2025-08-24 ##
 * Filter extension is now required.
