@@ -58,7 +58,7 @@ trait Installer
             {
                 case 200:
                     break;
-                case 404;
+                case 404:
                     throw new \Exception(sprintf(
                         'Seems like %s doesn\'t exist',
                         $this->baseRelease
