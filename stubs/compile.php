@@ -162,7 +162,10 @@ class Compiler extends Command
         {
             if (
                 ($package == 'symfony/polyfill-iconv' && $npIconv)
-                || (str_starts_with($package, 'symfony/polyfill-') && $np)
+                || (preg_match(
+                    '/^symfony\/polyfill-(iconv|mbstring|ctype|intl)/',
+                    $package
+                ) && $np)
             ) {
                 $phar->addFromString('vendor/' . $package . '/bootstrap.php', '<?php');
                 $output->write("skipping " . $package . "\n");
@@ -182,7 +185,13 @@ class Compiler extends Command
             $packages++;
         }
 
-        $phar->addFromString('vendor/files.skipped', implode("\n", $allSkipped));
+        $phar->addFromString(
+            'vendor/files.skipped',
+            implode("\n", array_filter($allSkipped, function(string $v)
+            {
+                return str_ends_with($v, '.php');
+            }))
+        );
 
         $output->writeln(sprintf(
             "    %d files added, %d skipped across %s packages",
@@ -256,7 +265,7 @@ class Compiler extends Command
                 case 'string':
                     $v = sprintf("'%s'", $v);
                     break;
-                case 'NULL';
+                case 'NULL':
                     $v = 'null';
                     break;
             }
@@ -319,7 +328,6 @@ $variableTests = <<<TESTS
 if (!extension_loaded('mbstring')) \$issues[] = 'PHP extension mbstring required';
 if (!extension_loaded('intl')) \$issues[] = 'PHP extension intl required';
 if (!extension_loaded('ctype')) \$issues[] = 'PHP extension ctype required';
-if (!extension_loaded('uuid')) \$issues[] = 'PHP extension uuid required';
 TESTS;
         }
         elseif($npIconv)
