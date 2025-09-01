@@ -24,6 +24,10 @@ use Symfony\Component\Console\Tester\Constraint\CommandIsSuccessful;
 trait TesterTrait
 {
     private StreamOutput $output;
+
+    /**
+     * @var list<string>
+     */
     private array $inputs = [];
     private bool $captureStreamsIndependently = false;
     private InputInterface $input;
@@ -107,8 +111,8 @@ trait TesterTrait
     /**
      * Sets the user inputs.
      *
-     * @param array $inputs An array of strings representing each input
-     *                      passed to the command input stream
+     * @param list<string> $inputs An array of strings representing each input
+     *                             passed to the command input stream
      *
      * @return $this
      */
@@ -161,6 +165,8 @@ trait TesterTrait
     }
 
     /**
+     * @param list<string> $inputs
+     *
      * @return resource
      */
     private static function createStream(array $inputs)
@@ -169,6 +175,10 @@ trait TesterTrait
 
         foreach ($inputs as $input) {
             fwrite($stream, $input.\PHP_EOL);
+
+            if (str_contains($input, \PHP_EOL)) {
+                fwrite($stream, "\x4");
+            }
         }
 
         rewind($stream);
