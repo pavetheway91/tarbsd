@@ -214,12 +214,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/cache.git",
-                "reference": "5d2b58ce6a181c955811e966075bce9779832f36"
+                "reference": "a3b4db4e88103e9545876753b0423df74b18bbc6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/cache/zipball/5d2b58ce6a181c955811e966075bce9779832f36",
-                "reference": "5d2b58ce6a181c955811e966075bce9779832f36",
+                "url": "https://api.github.com/repos/symfony/cache/zipball/a3b4db4e88103e9545876753b0423df74b18bbc6",
+                "reference": "a3b4db4e88103e9545876753b0423df74b18bbc6",
                 "shasum": ""
             },
             "require": {
@@ -310,7 +310,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-08-27T13:08:03+00:00"
+            "time": "2025-09-07T11:40:39+00:00"
         },
         {
             "name": "symfony/cache-contracts",
@@ -394,12 +394,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "cd6aabaab6fb2bf642488d3f769adf24569e329e"
+                "reference": "7d4909189792c6e1b897ffff6b271485ab00f004"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/cd6aabaab6fb2bf642488d3f769adf24569e329e",
-                "reference": "cd6aabaab6fb2bf642488d3f769adf24569e329e",
+                "url": "https://api.github.com/repos/symfony/console/zipball/7d4909189792c6e1b897ffff6b271485ab00f004",
+                "reference": "7d4909189792c6e1b897ffff6b271485ab00f004",
                 "shasum": ""
             },
             "require": {
@@ -484,7 +484,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-09-01T13:42:51+00:00"
+            "time": "2025-09-22T15:32:33+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -789,12 +789,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/finder.git",
-                "reference": "57861c3e46d9c85d89b73588afae62049ceafc5e"
+                "reference": "c1a41e8ecb0f76b9e6d93deaeb5b85718975b12a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/finder/zipball/57861c3e46d9c85d89b73588afae62049ceafc5e",
-                "reference": "57861c3e46d9c85d89b73588afae62049ceafc5e",
+                "url": "https://api.github.com/repos/symfony/finder/zipball/c1a41e8ecb0f76b9e6d93deaeb5b85718975b12a",
+                "reference": "c1a41e8ecb0f76b9e6d93deaeb5b85718975b12a",
                 "shasum": ""
             },
             "require": {
@@ -849,7 +849,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-08-12T20:20:59+00:00"
+            "time": "2025-09-08T21:17:01+00:00"
         },
         {
             "name": "symfony/http-client",

@@ -3,7 +3,7 @@
         'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '579a575f3e3a97b7057bb5af3af50efd342be7fc',
+        'reference' => '4b9c82d6d8a8b6d43531eb7688ce95d10a21488a',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         '__root__' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '579a575f3e3a97b7057bb5af3af50efd342be7fc',
+            'reference' => '4b9c82d6d8a8b6d43531eb7688ce95d10a21488a',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -100,7 +100,7 @@
         'symfony/cache' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '5d2b58ce6a181c955811e966075bce9779832f36',
+            'reference' => 'a3b4db4e88103e9545876753b0423df74b18bbc6',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/cache',
             'aliases' => array(),
@@ -124,7 +124,7 @@
         'symfony/console' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => 'cd6aabaab6fb2bf642488d3f769adf24569e329e',
+            'reference' => '7d4909189792c6e1b897ffff6b271485ab00f004',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/console',
             'aliases' => array(),
@@ -175,7 +175,7 @@
         'symfony/finder' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '57861c3e46d9c85d89b73588afae62049ceafc5e',
+            'reference' => 'c1a41e8ecb0f76b9e6d93deaeb5b85718975b12a',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/finder',
             'aliases' => array(),

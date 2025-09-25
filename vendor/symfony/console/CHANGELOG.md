@@ -11,6 +11,8 @@ CHANGELOG
  * Add `BackedEnum` support with `#[Argument]` and `#[Option]` inputs in invokable commands
  * Allow Usages to be specified via `#[AsCommand]` attribute.
  * Allow passing invokable commands to `Symfony\Component\Console\Tester\CommandTester`
+ * Add `#[Input]` attribute to support DTOs in commands
+ * Add optional timeout for interaction in `QuestionHelper`
 
 7.3
 ---
