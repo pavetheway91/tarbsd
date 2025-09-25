@@ -7,7 +7,7 @@ class FreeBSDRelease implements \Stringable
 
     public readonly ?int $minor;
 
-    public readonly string $stability;
+    public readonly string $channel;
 
     public function __construct(string $release)
     {
@@ -15,7 +15,7 @@ class FreeBSDRelease implements \Stringable
         {
             $this->major = intval($m[1]);
             $this->minor = intval($m[2]);
-            $this->stability = $m[3];
+            $this->channel = $m[3];
             if ($this->major < 14 || ($this->major == 14 && $this->minor < 2))
             {
                 throw new \Exception(sprintf(
@@ -25,11 +25,11 @@ class FreeBSDRelease implements \Stringable
                 ));
             }
         }
-        /*elseif (preg_match('/^([0-9]{1,2})-STABLE$/', strtoupper($release), $m))
+        elseif (preg_match('/^([0-9]{1,2})-(LATEST)$/', strtoupper($release), $m))
         {
             $this->major = intval($m[1]);
             $this->minor = null;
-            $this->stability = 'STABLE';
+            $this->channel = $m[2];
             if ($this->major < 14)
             {
                 throw new \Exception(sprintf(
@@ -37,7 +37,7 @@ class FreeBSDRelease implements \Stringable
                     $this->major,
                 ));
             }
-        }*/
+        }
         else
         {
             throw new \Exception(sprintf(
@@ -60,11 +60,11 @@ class FreeBSDRelease implements \Stringable
             '%s.%s-%s',
             $this->major,
             $this->minor,
-            $this->stability
+            $this->channel
         ) : sprintf(
             '%s-%s',
             $this->major,
-            $this->stability
+            $this->channel
         );
     }
 }
