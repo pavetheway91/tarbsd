@@ -220,6 +220,12 @@ abstract class AbstractBuilder implements EventSubscriberInterface
             $pruneList[$index] = 'rm -rf ' . $line;
         }
 
+        $f = (new Finder)
+            ->directories()
+            ->in($this->root . '/usr/share/locale')
+            ->notName(['en_*', 'C.UTF*']);
+        $this->fs->remove($f);
+
         Process::fromShellCommandline(implode("\n", $pruneList), $this->root)->mustRun();
         $output->writeln(self::CHECK . ' pruned dev tools, manpages and disabled features');
     }

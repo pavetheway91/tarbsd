@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 namespace TarBSD\Builder\Traits;
 
 use Symfony\Component\Console\Output\OutputInterface;
@@ -23,13 +23,10 @@ trait Installer
         );
 
         $distFileHash = hash('xxh128', json_encode([
-            $abi, $this->baseRelease->getBaseRepo()
+            $abi,
+            $this->baseRelease->getBaseRepo(),
+            gmdate('Y-m-d')
         ]));
-
-        if (!is_dir($pkgCache = '/var/cache/tarbsd/pkgbase'))
-        {
-            $this->fs->mkdir($pkgCache);
-        }
 
         if (
             !file_exists($distFileHashFile = $this->wrk . '/distFileHash')
@@ -83,8 +80,7 @@ trait Installer
                 $this->root . $pkgKeys
             );
 
-            $this->fs->mkdir($localPkgCache = $this->root . '/var/cache/pkg');
-
+            $this->fs->mkdir($pkgCache = '/var/cache/tarbsd/pkgbase');
             $umountPkgCache = $this->preparePKG($pkgCache);
 
             try
@@ -96,38 +92,67 @@ trait Installer
                     $abi
                 );
 
+                $listBasePkgs = function() use ($pkg)
+                {
+                    $p = Process::fromShellCommandline($pkg . ' search FreeBSD-')->mustRun();
+                    foreach(explode("\n", $p->getOutput()) as $line)
+                    {
+                        if ($line)
+                        {
+                            [$pkgName, $desc] = explode(" ", $line, 2);
+                            yield $pkgName;
+                        }
+                    }
+                };
+
                 Process::fromShellCommandline(
                     $pkg . ' update', null, null, null, 1800
                 )->mustRun();
 
-                $p = Process::fromShellCommandline($pkg . ' search Free')->mustRun();
+                $pkgs = [];
 
-                $pkgs = ['FreeBSD-kernel-generic'];
-
-                foreach(explode("\n", $p->getOutput()) as $line)
+                if ($this->baseRelease->major >= 15)
                 {
-                    if ($line)
+                    foreach($listBasePkgs() as $pkgName)
                     {
-                        list($pkgName, $desc) = explode(" ", $line);
-                        $pkgName = explode('-', $pkgName);
-                        if ($pkgName)
-                        {
-                            array_pop($pkgName);
-                            $pkgName = implode('-', $pkgName);
-                            if (!preg_match(
-                                '/-(lib|dbg|man|kernel|tests|toolchain|clang|sendmail|src)/',
-                                $pkgName
-                            )) {
-                                $pkgs[] = $pkgName;
-                            }
+                        if (preg_match(
+                            '/^FreeBSD-(kernel-generic|set-minimal|csh|pf|ipf'
+                            . '|ipfw|ntp|jail|bhyve|zfs|locales|dma|dpv|dwatch'
+                            . '|bsdinstall|acct|acpi|apm|at|autofs|bsnmp|ccdconfig'
+                            . '|ftp|ftpd|kerberos|mtree|netmap|ssh|tcpd|smbutils'
+                            . '|rcmds|iscsi|nfs|quotacheck'
+                            . '|([a-z]+)-tools|lib([0-9a-z_]+))'
+                            . '-([1-9][0-9])/',
+                            $pkgName
+                        )) {
+                            $pkgs[] = $pkgName;
                         }
                     }
                 }
+                else
+                {
+                    $pkgs[] = 'FreeBSD-kernel-generic';
+                    $pkgs[] = 'FreeBSD-devd';
+                    $pkgs[] = 'FreeBSD-devmatch';
+                    foreach($listBasePkgs() as $pkgName)
+                    {
+                        if (!preg_match(
+                            '/-(lib32|dbg|man|kernel|tests|games|dev'
+                            . '|toolchain|clang|lld|dtrace|src|sendmail|example'
+                            . '|bluetooth|telnet|ee|elftoolchain|rdma|hast|ggate'
+                            . '|hostapd)/',
+                            $pkgName
+                        )) {
+                            $pkgs[] = $pkgName;
+                        }
+                    }
+                }
+                $pkgs = " \\\n" . implode(" \\\n", $pkgs);
 
                 $progressIndicator = $this->progressIndicator($output);
                 $progressIndicator->start('downloading base packages');
                 Process::fromShellCommandline(
-                    $pkg . ' install -U -F -y ' . implode(' ', $pkgs), null, null, null, 1800
+                    $pkg . ' install -U -F -y ' . $pkgs, null, null, null, 1800
                 )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
                 {
                     $progressIndicator->advance();
@@ -137,8 +162,10 @@ trait Installer
 
                 $progressIndicator = $this->progressIndicator($output);
                 $progressIndicator->start('installing base packages');
+                $installCmd = $pkg . ' install -U -y ' . $pkgs;
+                $verboseOutput->writeln($installCmd);
                 Process::fromShellCommandline(
-                    $pkg . ' install -U -y ' . implode(' ', $pkgs), null, null, null, 1800
+                    $installCmd, null, null, null, 1800
                 )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
                 {
                     $progressIndicator->advance();
@@ -223,7 +250,6 @@ trait Installer
     final protected function finalizeInstall() : void
     {
         $this->fs->mkdir($this->root . '/boot/modules');
-        $this->fs->mkdir($this->root . '/var/cache/pkg');
         $this->fs->mkdir($this->root . '/usr/local/etc/pkg');
         $this->fs->remove($varTmp = $this->root . '/var/tmp');
         $this->fs->symlink('../tmp', $varTmp);
@@ -282,7 +308,10 @@ DEFAULTS);
                 $this->tarStream($pkgConfigDir, $target, $verboseOutput);
             }
 
-            $umountPkgCache = $this->preparePKG($this->wrk . '/cache/pkg');
+            $this->fs->mkdir(
+                $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion()
+            );
+            $umountPkgCache = $this->preparePKG($cache);
 
             $this->fs->copy(
                 TARBSD_STUBS . '/overlay/etc/resolv.conf',
@@ -292,9 +321,21 @@ DEFAULTS);
             try
             {
                 $progressIndicator = $this->progressIndicator($output);
+                $progressIndicator->start('downloading packages');
+                Process::fromShellCommandline(
+                    'pkg -c ' . $this->wrk . '/root install -F -y ' . implode(' ', $packages),
+                    null, null, null, 7200
+                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                {
+                    $progressIndicator->advance();
+                    $verboseOutput->write($buffer);
+                });
+                $progressIndicator->finish('packages downloaded');
+    
+                $progressIndicator = $this->progressIndicator($output);
                 $progressIndicator->start('installing packages');
                 Process::fromShellCommandline(
-                    'pkg -c ' . $this->wrk . '/root install -y ' . implode(' ', $packages),
+                    'pkg -c ' . $this->wrk . '/root install -U -y ' . implode(' ', $packages),
                     null, null, null, 7200
                 )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
                 {
@@ -316,16 +357,16 @@ DEFAULTS);
 
     final protected function preparePKG(string $cacheLocation) : Process
     {
-        $pkgCache = $this->root . '/var/cache/pkg';
+        $nullfs = $this->root . '/var/cache/pkg';
 
-        $this->fs->mkdir($this->wrk . '/cache/pkg');
+        $this->fs->mkdir($nullfs);
 
         Process::fromShellCommandline(
-            'mount_nullfs -o rw ' . $cacheLocation . ' ' . $pkgCache
+            'mount_nullfs -o rw ' . $cacheLocation . ' ' . $nullfs
         )->mustRun();
 
         return Process::fromShellCommandline(
-            'umount -f ' . $pkgCache
+            'umount -f ' . $nullfs
         );
     }
 

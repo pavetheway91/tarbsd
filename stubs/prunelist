@@ -60,6 +60,7 @@ usr/share/bsdconfig
 usr/libexec/bsdconfig
 usr/libexec/bsdinstall
 var/db/pkg
+usr/sbin/pkg
 var/db/etcupdate
 usr/local/include/*.h
 usr/local/include/*/*.h
@@ -73,5 +74,5 @@ usr/local/share/man
 sbin/bectl
 bin/ed
 bin/red
-usr/share/locale
+#usr/share/locale
 usr/share/i18n
