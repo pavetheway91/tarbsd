@@ -55,7 +55,7 @@ LOGO;
             {
                 $buidDate = App::getBuildDate();
 
-                if ($buidDate < new DateTimeImmutable('-3 weeks'))
+                if ($buidDate < new DateTimeImmutable('-8 weeks'))
                 {
                     $style = '<bg=yellow;options=bold>';
                 }
