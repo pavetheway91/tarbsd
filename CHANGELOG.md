@@ -1,6 +1,10 @@
-## upcoming (no specific time table but during 2025) ##
-* Feature-specific prunelists to be replaced by feature-specific preservelists, because multiple features could depend on the same file.
-* Option for MINIMAL kernel with pkgbase.
+## 2025-09-26 ##
+* Pkgbase implementation has been refactored and it should work with FreeBSD 15 too.
+	* FreeBSD 15 can be tested with --release 15-LATEST. LATEST here could mean
+	  STABLE, RC, BETA, ALPHA, or CURRENT depending on version.
+* Stale base packages are cleaned periodically from the cache directory /var/cache/tarbsd.
+* "Installing packages" step shows if it's downloading or actually installing at the moment.
+* Progress indicator spins at "compressing mfs image" step.
 
 ## 2025-08-27 ##
 * "Installing packages" step might have failed on some systems and this has been fixed now.
@@ -11,8 +15,8 @@
 * Pkgbase support with automatic download.
 * Due to having two FreeBSD installation methods now, automatic discovery of tarballs was removed.
 * Latest build log file is now symlinked to log/latest.
-* Log rotation (defaults to 10). Can be configured in a new /usr/local/etc/tarbsd.conf, which will also house other pieces of application (rather than a project) configuration in future releases.
-* Unless there's some quick fixes needed, the next release is planned to somewhere between 15.0-ALPHA1 and Q4.
+* Log rotation (defaults to 10). Can be configured in a new /usr/local/etc/tarbsd.conf, which 
+  will also house other pieces of application (rather than a project) configuration in future releases.
 
 ## 2025-08-17 ##
 * Recue typo has been fixed.

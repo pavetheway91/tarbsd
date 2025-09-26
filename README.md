@@ -25,9 +25,8 @@ Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases)
 chmod +x tarbsd
 mv tarbsd /usr/local/bin/tarbsd
 
-# dependencies, last 2 are optional and
-# might provide some tiny performance benefits
-pkg install php84-phar php84-zlib php84-filter php84-pcntl php84-mbstring php84-intl
+# dependencies
+pkg install php84-phar php84-zlib php84-filter php84-pcntl php84-mbstring
 
 # (optional) zopfli for better kernel compression
 pkg install zopfli
@@ -47,6 +46,10 @@ It'll ask few questions, create a configuration file as well as an overlay direc
 ```
 # pkgbase method
 tarbsd build --release 14.3-RELEASE
+
+# LATEST here could mean STABLE, RC, BETA,
+# ALPHA, or CURRENT depending on version.
+tarbsd build --release 15-LATEST
 
 # tarball (base.txz and kernel.txz) method
 tarbsd build --distfiles /cdrom
