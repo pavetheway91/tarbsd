@@ -37,7 +37,7 @@ class GlobalConfiguration
         ) {
             $yml = Yaml::dump($arr, 4, 4);
 
-            // fail silenlty if it's read-only
+            // fail silently if it's read-only
             @file_put_contents(self::FILE, $yml);
         }
     }
