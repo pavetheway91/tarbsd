@@ -222,7 +222,10 @@ abstract class AbstractBuilder implements EventSubscriberInterface
 
         $f = (new Finder)
             ->directories()
-            ->in($this->root . '/usr/share/locale')
+            ->in([
+                $this->root . '/usr/share/locale',
+                $this->root . '/usr/local/share/locale'
+            ])
             ->notName(['en_*', 'C.UTF*']);
         $this->fs->remove($f);
 
