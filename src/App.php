@@ -104,10 +104,10 @@ class App extends Application implements EventSubscriberInterface
             {
                 $item = $cache->getItem('pkgbase_prune');
 
-                if (!$item->isHit())
-                {
-                    $fs = new Filesystem;
+                $fs = new Filesystem;
 
+                if (!$item->isHit() && $fs->exists(self::CACHE_DIR . '/pkgbase'))
+                {
                     $f = (new Finder)
                         ->files()
                         ->in(self::CACHE_DIR . '/pkgbase')
