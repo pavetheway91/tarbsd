@@ -261,17 +261,18 @@ CONF;
         $umountUsr->mustRun();
 
         $progressIndicator = $this->progressIndicator($output);
-        $progressIndicator->start('compressing mfs image');
+        $progressIndicator->start('compressing mfs image (gzip-' . $gzipLevel . ')');
+        $this->gzStream($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
+        $progressIndicator->finish('mfs image ready');
+
         Process::fromShellCommandline(
-            'gzip -v -' . $gzipLevel . ' boot/mfsroot && makefs boot.img boot',
+            'makefs boot.img boot',
             $this->wrk,
             null, null, 1800
-        )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+        )->mustRun(function ($type, $buffer) use ($verboseOutput)
         {
-            $progressIndicator->advance();
             $verboseOutput->write($buffer);
         });
-        $progressIndicator->finish('mfs image ready');
 
         $size = $this->getFileSizeM($this->wrk . '/boot.img');
         $fullsize = strval($size + 1) . 'm';
@@ -290,7 +291,7 @@ gpart bootcode -b cache/pmbr -p cache/gptboot -i 1 "\$md"
 
 dd if=efi.img of=/dev/"\$md"p2 bs=128k
 dd if=boot.img of=/dev/"\$md"p3 bs=128k
-#rm -rf efi* && rm boot.img
+rm efi.img && rm boot.img
 rm cache/pmbr && rm cache/gptboot
 mdconfig -d -u "\$md"
 CMD;

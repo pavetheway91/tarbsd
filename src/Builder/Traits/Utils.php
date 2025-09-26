@@ -166,6 +166,35 @@ CMD;
     }
 
     /**
+     * Unlike /usr/bin/gzip, this gives real-time
+     * progress updates allowing progress indicator
+     * to spin.
+     */
+    final protected function gzStream(string $file, int $level, ProgressIndicator $progressIndicator) : void
+    {
+        if (!$this->fs->exists($file))
+        {
+            throw new \RuntimeException(sprintf(
+                "%s does not exist",
+                $file
+            ));
+        }
+
+        $in = fopen($file, 'r');
+        $out = gzopen($file . '.gz', 'wb' . $level);
+
+        while (!feof($in))
+        {
+            gzwrite($out, fread($in, 1048576));
+            $progressIndicator->advance();
+        }
+
+        fclose($in);
+        gzclose($out);
+        $this->fs->remove($file);
+    }
+
+    /**
      * Copies contents of one directory to another using tar.
      */
     final protected function tarStream(string $from, string $to, OutputInterface $verboseOutput) : void
