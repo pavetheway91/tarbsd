@@ -18,7 +18,7 @@ use Symfony\Component\Console\Cursor;
 
 #[AsCommand(
     name: 'bootstrap',
-    description: 'Bootstrap new tarBSD project'
+    description: 'Bootstrap a new tarBSD project'
 )]
 class Bootstrap extends AbstractCommand
 {
