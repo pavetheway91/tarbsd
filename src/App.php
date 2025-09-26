@@ -10,6 +10,10 @@ use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Application;
 
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Finder\Finder;
+
+
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -22,6 +26,8 @@ use DateTimeImmutable;
 
 class App extends Application implements EventSubscriberInterface
 {
+    const CACHE_DIR = '/var/cache/tarbsd';
+
     private readonly FilesystemCache $cache;
 
     private readonly EventDispatcher $dispatcher;
@@ -90,16 +96,34 @@ class App extends Application implements EventSubscriberInterface
         {
             $cache = $this->getCache();
 
-            if (42 == random_int(0, 49))
+            if (42 == random_int(29, 49))
             {
                 $cache->prune();
             }
             else
             {
-                /**
-                 * todo: cleanup old packages
-                 * from /var/cache/tarbsd/pkgbase
-                 */
+                $item = $cache->getItem('pkgbase_prune');
+
+                if (!$item->isHit())
+                {
+                    $fs = new Filesystem;
+
+                    $f = (new Finder)
+                        ->files()
+                        ->in(self::CACHE_DIR . '/pkgbase')
+                        ->date('until 31 days ago');
+                    $fs->remove($f);
+
+                    $f = (new Finder)
+                        ->files()
+                        ->in(self::CACHE_DIR . '/pkgbase')
+                        ->name('*.snap*')
+                        ->date('until 7 days ago');
+                    $fs->remove($f);
+
+                    $item->set(true)->expiresAt(new DateTimeImmutable('+3 days'));
+                    $cache->save($item);
+                }
             }
         }
     }
@@ -108,11 +132,7 @@ class App extends Application implements EventSubscriberInterface
     {
         if (!isset($this->cache))
         {
-            $this->cache = new FilesystemCache(
-                '',
-                0,
-                '/var/cache/tarbsd'
-            );
+            $this->cache = new FilesystemCache('', 0, self::CACHE_DIR);
         }
         return $this->cache;
     }

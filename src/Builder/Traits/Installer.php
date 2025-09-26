@@ -1,6 +1,8 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Builder\Traits;
 
+use TarBSD\App;
+
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
@@ -80,7 +82,7 @@ trait Installer
                 $this->root . $pkgKeys
             );
 
-            $this->fs->mkdir($pkgCache = '/var/cache/tarbsd/pkgbase');
+            $this->fs->mkdir($pkgCache = App::CACHE_DIR . '/pkgbase');
             $umountPkgCache = $this->preparePKG($pkgCache);
 
             try
