@@ -68,7 +68,7 @@ trait Utils
     {
         $this->fs->mkdir($keys = $this->filesDir . '/etc/ssh');
         $new = false;
-        foreach(['rsa', 'dsa', 'ecdsa', 'ed25519'] as $alg)
+        foreach(['rsa', 'ecdsa', 'ed25519'] as $alg)
         {
             $keyFile = $keys . '/ssh_host_' . $alg . '_key';
             $keyFilePub = $keyFile . '.pub';
