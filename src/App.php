@@ -106,17 +106,17 @@ class App extends Application implements EventSubscriberInterface
 
                 $fs = new Filesystem;
 
-                if (!$item->isHit() && $fs->exists(self::CACHE_DIR . '/pkgbase'))
+                if (!$item->isHit() && $fs->exists($pkgCache = self::CACHE_DIR . '/pkgbase'))
                 {
                     $f = (new Finder)
                         ->files()
-                        ->in(self::CACHE_DIR . '/pkgbase')
+                        ->in($pkgCache)
                         ->date('until 31 days ago');
                     $fs->remove($f);
 
                     $f = (new Finder)
                         ->files()
-                        ->in(self::CACHE_DIR . '/pkgbase')
+                        ->in($pkgCache)
                         ->name('*.snap*')
                         ->date('until 7 days ago');
                     $fs->remove($f);
