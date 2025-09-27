@@ -94,59 +94,26 @@ trait Installer
                     $abi
                 );
 
-                $listBasePkgs = function() use ($pkg)
-                {
-                    $p = Process::fromShellCommandline($pkg . ' search FreeBSD-')->mustRun();
-                    foreach(explode("\n", $p->getOutput()) as $line)
-                    {
-                        if ($line)
-                        {
-                            [$pkgName, $desc] = explode(" ", $line, 2);
-                            yield $pkgName;
-                        }
-                    }
-                };
-
                 Process::fromShellCommandline(
                     $pkg . ' update', null, null, null, 1800
                 )->mustRun();
+                $availableBasePkgs = Process::fromShellCommandline(
+                    $pkg . ' search FreeBSD-'
+                )->mustRun()->getOutput();
+
+                $basePkgRegex = explode("\n", file_get_contents(TARBSD_STUBS . '/basepkgs'));
+                $basePkgRegex[] = 'kernel-generic';
+                $basePkgRegex = sprintf(
+                    '/^(FreeBSD-(%s))-([1-9][0-9])/',
+                    implode('|', $basePkgRegex)
+                );
 
                 $pkgs = [];
-
-                if ($this->baseRelease->major >= 15)
+                foreach(explode("\n", $availableBasePkgs) as $pkgName)
                 {
-                    foreach($listBasePkgs() as $pkgName)
+                    if (preg_match($basePkgRegex, $pkgName, $m))
                     {
-                        if (preg_match(
-                            '/^FreeBSD-(kernel-generic|set-minimal|csh|pf|ipf'
-                            . '|ipfw|ntp|jail|bhyve|zfs|locales|dma|dpv|dwatch'
-                            . '|bsdinstall|acct|acpi|apm|at|autofs|bsnmp|ccdconfig'
-                            . '|ftp|ftpd|kerberos|mtree|netmap|ssh|tcpd|smbutils'
-                            . '|rcmds|iscsi|nfs|quotacheck'
-                            . '|([a-z]+)-tools|lib([0-9a-z_]+))'
-                            . '-([1-9][0-9])/',
-                            $pkgName
-                        )) {
-                            $pkgs[] = $pkgName;
-                        }
-                    }
-                }
-                else
-                {
-                    $pkgs[] = 'FreeBSD-kernel-generic';
-                    $pkgs[] = 'FreeBSD-devd';
-                    $pkgs[] = 'FreeBSD-devmatch';
-                    foreach($listBasePkgs() as $pkgName)
-                    {
-                        if (!preg_match(
-                            '/-(lib32|dbg|man|kernel|tests|games|dev'
-                            . '|toolchain|clang|lld|dtrace|src|sendmail|example'
-                            . '|bluetooth|telnet|ee|elftoolchain|rdma|hast|ggate'
-                            . '|hostapd)/',
-                            $pkgName
-                        )) {
-                            $pkgs[] = $pkgName;
-                        }
+                        $pkgs[] = $m[1];
                     }
                 }
                 $pkgs = " \\\n" . implode(" \\\n", $pkgs);
