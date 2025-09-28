@@ -289,10 +289,15 @@ DEFAULTS);
 
             try
             {
+                $pkg = sprintf('pkg -c %s ', $this->root);
+
                 $progressIndicator = $this->progressIndicator($output);
                 $progressIndicator->start('downloading packages');
                 Process::fromShellCommandline(
-                    'pkg -c ' . $this->wrk . '/root install -F -y ' . implode(' ', $packages),
+                    $pkg . ' update', null, null, null, 7200
+                )->mustRun();
+                Process::fromShellCommandline(
+                    $pkg . ' install -F -y ' . implode(' ', $packages),
                     null, null, null, 7200
                 )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
                 {
@@ -300,11 +305,14 @@ DEFAULTS);
                     $verboseOutput->write($buffer);
                 });
                 $progressIndicator->finish('packages downloaded');
-    
+
                 $progressIndicator = $this->progressIndicator($output);
                 $progressIndicator->start('installing packages');
+                $installCmd = $pkg . ' install -U -y ' . implode(' ', $packages);
+                $verboseOutput->writeln($installCmd);
+
                 Process::fromShellCommandline(
-                    'pkg -c ' . $this->wrk . '/root install -U -y ' . implode(' ', $packages),
+                    $installCmd,
                     null, null, null, 7200
                 )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
                 {
