@@ -1,3 +1,10 @@
+## 2025-09-28 ##
+* Several issues with FreeBSD 15 have been fixed.
+* OpenSSL, certctl, makefs and truncate are now included in busybox builds.
+* Logic for selecting base packages has been rewritten. The new implementation
+  should be less prone to unwanted surprises if there are changes to the base
+  package set during FreeBSD 15 release process.
+
 ## 2025-09-26 ##
 * Pkgbase implementation has been refactored and it should work with FreeBSD 15 too.
 	* FreeBSD 15 can be tested with --release 15-LATEST. LATEST here could mean
