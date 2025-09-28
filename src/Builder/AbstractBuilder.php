@@ -446,7 +446,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
                         . '|ifcon|dhcli|find|install|du|wall|service'
                         . '|env|utx|limits|automount|ldd|tar|bsdtar|pw'
                         . '|ip6add|fetch|drill|wpa_|mtree|ntpd|uname|passwd'
-                        . '|login|su'
+                        . '|login|su|certctl|openssl|makefs|truncate'
                         . '|(?:[a-z]+(pass|user))'
                     . ')/', $name)
                 ) {
@@ -469,7 +469,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
                 if (
                     !$bin->isLink()
                     && !preg_match('/^('
-                        . 'sh|expr|ln'
+                        . 'sh|expr|ln|dd'
                     . ')/', $name = $bin->getFileName())
                 ) {
                     if (isset($bysyBoxCMDs[$name]))
