@@ -14,22 +14,9 @@ Please note that this is an early version and things might change. Don't expect 
 * a remote FreeBSD installer with SSH
 
 ## Installing the builder tool ##
-### pkg ###
-[sysutils/tarbsd-builder](https://www.freshports.org/sysutils/tarbsd-builder) is now available from the latest repositories. Quarterly to follow in October. This installation method comes with a convenience of updating automatically as you update your system otherwise and pkg will also take care of dependencies and possible changes to them.
-
-### GitHub release ###
-Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need an existing FreeBSD system with PHP >= 8.2 along with some extensions. GitHub version can be updated with the self-update command.
+There are several flavoured packages available. If you have other PHP packages in your system, choose the package name suffix according to them. Corresponding port can be found from sysutils/tarbsd-builder in the ports tree.
 ```
-# make tarbsd builder executable
-# and move it to /usr/local/bin
-chmod +x tarbsd
-mv tarbsd /usr/local/bin/tarbsd
-
-# dependencies
-pkg install php84-phar php84-zlib php84-filter php84-pcntl php84-mbstring
-
-# (optional) zopfli for better kernel compression
-pkg install zopfli
+pkg install tarbsd-builder-php84
 ```
 
 ## Usage ##
