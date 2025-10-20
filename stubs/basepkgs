@@ -16,6 +16,7 @@ caroot
 ccdconfig
 certctl
 clibs
+clibs-dev
 cron
 csh
 devd
@@ -60,7 +61,6 @@ ssh
 syslogd
 tcpd
 ufs
-unbound
 utilities
 vi
 wpa

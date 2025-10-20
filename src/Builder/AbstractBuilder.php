@@ -172,6 +172,10 @@ abstract class AbstractBuilder implements EventSubscriberInterface
     {
         $pruneList = [];
 
+        $paramH = file_get_contents(
+            $paramHFile = $this->root . '/usr/include/sys/param.h'
+        );
+
         foreach(explode("\n", file_get_contents(TARBSD_STUBS . '/prunelist')) as $line)
         {
             if (strlen($line) > 0 && $line[0] !== '#')
@@ -230,6 +234,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
         $this->fs->remove($f);
 
         Process::fromShellCommandline(implode("\n", $pruneList), $this->root)->mustRun();
+        $this->fs->dumpFile($paramHFile, $paramH);
         $output->writeln(self::CHECK . ' pruned dev tools, manpages and disabled features');
     }
 
