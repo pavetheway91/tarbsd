@@ -80,7 +80,7 @@ class App extends Application implements EventSubscriberInterface
         if (
             !in_array($name = $event->getCommand()->getName(), ['list', 'help', 'diagnose'])
             && !static::amIRoot()
-        ){
+        ) {
             $output->writeln(sprintf(
                 "%s tarBSD builder needs root privileges for %s command",
                 Command\AbstractCommand::ERR,
@@ -103,24 +103,27 @@ class App extends Application implements EventSubscriberInterface
             else
             {
                 $item = $cache->getItem('pkgbase_prune');
-
-                $fs = new Filesystem;
-
-                if (!$item->isHit() && $fs->exists($pkgCache = self::CACHE_DIR . '/pkgbase'))
+                if (!$item->isHit())
                 {
-                    $f = (new Finder)
-                        ->files()
-                        ->in($pkgCache)
-                        ->date('until 31 days ago');
-                    $fs->remove($f);
+                    $fs = new Filesystem;
+                    foreach(['pkgbase', 'pkgbase_amd64', 'pkgbase_aarch64'] as $dir)
+                    {
+                        if ($fs->exists($pkgCache = self::CACHE_DIR . '/' . $dir))
+                        {
+                            $f = (new Finder)
+                                ->files()
+                                ->in($pkgCache)
+                                ->date('until 31 days ago');
+                            $fs->remove($f);
 
-                    $f = (new Finder)
-                        ->files()
-                        ->in($pkgCache)
-                        ->name('*.snap*')
-                        ->date('until 7 days ago');
-                    $fs->remove($f);
-
+                            $f = (new Finder)
+                                ->files()
+                                ->in($pkgCache)
+                                ->name('*.snap*')
+                                ->date('until 4 days ago');
+                            $fs->remove($f);
+                        }
+                    }
                     $item->set(true)->expiresAt(new DateTimeImmutable('+3 days'));
                     $cache->save($item);
                 }
