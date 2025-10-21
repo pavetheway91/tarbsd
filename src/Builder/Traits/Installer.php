@@ -27,7 +27,8 @@ trait Installer
         $distFileHash = hash('xxh128', json_encode([
             $abi,
             $this->baseRelease->getBaseRepo(),
-            gmdate('Y-m-d')
+            gmdate('Y-m-d'),
+            TARBSD_BUILD_ID
         ]));
 
         if (
@@ -173,6 +174,10 @@ trait Installer
             }
             hash_update_file($distFileHash, $fullPath);
             $distFiles[$file] = $fullPath;
+        }
+        if (TARBSD_BUILD_ID)
+        {
+            hash_update($distFileHash, TARBSD_BUILD_ID);
         }
         $distFileHash = hash_final($distFileHash);
 
