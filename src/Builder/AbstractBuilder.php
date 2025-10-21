@@ -172,9 +172,10 @@ abstract class AbstractBuilder implements EventSubscriberInterface
     {
         $pruneList = [];
 
-        $paramH = file_get_contents(
-            $paramHFile = $this->root . '/usr/include/sys/param.h'
-        );
+        // some tools use this to determine OS version
+        $paramH = file_get_contents($paramHFile = $this->root . '/usr/include/sys/param.h');
+        // poudriere needs this
+        $mountH = file_get_contents($mountHFile = $this->root . '/usr/include/sys/mount.h');
 
         foreach(explode("\n", file_get_contents(TARBSD_STUBS . '/prunelist')) as $line)
         {
@@ -235,6 +236,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface
 
         Process::fromShellCommandline(implode("\n", $pruneList), $this->root)->mustRun();
         $this->fs->dumpFile($paramHFile, $paramH);
+        $this->fs->dumpFile($mountHFile, $mountH);
         $output->writeln(self::CHECK . ' pruned dev tools, manpages and disabled features');
     }
 
