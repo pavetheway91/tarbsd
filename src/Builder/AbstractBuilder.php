@@ -177,13 +177,18 @@ abstract class AbstractBuilder implements EventSubscriberInterface
         // poudriere needs this
         $mountH = file_get_contents($mountHFile = $this->root . '/usr/include/sys/mount.h');
 
-        foreach(explode("\n", file_get_contents(TARBSD_STUBS . '/prunelist')) as $line)
+        $readPruneList = function(string $file) use (&$pruneList)
         {
-            if (strlen($line) > 0 && $line[0] !== '#')
+            foreach(explode("\n", file_get_contents($file)) as $line)
             {
-                $pruneList[] = $line;
+                if (strlen($line) > 0 && $line[0] !== '#')
+                {
+                    $pruneList[] = $line;
+                }
             }
-        }
+        };
+
+        $readPruneList(TARBSD_STUBS . '/prunelist');
 
         foreach($this->config->features() as $feature)
         {
@@ -195,22 +200,12 @@ abstract class AbstractBuilder implements EventSubscriberInterface
                 }
             }
         }
+
         switch($this->config->getSSH())
         {
             case 'dropbear':
             case null:
-                $pruneList[] = 'usr/bin/ssh*';
-                $pruneList[] = 'usr/sbin/sshd';
-                $pruneList[] = 'etc/ssh/*_config';
-                $pruneList[] = 'usr/lib/libprivatessh.*';
-                // are these needed by anything else than OpenSSH?
-                $pruneList[] = 'usr/lib/lib*krb*';
-                $pruneList[] = 'usr/lib/libgssapi*';
-                $pruneList[] = 'usr/lib/libhx509*';
-                $pruneList[] = 'usr/lib/libasn1*';
-                $pruneList[] = 'usr/lib/libprivateldns*';
-                $pruneList[] = 'usr/lib/libprivatefido2*';
-                $pruneList[] = 'usr/lib/libprivatecbor*';
+                $readPruneList(TARBSD_STUBS . '/prunelist.openssh');
                 break;
             case 'openssh':
                 break;
