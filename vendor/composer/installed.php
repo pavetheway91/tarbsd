@@ -3,7 +3,7 @@
         'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'c077b8fef721b16bf37149ebd323eb87efd5ab09',
+        'reference' => 'e9b428dace118a63abeaa3def591d09c25853fc9',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         '__root__' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'c077b8fef721b16bf37149ebd323eb87efd5ab09',
+            'reference' => 'e9b428dace118a63abeaa3def591d09c25853fc9',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -100,7 +100,7 @@
         'symfony/cache' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => 'a3b4db4e88103e9545876753b0423df74b18bbc6',
+            'reference' => '50056324d98fff952c2bd7ba2b88307ea2d1e79b',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/cache',
             'aliases' => array(),
@@ -124,7 +124,7 @@
         'symfony/console' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => 'a687b340755a81fe8a7114d45e3665feaa06b8cc',
+            'reference' => 'c3da86291d89157fe2a9ba2401c4acf1a7c93eba',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/console',
             'aliases' => array(),
@@ -142,7 +142,7 @@
         'symfony/event-dispatcher' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => 'c511634ea987e9f96eafe4270a3c5e7cf6f2f747',
+            'reference' => '899a660f2d62e493ce6e68844b9089d4e1a639a1',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/event-dispatcher',
             'aliases' => array(),
@@ -175,7 +175,7 @@
         'symfony/finder' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => 'c1a41e8ecb0f76b9e6d93deaeb5b85718975b12a',
+            'reference' => '38665c9607ce1fd17beaab3ea5d68e87ac5ed385',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/finder',
             'aliases' => array(),
@@ -184,7 +184,7 @@
         'symfony/http-client' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '9a33f2d83a114cfd82a65b1f5152926809a3f977',
+            'reference' => '47ed7b551cadc882df160d8bc70fa15dc02d379a',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/http-client',
             'aliases' => array(),
@@ -271,7 +271,7 @@
         'symfony/process' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => 'c61e87dafe1f427ce8d2e1d87c8b90d4806974cd',
+            'reference' => '7ca8dc2d0dcf4882658313aba8be5d9fd01026c8',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/process',
             'aliases' => array(),

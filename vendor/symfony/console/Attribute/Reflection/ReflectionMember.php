@@ -96,4 +96,14 @@ class ReflectionMember
     {
         return $this->member instanceof \ReflectionParameter ? 'parameter' : 'property';
     }
+
+    public function isParameter(): bool
+    {
+        return $this->member instanceof \ReflectionParameter;
+    }
+
+    public function isProperty(): bool
+    {
+        return $this->member instanceof \ReflectionProperty;
+    }
 }
