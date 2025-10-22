@@ -1,0 +1,37 @@
+# password is tarbsd
+root_pwhash: $2y$12$/F982r2u63jVY51Ym2bhIOGTaG7RAoctF8ubhoGRUda5BBBibKXOC
+# copy-paste your SSH key here
+root_sshkey: null
+backup: true
+busybox: false
+ssh: openssh
+features:
+    zfs: true
+    geli: false
+    pf: false
+    ipfw: false
+    wireguard: false
+    wifi: false
+    bhyve: false
+    jails: true
+    ntpd: true
+    rescue: false
+modules:
+    early:
+    late:
+        - mqueuefs
+        - linux_common
+        - linprocfs
+        - linsysfs
+        - linux
+        - linux64
+packages:
+    - tmux
+    - nano
+    - htop
+    - nginx
+    - poudriere
+    - ccache-static
+    - git-lite
+    - portlint
+    - portfmt

@@ -1,0 +1,3 @@
+
+    Create a dataset over this directory and place your
+    poudriere.conf with rest of the configuration in it.
