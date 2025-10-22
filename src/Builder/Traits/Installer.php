@@ -83,7 +83,7 @@ trait Installer
                 $this->root . $pkgKeys
             );
 
-            $this->fs->mkdir($pkgCache = App::CACHE_DIR . '/pkgbase');
+            $this->fs->mkdir($pkgCache = App::CACHE_DIR . '/pkgbase_' . $arch);
             $umountPkgCache = $this->preparePKG($pkgCache);
 
             try
