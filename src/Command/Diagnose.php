@@ -21,6 +21,7 @@ class Diagnose extends AbstractCommand
         $output->writeln('  build id: ' . TARBSD_BUILD_ID);
         $output->writeln('  version: ' . TARBSD_VERSION);
         $output->writeln('  ports: ' . (TARBSD_PORTS ? 'yep' : 'nope'));
+        $output->writeln('  prefix: ' . TARBSD_PREFIX);
         $output->writeln('  gh: ' . (TARBSD_SELF_UPDATE ? 'yep' : 'nope'));
         $output->writeln('  php: ' . PHP_VERSION);
         $output->writeln('  phar: ' . Phar::running(false));

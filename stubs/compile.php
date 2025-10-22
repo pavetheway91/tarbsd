@@ -42,7 +42,8 @@ class Compiler extends Command
         #[Option('Signature key password')] ?string $pw = null,
         #[Option('Leave iconv polyfill out')] bool $npIconv = false,
         #[Option('Leave all polyfills out, cuts compile time to ≈ 1/3')] bool $np = false,
-        #[Option('Mock Github api')] bool $mockGh = false
+        #[Option('Mock Github api')] bool $mockGh = false,
+        #[Option('Prefix')] string $prefix = '/usr/local'
     ) {
         $start = time();
 
@@ -113,6 +114,7 @@ class Compiler extends Command
         $constants['TARBSD_SELF_UPDATE'] = ($ports || !$key) ? false : true;
         $constants['TARBSD_PORTS'] = $ports;
         $constants['TARBSD_VERSION'] = $versionTag;
+        $constants['TARBSD_PREFIX'] = $prefix;
         $constantsStr = $this->stringifyConstants($constants);
         $phar->addFromString('stubs/constants.php', "<?php\n" . $constantsStr);
         $output->write($constantsStr);

@@ -5,7 +5,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class GlobalConfiguration
 {
-    const FILE = '/usr/local/etc/tarbsd.conf';
+    const FILE = TARBSD_PREFIX . '/etc/tarbsd.conf';
 
     private readonly string $hash;
 

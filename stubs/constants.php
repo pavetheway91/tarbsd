@@ -10,3 +10,5 @@ const TARBSD_PORTS = false;
 const TARBSD_BUILD_ID = null;
 
 const TARBSD_VERSION = null;
+
+const TARBSD_PREFIX = '/usr/local';
