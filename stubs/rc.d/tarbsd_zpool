@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# PROVIDE: tarbsd-zpool
+# REQUIRE: mountcritlocal
+# BEFORE: zfsbe zfs
+
+. /etc/rc.subr
+
+name=tarbsd_zpool
+desc="imports attached zpools"
+rcvar=tarbsd_zpool_enable
+
+load_rc_config $name
+
+start_cmd="${name}_start"
+
+tarbsd_zpool_start()
+{
+    if [ -f /sbin/zpool ]; then
+        /sbin/zpool import -fa
+    fi
+}
+
+run_rc_command "$1"
