@@ -3,6 +3,7 @@ namespace TarBSD\Builder;
 
 use TarBSD\Configuration;
 use TarBSD\Util\FreeBSDRelease;
+use TarBSD\Util\Icons;
 use TarBSD\Util\Fstab;
 use TarBSD\Util\WrkFs;
 use TarBSD\App;
@@ -19,17 +20,13 @@ use Symfony\Component\Finder\Finder;
 use DateTimeImmutable;
 use SplFileInfo;
 
-abstract class AbstractBuilder implements EventSubscriberInterface
+abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 {
     use Traits\SignalHandler;
 
     use Traits\Installer;
 
     use Traits\Utils;
-
-    const CHECK = ' <g>✔</>';
-
-    const ERR = ' <r>‼️</>';
 
     protected readonly string $wrk;
 

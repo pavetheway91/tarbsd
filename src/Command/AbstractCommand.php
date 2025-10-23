@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
+use TarBSD\Util\Icons;
 use TarBSD\Builder;
 use TarBSD\App;
 
@@ -9,12 +10,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 use DateTimeImmutable;
 
-abstract class AbstractCommand extends SfCommand
+abstract class AbstractCommand extends SfCommand implements Icons
 {
-    const CHECK = ' <info>✔</>';
-
-    const ERR = ' <r>‼️</>';
-
     const LOGO = <<<LOGO
 <c0>               ,       ,       </>
 <c0>              /(       )`      </>
@@ -73,7 +70,7 @@ LOGO;
         }
 
         $output->writeln(sprintf(
-            "version: %s%s%s",
+            " version: %s%s%s",
             $style,
             $v,
             $style ? '</>' : ''
