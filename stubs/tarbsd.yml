@@ -1,8 +1,8 @@
 root_pwhash: null
 root_sshkey: null
 backup: true
-busybox: true
-ssh: dropbear
+busybox: false
+ssh: openssh
 features:
     zfs: false
     geli: false
