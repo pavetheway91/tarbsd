@@ -34,6 +34,25 @@ abstract class AbstractCommand extends SfCommand implements Icons
 <c0>          `--{__________)       \/ </>
 LOGO;
 
+    const PHP_VERSIONS = [
+        '8.2' => [
+            "activeSupportEndDate" => "2024-12-31",
+            "eolDate"              => "2026-12-31"
+        ],
+        '8.3' => [
+            "activeSupportEndDate" => "2025-12-31",
+            "eolDate"              => "2027-12-31"
+        ],
+        '8.4' => [
+            "activeSupportEndDate" => "2026-12-31",
+            "eolDate"              => "2028-12-31"
+        ],
+        '8.5' => [
+            "activeSupportEndDate" => "2027-12-31",
+            "eolDate"              => "2029-12-31"
+        ]
+    ];
+
     protected function showLogo(OutputInterface $output) : void
     {
         $logo = preg_replace(
@@ -75,5 +94,38 @@ LOGO;
             $v,
             $style ? '</>' : ''
         ));
+
+        $phpVer = PHP_MAJOR_VERSION . '.' .  PHP_MINOR_VERSION;
+
+        if (isset(self::PHP_VERSIONS[$phpVer]))
+        {
+            $activeSupportEndDate = new DateTimeImmutable(
+                self::PHP_VERSIONS[$phpVer]['activeSupportEndDate']
+            );
+            $eolDate = new DateTimeImmutable(
+                self::PHP_VERSIONS[$phpVer]['eolDate']
+            );
+            $now = new DateTimeImmutable;
+            if ($eolDate < $now)
+            {
+                $output->writeln(sprintf(
+                    "%s PHP %s reached it's EOL in %s, please consider updating.",
+                    self::ERR,
+                    $phpVer,
+                    self::PHP_VERSIONS[$phpVer]['eolDate'],
+                ));
+            }
+            elseif ($activeSupportEndDate->modify('+6 months') < $now)
+            {
+                $output->writeln(sprintf(
+                    "%s PHP %s reached end of it's active support on %s"
+                    . "\n   and will be EOL in %s. Please consider updating.",
+                    self::ERR,
+                    $phpVer,
+                    self::PHP_VERSIONS[$phpVer]['activeSupportEndDate'],
+                    self::PHP_VERSIONS[$phpVer]['eolDate'],
+                ));
+            }
+        }
     }
 }
