@@ -450,51 +450,37 @@ NOICONV;
     protected function accept(string $package, string $file) : bool
     {
         $extensions = ['php'];
-
         switch($package)
         {
             case 'symfony/cache':
-                if (preg_match(
-                    '/('
+                $skipRegex = '/('
                         . 'Redis|Couchbase|CouchDB|Memcached|Mongo|DynamoDb'
                         . '|Zookeeper|Apcu|Pdo|Sql|FirePHP|IFTTT|Elastic'
-                        . '|Combined|Factory|Traceable|Apcu'
-                    . ')/',
-                    $file
-                )) {
-                    return false;
-                }
+                        . '|Combined|Factory|Traceable|Apcu|Relay|Array|Doctrine'
+                    . ')/';
                 break;
             case 'symfony/http-client':
-                if (preg_match(
-                    '/('
+                $skipRegex = '/('
                         . 'Amp|Caching|Httplug|PrivateNetwork|Retryable'
-                        . '|Scoping|Throttling|Traceable'
-                    . ')/',
-                    $file
-                )) {
-                    return false;
-                }
+                        . '|Scoping|Throttling|Traceable|Psr18Client'
+                        . '|NoPrivateNetworkHttpClient'
+                    . ')/';
                 break;
             case 'symfony/console':
+                $skipRegex = '/(Helper\/(Tree|Table))/';
                 $extensions = array_merge($extensions, [
                     'bash', 'zsh', 'fish'
                 ]);
                 break;
             case 'symfony/yaml':
-                if (preg_match(
-                    '/(Command|Ulid)/',
-                    $file
-                )) {
-                    return false;
-                }
+                $skipRegex = '/(Command)/';
                 break;
         }
-        if (!in_array(pathinfo($file, PATHINFO_EXTENSION), $extensions))
+        if (isset($skipRegex) && preg_match($skipRegex, $file))
         {
             return false;
         }
-        return true;
+        return in_array(pathinfo($file, PATHINFO_EXTENSION), $extensions);
     }
 }
 
