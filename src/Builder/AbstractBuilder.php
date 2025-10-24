@@ -217,14 +217,19 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             $pruneList[$index] = 'rm -rf ' . $line;
         }
 
-        $f = (new Finder)
-            ->directories()
-            ->in([
-                $this->root . '/usr/share/locale',
-                $this->root . '/usr/local/share/locale'
-            ])
-            ->notName(['en_*', 'C.UTF*']);
-        $this->fs->remove($f);
+        foreach([
+            $this->root . '/usr/share/locale',
+            $this->root . '/usr/local/share/locale'
+        ] as $localeDir) {
+            if ($this->fs->exists($localeDir))
+            {
+                $f = (new Finder)
+                    ->directories()
+                    ->in($localeDir)
+                    ->notName(['en_*', 'C.UTF*']);
+                $this->fs->remove($f);
+            }
+        }
 
         Process::fromShellCommandline(implode("\n", $pruneList), $this->root)->mustRun();
         $this->fs->dumpFile($paramHFile, $paramH);
