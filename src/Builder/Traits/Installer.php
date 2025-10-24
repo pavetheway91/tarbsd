@@ -276,63 +276,60 @@ DEFAULTS);
         catch (\Exception $e)
         {
             $this->rollback('installed');
-
-            if (file_exists($pkgConfigDir))
+            $this->fs->mkdir($this->wrk . '/cache');
+            if (count($packages) > 0)
             {
-                $this->fs->mkdir($target = $this->root . '/usr/local/etc/pkg');
-                $this->tarStream($pkgConfigDir, $target, $verboseOutput);
-            }
-
-            $this->fs->mkdir(
-                $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion()
-            );
-            $umountPkgCache = $this->preparePKG($cache);
-
-            $this->fs->copy(
-                TARBSD_STUBS . '/overlay/etc/resolv.conf',
-                $this->root . '/etc/resolv.conf'
-            );
-
-            try
-            {
-                $pkg = sprintf('pkg -c %s ', $this->root);
-
-                $progressIndicator = $this->progressIndicator($output);
-                $progressIndicator->start('downloading packages');
-                Process::fromShellCommandline(
-                    $pkg . ' update', null, null, null, 7200
-                )->mustRun();
-                Process::fromShellCommandline(
-                    $pkg . ' install -F -y ' . implode(' ', $packages),
-                    null, null, null, 7200
-                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                if (file_exists($pkgConfigDir))
                 {
-                    $progressIndicator->advance();
-                    $verboseOutput->write($buffer);
-                });
-                $progressIndicator->finish('packages downloaded');
-
-                $progressIndicator = $this->progressIndicator($output);
-                $progressIndicator->start('installing packages');
-                $installCmd = $pkg . ' install -U -y ' . implode(' ', $packages);
-                $verboseOutput->writeln($installCmd);
-
-                Process::fromShellCommandline(
-                    $installCmd,
-                    null, null, null, 7200
-                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                    $this->fs->mkdir($target = $this->root . '/usr/local/etc/pkg');
+                    $this->tarStream($pkgConfigDir, $target, $verboseOutput);
+                }
+                $this->fs->mkdir(
+                    $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion()
+                );
+                $umountPkgCache = $this->preparePKG($cache);
+                $this->fs->copy(
+                    TARBSD_STUBS . '/overlay/etc/resolv.conf',
+                    $this->root . '/etc/resolv.conf'
+                );
+                try
                 {
-                    $progressIndicator->advance();
-                    $verboseOutput->write($buffer);
-                });
-                $progressIndicator->finish('packages installed');
-            }
-            catch (\Exception $e)
-            {
+                    $pkg = sprintf('pkg -c %s ', $this->root);
+                    $progressIndicator = $this->progressIndicator($output);
+                    $progressIndicator->start('downloading packages');
+                    Process::fromShellCommandline(
+                        $pkg . ' update', null, null, null, 7200
+                    )->mustRun();
+                    Process::fromShellCommandline(
+                        $pkg . ' install -F -y ' . implode(' ', $packages),
+                        null, null, null, 7200
+                    )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                    {
+                        $progressIndicator->advance();
+                        $verboseOutput->write($buffer);
+                    });
+                    $progressIndicator->finish('packages downloaded');
+                    $progressIndicator = $this->progressIndicator($output);
+                    $progressIndicator->start('installing packages');
+                    $installCmd = $pkg . ' install -U -y ' . implode(' ', $packages);
+                    $verboseOutput->writeln($installCmd);
+                    Process::fromShellCommandline(
+                        $installCmd,
+                        null, null, null, 7200
+                    )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                    {
+                        $progressIndicator->advance();
+                        $verboseOutput->write($buffer);
+                    });
+                    $progressIndicator->finish('packages installed');
+                }
+                catch (\Exception $e)
+                {
+                    $umountPkgCache->mustRun();
+                    throw $e;
+                }
                 $umountPkgCache->mustRun();
-                throw $e;
             }
-            $umountPkgCache->mustRun();
             file_put_contents($packagesHashFile, $packagesHash);
             $this->snapshot('pkgsInstalled');
         }
