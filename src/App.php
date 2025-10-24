@@ -1,7 +1,6 @@
 <?php declare(strict_types=1);
 namespace TarBSD;
 
-
 use Symfony\Component\Cache\Adapter\FilesystemAdapter as FilesystemCache;
 use Symfony\Component\Console\Command\HelpCommand as SymfonyHelpCommand;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
@@ -12,7 +11,7 @@ use Symfony\Component\Console\Application;
 
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
-
+use Symfony\Polyfill\Uuid\Uuid;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -58,7 +57,7 @@ class App extends Application implements EventSubscriberInterface
         {
             $date = DateTimeImmutable::createFromFormat(
                 'U',
-                (string) uuid_time(TARBSD_BUILD_ID)
+                (string) Uuid::uuid_time(TARBSD_BUILD_ID)
             );
         }
 

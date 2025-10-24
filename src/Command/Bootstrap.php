@@ -7,7 +7,6 @@ use TarBSD\Configuration;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
-
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Question\ChoiceQuestion;
 use Symfony\Component\Yaml\Yaml;
@@ -15,6 +14,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Console\Cursor;
+use Symfony\Polyfill\Uuid\Uuid;
 
 #[AsCommand(
     name: 'bootstrap',
@@ -93,7 +93,7 @@ class Bootstrap extends AbstractCommand
 
         $fs->dumpFile(
             $overlay . '/etc/hostid',
-            $hostid = uuid_create(UUID_TYPE_TIME) . "\n"
+            $hostid = Uuid::uuid_create(Uuid::UUID_TYPE_TIME) . "\n"
         );
         $fs->dumpFile(
             $overlay . '/etc/machine-id',
@@ -106,8 +106,6 @@ class Bootstrap extends AbstractCommand
             "\n" . self::CHECK . ' Everything\'s set up. Take a look at tarbsd.yml'
             . " as well contents\n   of the overlay directory called tarbsd.\n"
         );
-
-        //$fs->dumpFile($cwd . '/tarbsd.yml', $yml);
 
         return self::SUCCESS;
     }
