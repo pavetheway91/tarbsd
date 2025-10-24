@@ -1,0 +1,8 @@
+
+    This directory is a placeholder for the VM dataset.
+
+    zfs create -o mountpoint=/usr/vm tank/vm
+
+    Because vm-bhyve's examples dir gets pruned out,
+    download them from here:
+    https://github.com/freebsd/vm-bhyve
