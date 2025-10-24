@@ -229,6 +229,7 @@ trait Installer
         $this->fs->symlink('../tmp', $varTmp);
         $this->fs->appendToFile($this->root. '/etc/ssh/sshd_config', <<<SSH
 PasswordAuthentication no
+KbdInteractiveAuthentication no
 PermitRootLogin yes
 
 SSH);
