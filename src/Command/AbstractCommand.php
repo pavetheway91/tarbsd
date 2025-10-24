@@ -83,7 +83,7 @@ LOGO;
 
                 if ($buidDate < new DateTimeImmutable('-8 weeks'))
                 {
-                    $style = '<c1g=yellow;options=bold>';
+                    $style = '<bg=yellow;options=bold>';
                 }
             }
         }
