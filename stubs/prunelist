@@ -56,8 +56,7 @@ usr/share/man
 usr/share/openssl
 usr/share/nls
 usr/tests
-usr/share/bsdconfig
-usr/libexec/bsdconfig
+usr/sbin/bsdconfig
 usr/libexec/bsdinstall
 var/db/pkg
 usr/sbin/pkg
