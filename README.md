@@ -14,9 +14,24 @@ Please note that this is an early version and things might change. Don't expect 
 * a remote FreeBSD installer with SSH
 
 ## Installing the builder tool ##
+### pkg/ports ###
 There are several flavoured packages available. If you have other PHP packages in your system, choose the package name suffix according to them. Corresponding port can be found from sysutils/tarbsd-builder in the ports tree.
 ```
 pkg install tarbsd-builder-php84
+```
+### GitHub release ###
+Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need an existing FreeBSD system with PHP >= 8.2 along with some extensions. GitHub version can be updated with the self-update command.
+```
+# make tarbsd builder executable
+# and move it to /usr/local/bin
+chmod +x tarbsd
+mv tarbsd /usr/local/bin/tarbsd
+
+# dependencies
+pkg install php84-phar php84-zlib php84-filter php84-pcntl php84-mbstring
+
+# (optional) zopfli for better kernel compression
+pkg install zopfli
 ```
 
 ## Usage ##
@@ -71,7 +86,7 @@ Backup tarbsd.yml as well as the overlay directory inside the image. If you loos
 Replaces many applications with [busybox](https://en.wikipedia.org/wiki/BusyBox). Might break some shell scripts and some commands might not behave exactly in a way you're used to.
 
 ### ssh (dropbear|openssh|null) ###
-Dropbear is slightly smaller. tarBSD does some tricks here to share the host keys between the two, so you can switch easily without re-keying clients.
+Dropbear is slightly smaller. tarBSD does some tricks here to share the host keys between the two, so you can switch easily without re-keying clients. No OpenSSH also means no base kerberos.
 
 ### features ###
 Things such as ZFS, bhyve and wireguard etc that are only needed by some and thus, are opt-in. Depending on feature, it will include relevant kernel modules, userland tools and sometimes packages. Please, suggest new ones (or send pr) if you think something is missing.

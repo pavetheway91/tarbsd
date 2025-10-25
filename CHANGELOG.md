@@ -1,6 +1,17 @@
+## 2025-10-25 ##
+* Port ships with example poudriere and vm-bhyve projects.
+  * They can be found from /usr/local/share/examples/tarbsd-builder
+* tarBSD rc script can now import zfs pools upon boot.
+  * Add tarbsd_zpools variable to rc.conf to use it.
+* Small optimizations to image size and build time.
+* Several bugs have been fixed.
+* BusyBox is off by default for new projects.
+* Default SSH program for new projects is now OpenSSH.
+* A small facelift, the app looks better now, especially on darker terminals.
+
 ## 2025-09-28 ##
 * Several issues with FreeBSD 15 have been fixed.
-* OpenSSL, certctl, makefs and truncate are now included in busybox builds.
+* OpenSSL, certctl, makefs and truncate are now included in BusyBox builds.
 * Logic for selecting base packages has been rewritten. The new implementation
   should be less prone to unwanted surprises if there are changes to the base
   package set during FreeBSD 15 release process.
