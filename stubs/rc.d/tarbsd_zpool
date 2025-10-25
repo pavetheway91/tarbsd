@@ -10,14 +10,14 @@ name=tarbsd_zpool
 desc="imports attached zpools"
 rcvar=tarbsd_zpool_enable
 
-load_rc_config $name
-
 start_cmd="${name}_start"
 
 tarbsd_zpool_start()
 {
     if [ -f /sbin/zpool ]; then
-        /sbin/zpool import -fa
+        for pool in ${tarbsd_zpools}; do
+            /sbin/zpool import -f ${pool}
+        done
     fi
 }
 
