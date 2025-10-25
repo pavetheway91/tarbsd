@@ -40,7 +40,6 @@ class Compiler extends Command
         #[Option('Version tag')] ?string $versionTag = null,
         #[Option('Signature key file')] ?string $key = null,
         #[Option('Signature key password')] ?string $pw = null,
-        #[Option('Leave iconv polyfill out')] bool $npIconv = false,
         #[Option('Leave all polyfills out, cuts compile time to ≈ 1/3')] bool $np = false,
         #[Option('Mock Github api')] bool $mockGh = false,
         #[Option('Prefix')] string $prefix = '/usr/local'
@@ -56,7 +55,7 @@ class Compiler extends Command
 
         if ($key)
         {
-            if ($npIconv || $np)
+            if ($np)
             {
                 throw new \Exception(
                     "Don't build a release without polyfills"
@@ -92,7 +91,7 @@ class Compiler extends Command
             $id = uuid_create(UUID_TYPE_TIME)
         );
 
-        $phar->setStub($this->genStub($id, $npIconv, $np));
+        $phar->setStub($this->genStub($id, $ports, $np));
 
         $rootlen = strlen($this->root);
 
@@ -163,7 +162,7 @@ class Compiler extends Command
         foreach($this->addPackages($phar) as $package => $cb)
         {
             if (
-                ($package == 'symfony/polyfill-iconv' && $npIconv)
+                ($package == 'symfony/polyfill-iconv' && $ports)
                 || (preg_match(
                     '/^symfony\/polyfill-(iconv|mbstring|ctype|intl)/',
                     $package
@@ -204,9 +203,7 @@ class Compiler extends Command
 
         $phar->compressFiles(Phar::GZ);
 
-        $fs->chmod($tmpFile, 0770);
-
-        $finalName = $phar = $out . '/tarbsd';
+        $finalName = $out . '/tarbsd';
 
         if ($mockGh)
         {
@@ -280,7 +277,7 @@ class Compiler extends Command
         return $out;
     }
 
-    protected function genStub(string $buildId, bool $npIconv, bool $np)
+    protected function genStub(string $buildId, bool $ports, bool $np)
     {
         $stub = <<<STUB
 #!/usr/bin/env php
@@ -332,7 +329,7 @@ if (!extension_loaded('intl')) \$issues[] = 'PHP extension intl required';
 if (!extension_loaded('ctype')) \$issues[] = 'PHP extension ctype required';
 TESTS;
         }
-        elseif($npIconv)
+        elseif($ports)
         {
 $variableTests = <<<NOICONV
 
