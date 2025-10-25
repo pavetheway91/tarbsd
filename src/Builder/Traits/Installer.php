@@ -239,6 +239,7 @@ entropy_file="NO"
 clear_tmp_X="NO"
 varmfs="NO"
 tarbsdinit_enable="YES"
+tarbsd_zpool_enable="YES"
 
 DEFAULTS);
     }
