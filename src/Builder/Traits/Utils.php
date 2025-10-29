@@ -170,7 +170,7 @@ CMD;
      * progress updates allowing progress indicator
      * to spin.
      */
-    final protected function gzStream(string $file, int $level, ProgressIndicator $progressIndicator) : void
+    final protected function zlibCompress(string $file, int $level, ProgressIndicator $progressIndicator) : void
     {
         if (!$this->fs->exists($file))
         {
@@ -191,6 +191,30 @@ CMD;
 
         fclose($in);
         gzclose($out);
+        $this->fs->remove($file);
+    }
+
+    final protected function pigzCompress(string $file, int $level, ProgressIndicator $progressIndicator) : void
+    {
+        if (!$this->fs->exists($file))
+        {
+            throw new \RuntimeException(sprintf(
+                "%s does not exist",
+                $file
+            ));
+        }
+
+        $out = fopen($file . '.gz', 'wb');
+
+        $p = Process::fromShellCommandline(
+            sprintf("pigz -%d -c %s", $level, $file),
+            null, null, null, 1800
+        )->mustRun(function ($type, $buffer) use ($out, $progressIndicator)
+        {
+            $progressIndicator->advance();
+            fwrite($out, $buffer);
+        });
+        fclose($out);
         $this->fs->remove($file);
     }
 
@@ -267,5 +291,25 @@ CMD;
         }
 
         return $hasZopfli;
+    }
+
+    final protected function hasPigz() : bool
+    {
+        static $hasPigz;
+
+        if (null === $hasPigz)
+        {
+            try
+            {
+                Process::fromShellCommandline('pigz -h')->mustRun();
+                $hasPigz = true;
+            }
+            catch (\Exception $e)
+            {
+                $hasPigz = false;
+            }
+        }
+
+        return $hasPigz;
     }
 }

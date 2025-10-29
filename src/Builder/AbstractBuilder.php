@@ -361,8 +361,17 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             $zopfliItem = $this->cache->getItem(
                 hash_hmac_file('sha1', (string) $file, 'zopfli')
             );
+            $pigzItem = $this->cache->getItem(
+                hash_hmac_file('sha1', (string) $file, 'pigz')
+            );
 
-            if ($zopfliItem->isHit())
+            if ($pigzItem->isHit())
+            {
+                $output->write(self::CHECK . ' ' . $file->getFilename() . '.gz (compressed using pigz) cached', true);
+                file_put_contents($file . '.gz', $pigzItem->get());
+                unlink((string) $file);
+            }
+            elseif ($zopfliItem->isHit())
             {
                 $output->write(self::CHECK . ' ' . $file->getFilename() . '.gz (compressed using zopfli) cached', true);
                 file_put_contents($file . '.gz', $zopfliItem->get());
@@ -370,7 +379,19 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             }
             else
             {
-                if ($this->hasZopfli() && !$quick)
+                if ($this->hasPigz() && !$quick)
+                {
+                    $progressIndicator = $this->progressIndicator($output);
+                    $progressIndicator->start(sprintf(
+                        "compressing %s using pigz-11, might take a while, will be cached.",
+                        $file->getFilename(),
+                    ));
+                    $this->pigzCompress((string) $file, 11, $progressIndicator);
+                    $progressIndicator->finish($file->getFilename() . ' compressed');
+                    $pigzItem->set(file_get_contents($file . '.gz'))->expiresAt($expiration);
+                    $this->cache->save($pigzItem);
+                }
+                elseif ($this->hasZopfli() && !$quick)
                 {
                     $progressIndicator = $this->progressIndicator($output);
                     $progressIndicator->start(sprintf(
@@ -405,16 +426,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                         "compressing %s",
                         $file->getFilename(),
                     ));
-    
-                    $p = Process::fromShellCommandline(
-                        'gzip -v -9 ' . $file
-                    )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
-                    {
-                        $progressIndicator->advance();
-                        $verboseOutput->write($buffer);
-                    });
+                    $this->zlibCompress((string) $file, 9, $progressIndicator);
                     $progressIndicator->finish($file->getFilename() . ' compressed');
-
                     $zlibItem->set(file_get_contents($file . '.gz'))->expiresAt($expiration);
                     $this->cache->save($zlibItem);
                 }

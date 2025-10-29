@@ -262,7 +262,7 @@ CONF;
 
         $progressIndicator = $this->progressIndicator($output);
         $progressIndicator->start('compressing mfs image (gzip-' . $gzipLevel . ')');
-        $this->gzStream($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
+        $this->zlibCompress($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
         $progressIndicator->finish('mfs image ready');
 
         Process::fromShellCommandline(
