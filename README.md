@@ -30,8 +30,8 @@ mv tarbsd /usr/local/bin/tarbsd
 # dependencies
 pkg install php84-phar php84-zlib php84-filter php84-pcntl php84-mbstring
 
-# (optional) zopfli for better kernel compression
-pkg install zopfli
+# (optional) pigz for better kernel compression
+pkg install pigz
 ```
 
 ## Usage ##

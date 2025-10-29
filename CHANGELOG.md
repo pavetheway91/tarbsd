@@ -1,3 +1,7 @@
+## 2025-10-29 ##
+* Pigz compression support for kernel. It does the same thing as zopfli, but
+  significantly quicker on multi-core processors.
+
 ## 2025-10-25 ##
 * Port ships with example poudriere and vm-bhyve projects.
   * They can be found from /usr/local/share/examples/tarbsd-builder
