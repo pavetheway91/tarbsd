@@ -3,6 +3,11 @@ namespace TarBSD\Util;
 
 class FreeBSDRelease implements \Stringable
 {
+    //const PKGBASE_DOMAIN = 'pkgbase.freebsd.org';
+    const PKGBASE_DOMAIN = 'pkg.freebsd.org';
+
+    const PKGBASE_DOMAIN_UNOFFICIAL = 'pkg.freebsd.org';
+
     public readonly int $major;
 
     public readonly ?int $minor;
@@ -11,11 +16,11 @@ class FreeBSDRelease implements \Stringable
 
     public function __construct(string $release)
     {
-        if (preg_match('/^([0-9]{1,2}).([0-9])-(RELEASE)$/', strtoupper($release), $m))
+        if (preg_match('/^([0-9]{1,2}).([0-9])(-RELEASE|)$/', strtoupper($release), $m))
         {
             $this->major = intval($m[1]);
             $this->minor = intval($m[2]);
-            $this->channel = $m[3];
+            $this->channel = 'RELEASE';
             if ($this->major < 14 || ($this->major == 14 && $this->minor < 2))
             {
                 throw new \Exception(sprintf(
@@ -47,11 +52,37 @@ class FreeBSDRelease implements \Stringable
         }
     }
 
-    public function getBaseRepo() : string
+    public function getBaseConf() : string
     {
-        return is_int($this->minor)
-            ? ('base_release_' . $this->minor)
-            : 'base_latest';
+        return sprintf(
+            file_get_contents(TARBSD_STUBS . '/FreeBSD-base.conf'),
+            $this->getBaseRepo('${ABI}')
+        );
+    }
+
+    public function getDomain() : string
+    {
+        return (is_int($this->minor) && $this->major >= 15)  ?
+            self::PKGBASE_DOMAIN
+            : self::PKGBASE_DOMAIN_UNOFFICIAL;
+    }
+
+    public function getBaseRepo(string $abi) : string
+    {
+        if ($this->channel === 'LATEST')
+        {
+            return sprintf(
+                'https://%s/%s/base_latest/',
+                self::PKGBASE_DOMAIN_UNOFFICIAL,
+                $abi
+            );
+        }
+        return sprintf(
+            'https://%s/%s/base_release_%d/',
+            $this->getDomain(),
+            $abi,
+            $this->minor
+        );
     }
 
     public function __toString() : string

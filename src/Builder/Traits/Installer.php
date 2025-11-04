@@ -25,8 +25,7 @@ trait Installer
         );
 
         $distFileHash = hash('xxh128', json_encode([
-            $abi,
-            $this->baseRelease->getBaseRepo(),
+            $this->baseRelease->getBaseRepo($abi),
             gmdate('Y-m-d'),
             TARBSD_BUILD_ID
         ]));
@@ -48,11 +47,7 @@ trait Installer
         {
             $this->rollback('empty');
 
-            $res = $this->httpClient->request('GET', sprintf(
-                'https://pkg.freebsd.org/%s/%s/',
-                $abi,
-                $this->baseRelease->getBaseRepo()
-            ));
+            $res = $this->httpClient->request('GET', $this->baseRelease->getBaseRepo($abi));
 
             switch($res->getStatusCode())
             {
@@ -65,18 +60,15 @@ trait Installer
                     ));
                 default:
                     throw new \Exception(sprintf(
-                        'Seems like there\'s something wrong in pkg.freebsd.org, status code: %s',
+                        'Seems like there\'s something wrong in %s, status code: %s',
+                        $this->baseRelease->getDomain(),
                         $res->getStatusCode()
                     ));
             }
 
-            $baseConf = sprintf(
-                file_get_contents(TARBSD_STUBS . '/FreeBSD-base.conf'),
-                $this->baseRelease->getBaseRepo()
-            );
             $this->fs->dumpFile(
                 $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',
-                $baseConf
+                $this->baseRelease->getBaseConf()
             );
             $this->fs->mirror(
                 $pkgKeys = '/usr/share/keys/pkg',
