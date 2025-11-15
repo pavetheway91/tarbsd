@@ -3,7 +3,7 @@
         'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'e9b428dace118a63abeaa3def591d09c25853fc9',
+        'reference' => '795f1990ffe50fb685aff5220620ef02d83bf5f5',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         '__root__' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'e9b428dace118a63abeaa3def591d09c25853fc9',
+            'reference' => '795f1990ffe50fb685aff5220620ef02d83bf5f5',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -100,7 +100,7 @@
         'symfony/cache' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '50056324d98fff952c2bd7ba2b88307ea2d1e79b',
+            'reference' => '222aabcdde9e9f20fded5861236494137fcbf8cd',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/cache',
             'aliases' => array(),
@@ -124,7 +124,7 @@
         'symfony/console' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => 'c3da86291d89157fe2a9ba2401c4acf1a7c93eba',
+            'reference' => '87ad3ca38e7de6d322a5750a81656731028ba75f',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/console',
             'aliases' => array(),
@@ -142,7 +142,7 @@
         'symfony/event-dispatcher' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '899a660f2d62e493ce6e68844b9089d4e1a639a1',
+            'reference' => '9dddcddff1ef974ad87b3708e4b442dc38b2261d',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/event-dispatcher',
             'aliases' => array(),
@@ -166,7 +166,7 @@
         'symfony/filesystem' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '633c6fdfb2eac90041c2de30ad1ccff95a671f66',
+            'reference' => '581d9d4dbd0159d3e960b4786edd0640820d0d09',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/filesystem',
             'aliases' => array(),
@@ -175,7 +175,7 @@
         'symfony/finder' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '38665c9607ce1fd17beaab3ea5d68e87ac5ed385',
+            'reference' => '340b9ed7320570f319028a2cbec46d40535e94bd',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/finder',
             'aliases' => array(),
@@ -184,7 +184,7 @@
         'symfony/http-client' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '47ed7b551cadc882df160d8bc70fa15dc02d379a',
+            'reference' => '3ef3447cbd02ebaccbd11a05370c6ca099f54bd4',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/http-client',
             'aliases' => array(),
@@ -278,9 +278,9 @@
             'dev_requirement' => false,
         ),
         'symfony/service-contracts' => array(
-            'pretty_version' => 'v3.6.0',
-            'version' => '3.6.0.0',
-            'reference' => 'f021b05a130d35510bd6b25fe9053c2a8a15d5d4',
+            'pretty_version' => 'v3.6.1',
+            'version' => '3.6.1.0',
+            'reference' => '45112560a3ba2d715666a509a0bc9521d10b6c43',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/service-contracts',
             'aliases' => array(),
@@ -307,7 +307,7 @@
         'symfony/yaml' => array(
             'pretty_version' => '7.4.x-dev',
             'version' => '7.4.9999999.9999999-dev',
-            'reference' => '0d7c67f404dc22bfa340546f8537cd0eb61eec6a',
+            'reference' => 'c082fdb5ed36786ede17b4b0e0eed4e4e00e1584',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/yaml',
             'aliases' => array(),
