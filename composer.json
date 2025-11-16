@@ -9,15 +9,16 @@
     },
     "require": {
         "php": ">= 8.2.0",
-        "symfony/console": "^7.4-dev",
-        "symfony/process": "^7.4-dev",
-        "symfony/filesystem": "^7.4-dev",
-        "symfony/finder": "^7.4-dev",
-        "symfony/cache": "^7.4-dev",
-        "symfony/yaml": "^7.4-dev",
-        "symfony/event-dispatcher": "^7.4-dev",
-        "symfony/http-client": "^7.4-dev",
+        "symfony/console": "^7.4",
+        "symfony/process": "^7.4",
+        "symfony/filesystem": "^7.4",
+        "symfony/finder": "^7.4",
+        "symfony/cache": "^7.4",
+        "symfony/yaml": "^7.4",
+        "symfony/event-dispatcher": "^7.4",
+        "symfony/http-client": "^7.4",
         "symfony/polyfill-uuid": "^1.32",
         "symfony/polyfill-iconv": "^1.32"
-    }
+    },
+    "minimum-stability": "RC"
 }
