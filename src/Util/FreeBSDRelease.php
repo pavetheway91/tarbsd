@@ -21,7 +21,7 @@ class FreeBSDRelease implements \Stringable
             $this->major = intval($m[1]);
             $this->minor = intval($m[2]);
             $this->channel = 'RELEASE';
-            if ($this->major < 14 || ($this->major == 14 && $this->minor < 2))
+            if ($this->major < 14 || ($this->major == 14 && $this->minor < 3))
             {
                 throw new \Exception(sprintf(
                     'FreeBSD %s.%s isn\'t supported',
@@ -52,23 +52,46 @@ class FreeBSDRelease implements \Stringable
         }
     }
 
-    public function getBaseConf() : string
+    public function getAbi(string $arch) : string
     {
         return sprintf(
+            'FreeBSD:%s:%s',
+            $this->major,
+            $arch
+        );
+    }
+
+    public function getOsVersion() : string
+    {
+        $major = strval($this->major);
+        $minor = strval(is_int($this->minor) ? $this->minor : 0);
+        return str_pad($major, 3, '0', STR_PAD_RIGHT) . str_pad($minor, 4, '0', STR_PAD_RIGHT);
+    }
+
+    public function getBaseConf(?string $arch = null) : string
+    {
+        $keyLocation = $this->getDomain() == self::PKGBASE_DOMAIN_UNOFFICIAL ? 
+            '/usr/share/keys/pkg'
+            : '/usr/share/keys/pkgbase-${VERSION_MAJOR}';
+
+        return sprintf(
             file_get_contents(TARBSD_STUBS . '/FreeBSD-base.conf'),
-            $this->getBaseRepo('${ABI}')
+            $this->getBaseRepo($arch),
+            $keyLocation
         );
     }
 
     public function getDomain() : string
     {
-        return (is_int($this->minor) && $this->major >= 15)  ?
+        return (is_int($this->minor) && $this->major >= 15) ?
             self::PKGBASE_DOMAIN
             : self::PKGBASE_DOMAIN_UNOFFICIAL;
     }
 
-    public function getBaseRepo(string $abi) : string
+    public function getBaseRepo(?string $arch = null) : string
     {
+        $abi = $arch ? $this->getAbi($arch) : '${ABI}';
+
         if ($this->channel === 'LATEST')
         {
             return sprintf(

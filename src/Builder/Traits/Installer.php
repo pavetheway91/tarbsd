@@ -18,14 +18,10 @@ trait Installer
 
         $rootId = $this->fsId . '/root';
 
-        $abi = sprintf(
-            'FreeBSD:%s:%s',
-            $this->baseRelease->major,
-            $arch
-        );
+        $abi = $this->baseRelease->getAbi($arch);
 
         $distFileHash = hash('xxh128', json_encode([
-            $this->baseRelease->getBaseRepo($abi),
+            $this->baseRelease->getBaseRepo($arch),
             gmdate('Y-m-d'),
             TARBSD_BUILD_ID
         ]));
@@ -47,7 +43,7 @@ trait Installer
         {
             $this->rollback('empty');
 
-            $res = $this->httpClient->request('GET', $this->baseRelease->getBaseRepo($abi));
+            $res = $this->httpClient->request('GET', $this->baseRelease->getBaseRepo($arch));
 
             switch($res->getStatusCode())
             {
@@ -68,12 +64,24 @@ trait Installer
 
             $this->fs->dumpFile(
                 $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',
-                $this->baseRelease->getBaseConf()
+                $this->baseRelease->getBaseConf($arch)
             );
             $this->fs->mirror(
-                $pkgKeys = '/usr/share/keys/pkg',
-                $this->root . $pkgKeys
+                $pkgKeys = '/usr/share/keys',
+                $rootPkgKeys = $this->root . $pkgKeys
             );
+            $f = (new Finder)->directories()->in(TARBSD_STUBS . '/keys')->depth(0);
+            foreach($f as $dir)
+            {
+                if (!$this->fs->exists($target = $rootPkgKeys . '/' . $dir->getFileName()))
+                {
+                    $this->fs->mirror((string) $dir, $target);
+                    if (!$this->fs->exists($revoked = $target . '/revoked'))
+                    {
+                        $this->fs->mkdir($revoked);
+                    }
+                }
+            }
 
             $this->fs->mkdir($pkgCache = App::CACHE_DIR . '/pkgbase_' . $arch);
             $umountPkgCache = $this->preparePKG($pkgCache);
@@ -81,10 +89,11 @@ trait Installer
             try
             {
                 $pkg = sprintf(
-                    'pkg --rootdir %s --repo-conf-dir %s -o IGNORE_OSVERSION=yes -o ABI=%s ',
+                    'pkg --rootdir %s --repo-conf-dir %s -o IGNORE_OSVERSION=yes -o ABI=%s -o OSVERSION=%s ',
                     $this->root,
                     dirname($pkgConf),
-                    $abi
+                    $abi,
+                    $this->baseRelease->getOsVersion()
                 );
 
                 Process::fromShellCommandline(
