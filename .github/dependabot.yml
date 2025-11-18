@@ -1,0 +1,18 @@
+version: 2
+updates:
+- package-ecosystem: composer
+  directory: "/"
+  schedule:
+    interval: daily
+  groups:
+    symfony:
+      applies-to: version-updates
+      patterns:
+        - "symfony*"
+    psr:
+      applies-to: version-updates
+      patterns:
+        - "psr*"
+  ignore:
+      - dependency-name: "symfony*"
+        update-types: ["version-update:semver-major"]
