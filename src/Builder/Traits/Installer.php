@@ -2,6 +2,7 @@
 namespace TarBSD\Builder\Traits;
 
 use TarBSD\App;
+use TarBSD\Util\FreeBSDRelease;
 
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
@@ -43,25 +44,30 @@ trait Installer
         {
             $this->rollback('empty');
 
-            $res = $this->httpClient->request('GET', $this->baseRelease->getBaseRepo($arch));
-
-            switch($res->getStatusCode())
+            /**
+             * Skip this check with the new pkgbase.freebsd.org repo, it doesn't
+             * have A or AAAA records, but pkg knows how to find it.
+             **/
+            if ($this->baseRelease->getDomain() !== FreeBSDRelease::PKGBASE_DOMAIN)
             {
-                case 200:
-                    break;
-                case 404:
-                    throw new \Exception(sprintf(
-                        'Seems like %s doesn\'t exist',
-                        $this->baseRelease
-                    ));
-                default:
-                    throw new \Exception(sprintf(
-                        'Seems like there\'s something wrong in %s, status code: %s',
-                        $this->baseRelease->getDomain(),
-                        $res->getStatusCode()
-                    ));
+                $res = $this->httpClient->request('GET', $this->baseRelease->getBaseRepo($arch));
+                switch($res->getStatusCode())
+                {
+                    case 200:
+                        break;
+                    case 404:
+                        throw new \Exception(sprintf(
+                            'Seems like %s doesn\'t exist',
+                            $this->baseRelease
+                        ));
+                    default:
+                        throw new \Exception(sprintf(
+                            'Seems like there\'s something wrong in %s, status code: %s',
+                            $this->baseRelease->getDomain(),
+                            $res->getStatusCode()
+                        ));
+                }
             }
-
             $this->fs->dumpFile(
                 $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',
                 $this->baseRelease->getBaseConf($arch)
