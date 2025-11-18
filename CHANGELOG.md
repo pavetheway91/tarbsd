@@ -1,3 +1,12 @@
+## 2025-11-18 ##
+* Base packages for 15 (RELEASE/RC) are downloaded from the new repository run by
+  the release engineering team.
+  * Patch releases (eg. 15.0-RELEASE-p1) are available immidiatelly after there
+    has been an announcement and not sometime during next 24 hours.
+* RELEASE can be omitted from "tarbsd build"
+  * eg. "tarbsd build --release 15.0" will install the latest -RELEASE or -RC version
+    that happens to be in the repository.
+
 ## 2025-10-29 ##
 * Pigz compression support for kernel. It does the same thing as zopfli, but
   significantly quicker on multi-core processors.

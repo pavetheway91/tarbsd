@@ -47,10 +47,9 @@ It'll ask few questions, create a configuration file as well as an overlay direc
 ### Building the image ###
 ```
 # pkgbase method
-tarbsd build --release 14.3-RELEASE
+tarbsd build --release 15.0-RELEASE
 
-# LATEST here could mean STABLE, RC, BETA,
-# ALPHA, or CURRENT depending on version.
+# LATEST here could mean STABLE or CURRENT depending on version
 tarbsd build --release 15-LATEST
 
 # tarball (base.txz and kernel.txz) method
