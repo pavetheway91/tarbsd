@@ -216,17 +216,17 @@
         },
         {
             "name": "symfony/cache",
-            "version": "v7.4.0-RC1",
-            "version_normalized": "7.4.0.0-RC1",
+            "version": "v7.4.0-RC2",
+            "version_normalized": "7.4.0.0-RC2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/cache.git",
-                "reference": "f5b5329babe17c9f2da4a02c8225c8611491ad56"
+                "reference": "a7a1325a5de2e54ddb45fda002ff528162e48293"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/cache/zipball/f5b5329babe17c9f2da4a02c8225c8611491ad56",
-                "reference": "f5b5329babe17c9f2da4a02c8225c8611491ad56",
+                "url": "https://api.github.com/repos/symfony/cache/zipball/a7a1325a5de2e54ddb45fda002ff528162e48293",
+                "reference": "a7a1325a5de2e54ddb45fda002ff528162e48293",
                 "shasum": ""
             },
             "require": {
@@ -264,7 +264,7 @@
                 "symfony/messenger": "^6.4|^7.0|^8.0",
                 "symfony/var-dumper": "^6.4|^7.0|^8.0"
             },
-            "time": "2025-11-12T15:39:26+00:00",
+            "time": "2025-11-16T10:14:42+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -299,7 +299,7 @@
                 "psr6"
             ],
             "support": {
-                "source": "https://github.com/symfony/cache/tree/v7.4.0-RC1"
+                "source": "https://github.com/symfony/cache/tree/v7.4.0-RC2"
             },
             "funding": [
                 {
@@ -402,17 +402,17 @@
         },
         {
             "name": "symfony/console",
-            "version": "v7.4.0-RC1",
-            "version_normalized": "7.4.0.0-RC1",
+            "version": "v7.4.0-RC2",
+            "version_normalized": "7.4.0.0-RC2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "a2b78aee774e76d4a7ec82624ad9c269305010fa"
+                "reference": "87ad3ca38e7de6d322a5750a81656731028ba75f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/a2b78aee774e76d4a7ec82624ad9c269305010fa",
-                "reference": "a2b78aee774e76d4a7ec82624ad9c269305010fa",
+                "url": "https://api.github.com/repos/symfony/console/zipball/87ad3ca38e7de6d322a5750a81656731028ba75f",
+                "reference": "87ad3ca38e7de6d322a5750a81656731028ba75f",
                 "shasum": ""
             },
             "require": {
@@ -445,7 +445,7 @@
                 "symfony/stopwatch": "^6.4|^7.0|^8.0",
                 "symfony/var-dumper": "^6.4|^7.0|^8.0"
             },
-            "time": "2025-11-13T08:53:59+00:00",
+            "time": "2025-11-14T06:57:14+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -479,7 +479,7 @@
                 "terminal"
             ],
             "support": {
-                "source": "https://github.com/symfony/console/tree/v7.4.0-RC1"
+                "source": "https://github.com/symfony/console/tree/v7.4.0-RC2"
             },
             "funding": [
                 {
@@ -2008,17 +2008,17 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v7.4.0-RC1",
-            "version_normalized": "7.4.0.0-RC1",
+            "version": "v7.4.0-RC2",
+            "version_normalized": "7.4.0.0-RC2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "c082fdb5ed36786ede17b4b0e0eed4e4e00e1584"
+                "reference": "6c84a4b55aee4cd02034d1c528e83f69ddf63810"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/c082fdb5ed36786ede17b4b0e0eed4e4e00e1584",
-                "reference": "c082fdb5ed36786ede17b4b0e0eed4e4e00e1584",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/6c84a4b55aee4cd02034d1c528e83f69ddf63810",
+                "reference": "6c84a4b55aee4cd02034d1c528e83f69ddf63810",
                 "shasum": ""
             },
             "require": {
@@ -2032,7 +2032,7 @@
             "require-dev": {
                 "symfony/console": "^6.4|^7.0|^8.0"
             },
-            "time": "2025-11-12T15:39:26+00:00",
+            "time": "2025-11-16T10:14:42+00:00",
             "bin": [
                 "Resources/bin/yaml-lint"
             ],
@@ -2063,7 +2063,7 @@
             "description": "Loads and dumps YAML files",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/yaml/tree/v7.4.0-RC1"
+                "source": "https://github.com/symfony/yaml/tree/v7.4.0-RC2"
             },
             "funding": [
                 {
