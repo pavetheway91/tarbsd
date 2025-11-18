@@ -88,7 +88,10 @@ trait Installer
                     }
                 }
             }
-
+            $this->fs->copy(
+                TARBSD_STUBS . '/overlay/etc/resolv.conf',
+                $this->root . '/etc/resolv.conf'
+            );
             $this->fs->mkdir($pkgCache = App::CACHE_DIR . '/pkgbase_' . $arch);
             $umountPkgCache = $this->preparePKG($pkgCache);
 
@@ -220,7 +223,10 @@ trait Installer
                 });
                 $progressIndicator->finish($file . ' extracted');
             }
-
+            $this->fs->copy(
+                TARBSD_STUBS . '/overlay/etc/resolv.conf',
+                $this->root . '/etc/resolv.conf'
+            );
             $this->runFreeBSDUpdate($output, $verboseOutput);
             $this->finalizeInstall();
             file_put_contents($distFileHashFile, $distFileHash);
@@ -296,10 +302,7 @@ DEFAULTS);
                     $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion()
                 );
                 $umountPkgCache = $this->preparePKG($cache);
-                $this->fs->copy(
-                    TARBSD_STUBS . '/overlay/etc/resolv.conf',
-                    $this->root . '/etc/resolv.conf'
-                );
+
                 try
                 {
                     $pkg = sprintf('pkg -c %s ', $this->root);
