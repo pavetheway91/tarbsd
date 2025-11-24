@@ -390,16 +390,16 @@
         },
         {
             "name": "symfony/console",
-            "version": "v7.4.0-RC2",
+            "version": "v7.4.0-RC3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "87ad3ca38e7de6d322a5750a81656731028ba75f"
+                "reference": "4155b9ffec268d2afbaa094dc9b7d039aa3babb9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/87ad3ca38e7de6d322a5750a81656731028ba75f",
-                "reference": "87ad3ca38e7de6d322a5750a81656731028ba75f",
+                "url": "https://api.github.com/repos/symfony/console/zipball/4155b9ffec268d2afbaa094dc9b7d039aa3babb9",
+                "reference": "4155b9ffec268d2afbaa094dc9b7d039aa3babb9",
                 "shasum": ""
             },
             "require": {
@@ -464,7 +464,7 @@
                 "terminal"
             ],
             "support": {
-                "source": "https://github.com/symfony/console/tree/v7.4.0-RC2"
+                "source": "https://github.com/symfony/console/tree/v7.4.0-RC3"
             },
             "funding": [
                 {
@@ -484,7 +484,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-11-14T06:57:14+00:00"
+            "time": "2025-11-21T13:17:08+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -854,16 +854,16 @@
         },
         {
             "name": "symfony/http-client",
-            "version": "v7.4.0-RC1",
+            "version": "v7.4.0-RC3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/http-client.git",
-                "reference": "3ef3447cbd02ebaccbd11a05370c6ca099f54bd4"
+                "reference": "ee5e0e0139ab506f6063a230e631bed677c650a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-client/zipball/3ef3447cbd02ebaccbd11a05370c6ca099f54bd4",
-                "reference": "3ef3447cbd02ebaccbd11a05370c6ca099f54bd4",
+                "url": "https://api.github.com/repos/symfony/http-client/zipball/ee5e0e0139ab506f6063a230e631bed677c650a4",
+                "reference": "ee5e0e0139ab506f6063a230e631bed677c650a4",
                 "shasum": ""
             },
             "require": {
@@ -931,7 +931,7 @@
                 "http"
             ],
             "support": {
-                "source": "https://github.com/symfony/http-client/tree/v7.4.0-RC1"
+                "source": "https://github.com/symfony/http-client/tree/v7.4.0-RC3"
             },
             "funding": [
                 {
@@ -951,7 +951,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-11-12T15:39:26+00:00"
+            "time": "2025-11-20T12:32:50+00:00"
         },
         {
             "name": "symfony/http-client-contracts",
@@ -2017,7 +2017,9 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "RC",
-    "stability-flags": {},
+    "stability-flags": {
+        "symfony/http-client": 5
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
