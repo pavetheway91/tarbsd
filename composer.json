@@ -19,6 +19,5 @@
         "symfony/http-client": "^7.4",
         "symfony/polyfill-uuid": "^1.32",
         "symfony/polyfill-iconv": "^1.32"
-    },
-    "minimum-stability": "RC"
+    }
 }

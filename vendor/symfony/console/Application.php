@@ -421,6 +421,15 @@ class Application implements ResetInterface
         if (CompletionInput::TYPE_OPTION_NAME === $input->getCompletionType()) {
             $suggestions->suggestOptions($this->getDefinition()->getOptions());
         }
+
+        if (
+            CompletionInput::TYPE_OPTION_VALUE === $input->getCompletionType()
+            && ($definition = $this->getDefinition())->hasOption($input->getCompletionName())
+        ) {
+            $definition->getOption($input->getCompletionName())->complete($input, $suggestions);
+
+            return;
+        }
     }
 
     /**
@@ -793,9 +802,9 @@ class Application implements ResetInterface
             }
         }
 
-        $command = $this->get(reset($commands));
+        $command = $commands ? $this->get(reset($commands)) : null;
 
-        if ($command->isHidden()) {
+        if (!$command || $command->isHidden()) {
             throw new CommandNotFoundException(\sprintf('The command "%s" does not exist.', $name));
         }
 
