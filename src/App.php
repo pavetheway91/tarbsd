@@ -17,7 +17,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\NativeHttpClient;
 
 use Symfony\Component\Process\Process;
 
@@ -143,7 +143,7 @@ class App extends Application implements EventSubscriberInterface
     {
         if (!isset($this->httpClient))
         {
-            $this->httpClient = HttpClient::create();
+            $this->httpClient = new NativeHttpClient;
         }
         return $this->httpClient;
     }
