@@ -7,7 +7,6 @@ namespace TarBSD;
  * 
  ****************************************************/
 require __DIR__ . '/../vendor/autoload.php';
-use TarBSD\App;
 
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -28,10 +27,21 @@ class Compiler extends Command
 {
     private readonly string $root;
 
+    private readonly string $initializer;
+
     public function __construct()
     {
         parent::__construct();
         $this->root = dirname(__DIR__);
+        $f = file_get_contents($this->root . '/vendor/composer/autoload_static.php');
+        if (preg_match('/(ComposerStaticInit[a-z0-9]+)/', $f, $m))
+        {
+            $this->initializer = 'Composer\\Autoload\\' . $m[1];
+        }
+        else
+        {
+            throw new \Exception('Could not find composer autoload initializer');
+        }
     }
 
     public function __invoke(
@@ -93,113 +103,11 @@ class Compiler extends Command
 
         $phar->setStub($this->genStub($id, $ports, $np));
 
-        $rootlen = strlen($this->root);
+        $this->genBootstrap($phar, !$versionTag);
 
-        $srcFiles = 0;
-        foreach(
-            (new Finder)->files()->in($this->root . '/src')
-            as $file
-        ) {
-            $file = (string) $file;
-            $phar->addFromString(
-                substr($file, $rootlen + 1),
-                file_get_contents($file)
-            );
-            $srcFiles++;
-        }
+        $this->addOwnSrc($output, $phar, $ports, $prefix, $versionTag, $mockGh);
 
-        $constants = [];
-        $constants['TARBSD_GITHUB_API'] = $mockGh ? 'http://localhost:8080' : 'https://api.github.com';
-        $constants['TARBSD_SELF_UPDATE'] = ($ports || !$key) ? false : true;
-        $constants['TARBSD_PORTS'] = $ports;
-        $constants['TARBSD_VERSION'] = $versionTag;
-        $constants['TARBSD_PREFIX'] = $prefix;
-        $constantsStr = $this->stringifyConstants($constants);
-        $phar->addFromString('stubs/constants.php', "<?php\n" . $constantsStr);
-        $output->write($constantsStr);
-        $phar->addFile(__DIR__ . '/../LICENSE', 'LICENSE');
-
-        $stubFiles = 0;
-        foreach(
-            (new Finder)->files()->in(__DIR__)->depth('0')->notname('*.php')->sortByName()->reverseSorting()
-            as $file
-        ) {
-            $file = (string) $file;
-            $phar->addFromString(
-                substr($file, $rootlen + 1),
-                file_get_contents($file)
-            );
-            $stubFiles++;
-        }
-
-        foreach(
-            (new Finder)->directories()->in(__DIR__)->depth('0')
-            as $dir
-        ) {
-            $dir = (string) $dir;
-            foreach((new Finder)->in($dir) as $file)
-            {
-                if ($file->isFile())
-                {
-                    $file = (string) $file;
-                    $relativeFile = substr($file, $rootlen + 1);
-                    $phar->addFile($file, $relativeFile);
-                    $stubFiles++;
-                }
-            }
-        }
-
-        $output->writeln(sprintf(
-            "%d src files\n%d stub files",
-            $srcFiles,
-            $stubFiles
-        ));
-
-        $this->addAutoloaderFiles($phar);
-
-        $allAdded = $allSkipped = [];
-        $packages = 0;
-        foreach($this->addPackages($phar) as $package => $cb)
-        {
-            if (
-                ($package == 'symfony/polyfill-iconv' && $ports)
-                || (preg_match(
-                    '/^symfony\/polyfill-(iconv|mbstring|ctype|intl)/',
-                    $package
-                ) && $np)
-            ) {
-                $phar->addFromString('vendor/' . $package . '/bootstrap.php', '<?php');
-                $output->write("skipping " . $package . "\n");
-            }
-            else
-            {
-                $output->write("    adding files for " . $package . ' ');
-                [$added, $skipped] = $cb();
-                $output->writeln(sprintf(
-                    "%d added, %d skipped",
-                    count($added),
-                    count($skipped)
-                ));
-                $allAdded = array_merge($allAdded, $added);
-                $allSkipped = array_merge($allSkipped, $skipped);
-            }
-            $packages++;
-        }
-
-        $phar->addFromString(
-            'vendor/files.skipped',
-            implode("\n", array_filter($allSkipped, function(string $v)
-            {
-                return str_ends_with($v, '.php');
-            }))
-        );
-
-        $output->writeln(sprintf(
-            "    %d files added, %d skipped across %s packages",
-            count($allAdded),
-            count($allSkipped),
-            $packages
-        ));
+        $this->addPackages($output, $phar, $ports, $np);
 
         $phar->compressFiles(Phar::GZ);
 
@@ -288,6 +196,7 @@ if ((\$os = php_uname('s')) !== 'FreeBSD') \$issues[] = 'Unsupported operating s
 if (!(PHP_VERSION_ID >= 80200)) \$issues[] = 'PHP >= 8.2.0 required, you are running ' . PHP_VERSION;
 if (!extension_loaded('phar')) \$issues[] = 'PHP extension phar required';
 if (!extension_loaded('zlib')) \$issues[] = 'PHP extension zlib required';
+if (!extension_loaded('openssl')) \$issues[] = 'PHP extension openssl required';
 if (!extension_loaded('pcntl')) \$issues[] = 'PHP extension pcntl required';
 if (!extension_loaded('filter')) \$issues[] = 'PHP extension filter required';%s
 if (\$issues)
@@ -297,11 +206,11 @@ if (\$issues)
 }
 const TARBSD_BUILD_ID = '%s';
 Phar::mapPhar(TARBSD_BUILD_ID);
-require 'phar://' . TARBSD_BUILD_ID . '/vendor/autoload.php';
-(new TarBSD\App)->run(
-    new Symfony\Component\Console\Input\ArgvInput,
-    new Symfony\Component\Console\Output\ConsoleOutput
-);
+require 'phar://' . TARBSD_BUILD_ID . '/bootstrap.php';
+if (!defined('TARBSD_NO_RUN') || !TARBSD_NO_RUN)
+{
+    TarBSD\\run();
+}
 /*****************************************************
  * 
  *  This is a compressed phar archive and thus, not
@@ -345,103 +254,274 @@ NOICONV;
         );
     }
 
-    protected function addAutoloaderFiles(Phar $phar)
+    protected function genBootstrap(Phar $phar, bool $isDev)
     {
-        $rootlen = strlen($this->root);
+        $bootstrap = <<<BOOTSTRAP
+<?php
+namespace TarBSD;
+use Composer\Autoload\ClassLoader;
+use %s as Initializer;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
-        foreach(['composer/LICENSE', 'autoload.php'] as $file)
+function getClassLoader() : ClassLoader
+{
+    static \$loader;
+
+    if (null === \$loader)
+    {
+        if (!class_exists(ClassLoader::class, false))
         {
-            $phar->addFromString(
-                'vendor/' . $file,
-                file_get_contents($this->root . '/vendor/' . $file)
-            );
+            require __DIR__ . '/vendor/composer/ClassLoader.php';
+        }
+        if (!class_exists(Initializer::class, false))
+        {
+            require __DIR__ . '/vendor/composer/autoload_static.php';
         }
 
-        $f = (new Finder)
-            ->files()
-            ->in([$this->root . '/vendor/composer'])
-            ->depth(0)
-            ->name('*.php');
+        Initializer::getInitializer(\$loader = new ClassLoader)->__invoke();
+        \$loader->register();
 
-        foreach($f as $file)
+        foreach(%s as \$file)
         {
-            $file = (string) $file;
-            $phar->addFromString(
-                substr($file, $rootlen + 1),
-                php_strip_whitespace($file)
-            );
+            if (is_file(\$file))
+            {
+                require \$file;
+            }
         }
     }
 
-    protected function addPackages(Phar $phar)
-    {
-        $rootlen = strlen($this->root);
+    return \$loader;
+}
 
-        $f = (new Finder)
-            ->directories()
-            ->in($this->root . '/vendor')
-            ->depth(1);
+function run() : int
+{
+    error_reporting(%s);
+    ini_set('display_errors', 1);
+    getClassLoader();
+    \$app = new App;
+    return \$app->run();
+}
 
-        foreach($f as $package)
+BOOTSTRAP;
+        $files = [];
+        $rootLen = strlen($this->root);
+
+        foreach($this->initializer::$files as $file)
         {
-            $name = $package->getRelativePathName();
-            $path = $this->root . '/vendor/' . $name . '/';
-
-            if (!file_exists($path . '/composer.json'))
-            {
-                continue;
-            }
-
-            yield $name => function() use ($phar, $name, $path, $rootlen)
-            {
-                $foundLicenseFile = null;
-
-                foreach(['LICENSE.txt', 'LICENSE'] as $licenseFile)
-                {
-                    if (file_exists($licenseFile = $path . $licenseFile))
-                    {
-                        $foundLicenseFile = $licenseFile;
-                    }
-                }
-
-                if (!$foundLicenseFile)
-                {
-                    throw new \Exception('Cannot find license file for ' . $name);
-                }
-
-                $phar->addFromString(
-                    substr($foundLicenseFile, $rootlen + 1),
-                    file_get_contents($foundLicenseFile)
-                );
-
-                $added = [];
-                $skipped = [];
-
-                foreach(
-                    (new Finder)->files()->in($path)
-                    as $file
-                ) {
-                    $file = (string) $file;
-                    $relativeFile = substr($file, $rootlen + 1);
-
-                    if ($this->accept($name, $relativeFile))
-                    {
-                        $phar->addFromString(
-                            $relativeFile,
-                            pathinfo($file, PATHINFO_EXTENSION) == 'php'
-                                ? php_strip_whitespace($file)
-                                : file_get_contents($file)
-                        );
-                        $added[] = $relativeFile;
-                    }
-                    else
-                    {
-                        $skipped[] = $relativeFile;
-                    }
-                }
-                return [$added, $skipped];
-            };
+            $file = realpath($file);
+            $file = substr($file, $rootLen);
+            $files[] = '__DIR__.\'' . $file . '\'';
         }
+        $files = "[\n\t\t" . implode(",\n\t\t", $files) . "\n\t]";
+
+        $phar->addFromString('bootstrap.php', sprintf(
+            $bootstrap,
+            $this->initializer,
+            $files,
+            $isDev ? 'E_ALL' : 'E_ALL & ~E_DEPRECATED',
+        ));
+
+        foreach([
+            'LICENSE',
+            'ClassLoader.php',
+            'autoload_static.php',
+            'installed.php'
+        ] as $file) {
+            $phar->addFromString(
+                'vendor/composer/' . $file,
+                file_get_contents($this->root . '/vendor/composer/' . $file)
+            );
+        }
+        return;
+    }
+
+    protected function addOwnSrc(
+        OutputInterface $output,
+        Phar $phar,
+        bool $ports,
+        string $prefix,
+        ?string $versionTag,
+        bool $mockGh
+    ) {
+        $rootLen = strlen($this->root);
+
+        $srcFiles = 0;
+        foreach(
+            (new Finder)->files()->in($this->root . '/src')
+            as $file
+        ) {
+            $file = (string) $file;
+            $phar->addFromString(
+                substr($file, $rootLen + 1),
+                file_get_contents($file)
+            );
+            $srcFiles++;
+        }
+
+        $constants = [];
+        $constants['TARBSD_GITHUB_API'] = $mockGh ? 'http://localhost:8080' : 'https://api.github.com';
+        $constants['TARBSD_SELF_UPDATE'] = (!$ports && $versionTag);
+        $constants['TARBSD_PORTS'] = $ports;
+        $constants['TARBSD_VERSION'] = $versionTag;
+        $constants['TARBSD_PREFIX'] = $prefix;
+        $constantsStr = $this->stringifyConstants($constants);
+        $phar->addFromString('stubs/constants.php', "<?php\n" . $constantsStr);
+        $output->write($constantsStr);
+        $phar->addFile(__DIR__ . '/../LICENSE', 'LICENSE');
+
+        $stubFiles = 0;
+        foreach(
+            (new Finder)->files()->in(__DIR__)->depth('0')->notname('*.php')->sortByName()->reverseSorting()
+            as $file
+        ) {
+            $file = (string) $file;
+            $phar->addFromString(
+                substr($file, $rootLen + 1),
+                file_get_contents($file)
+            );
+            $stubFiles++;
+        }
+
+        foreach(
+            (new Finder)->directories()->in(__DIR__)->depth('0')
+            as $dir
+        ) {
+            $dir = (string) $dir;
+            foreach((new Finder)->in($dir) as $file)
+            {
+                if ($file->isFile())
+                {
+                    $file = (string) $file;
+                    $relativeFile = substr($file, $rootLen + 1);
+                    $phar->addFile($file, $relativeFile);
+                    $stubFiles++;
+                }
+            }
+        }
+
+        $output->writeln(sprintf(
+            "%d src files\n%d stub files",
+            $srcFiles,
+            $stubFiles
+        ));
+    }
+
+    protected function addPackages(OutputInterface $output, Phar $phar, bool $ports, bool $np)
+    {
+        $rootLen = strlen($this->root);
+
+        $find = function(Phar $phar) use ($rootLen)
+        {
+            $f = (new Finder)
+                ->directories()
+                ->in($this->root . '/vendor')
+                ->depth(1);
+
+            foreach($f as $package)
+            {
+                $name = $package->getRelativePathName();
+                $path = $this->root . '/vendor/' . $name . '/';
+
+                if (!file_exists($path . '/composer.json'))
+                {
+                    continue;
+                }
+
+                yield $name => function() use ($phar, $name, $path, $rootLen)
+                {
+                    $foundLicenseFile = null;
+
+                    foreach(['LICENSE.txt', 'LICENSE'] as $licenseFile)
+                    {
+                        if (file_exists($licenseFile = $path . $licenseFile))
+                        {
+                            $foundLicenseFile = $licenseFile;
+                        }
+                    }
+
+                    if (!$foundLicenseFile)
+                    {
+                        throw new \Exception('Cannot find license file for ' . $name);
+                    }
+
+                    $phar->addFromString(
+                        substr($foundLicenseFile, $rootLen + 1),
+                        file_get_contents($foundLicenseFile)
+                    );
+
+                    $added = [];
+                    $skipped = [];
+
+                    foreach(
+                        (new Finder)->files()->in($path)
+                        as $file
+                    ) {
+                        $file = (string) $file;
+                        $relativeFile = substr($file, $rootLen + 1);
+
+                        if ($this->accept($name, $relativeFile))
+                        {
+                            $phar->addFromString(
+                                $relativeFile,
+                                pathinfo($file, PATHINFO_EXTENSION) == 'php'
+                                    ? php_strip_whitespace($file)
+                                    : file_get_contents($file)
+                            );
+                            $added[] = $relativeFile;
+                        }
+                        else
+                        {
+                            $skipped[] = $relativeFile;
+                        }
+                    }
+                    return [$added, $skipped];
+                };
+            }
+        };
+
+        $allAdded = $allSkipped = [];
+        $packages = 0;
+        foreach($find($phar) as $package => $cb)
+        {
+            if (
+                ($package == 'symfony/polyfill-iconv' && $ports)
+                || (preg_match(
+                    '/^symfony\/polyfill-(iconv|mbstring|ctype|intl)/',
+                    $package
+                ) && $np)
+            ) {
+                $output->write("skipping " . $package . "\n");
+            }
+            else
+            {
+                $output->write("    adding files for " . $package . ' ');
+                [$added, $skipped] = $cb();
+                $output->writeln(sprintf(
+                    "%d added, %d skipped",
+                    count($added),
+                    count($skipped)
+                ));
+                $allAdded = array_merge($allAdded, $added);
+                $allSkipped = array_merge($allSkipped, $skipped);
+            }
+            $packages++;
+        }
+
+        $phar->addFromString(
+            'vendor/files.skipped',
+            implode("\n", array_filter($allSkipped, function(string $v)
+            {
+                return str_ends_with($v, '.php');
+            }))
+        );
+
+        $output->writeln(sprintf(
+            "    %d files added, %d skipped across %s packages",
+            count($allAdded),
+            count($allSkipped),
+            $packages
+        ));
     }
 
     protected function accept(string $package, string $file) : bool
@@ -460,7 +540,7 @@ NOICONV;
                 $skipRegex = '/('
                         . 'Amp|Caching|Httplug|PrivateNetwork|Retryable'
                         . '|Scoping|Throttling|Traceable|Psr18Client'
-                        . '|NoPrivateNetworkHttpClient'
+                        . '|NoPrivateNetworkHttpClient|Curl'
                     . ')/';
                 break;
             case 'symfony/console':
@@ -471,6 +551,9 @@ NOICONV;
                 break;
             case 'symfony/yaml':
                 $skipRegex = '/(Command)/';
+                break;
+            case 'symfony/polyfill-uuid':
+                $skipRegex = '/(bootstrap)/';
                 break;
         }
         if (isset($skipRegex) && preg_match($skipRegex, $file))

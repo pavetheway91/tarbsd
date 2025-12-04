@@ -5,13 +5,6 @@ class PlatformCheck
 {
     public static function run() : void
     {
-        if (!TARBSD_PORTS)
-        {
-            ini_set('display_errors', 1);
-            ini_set('display_startup_errors', 1);
-            error_reporting(E_ALL);
-        }
-
         /**
          * Shouldn't have practical effect, since
          * most of the time gets spent by other
