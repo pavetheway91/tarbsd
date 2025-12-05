@@ -44,34 +44,33 @@ trait Installer
         {
             $this->rollback('empty');
 
-            /**
-             * Skip this check with the new pkgbase.freebsd.org repo, it doesn't
-             * have A or AAAA records, but pkg knows how to find it.
-             **/
-            if ($this->baseRelease->getDomain() !== FreeBSDRelease::PKGBASE_DOMAIN)
+            $res = $this->httpClient->request('GET', $url = $this->baseRelease->getBaseRepo($arch), [
+                'max_redirects' => 0,
+            ]);
+            switch($res->getStatusCode())
             {
-                $res = $this->httpClient->request('GET', $this->baseRelease->getBaseRepo($arch));
-                switch($res->getStatusCode())
-                {
-                    case 200:
-                        break;
-                    case 404:
-                        throw new \Exception(sprintf(
-                            'Seems like %s doesn\'t exist',
-                            $this->baseRelease
-                        ));
-                    default:
-                        throw new \Exception(sprintf(
-                            'Seems like there\'s something wrong in %s, status code: %s',
-                            $this->baseRelease->getDomain(),
-                            $res->getStatusCode()
-                        ));
-                }
+                case 200:
+                case 301:
+                case 302:
+                    break;
+                case 404:
+                    throw new \Exception(sprintf(
+                        'Seems like %s doesn\'t exist',
+                        $this->baseRelease
+                    ));
+                default:
+                    throw new \Exception(sprintf(
+                        'Seems like there\'s something wrong in %s, status code: %s',
+                        $this->baseRelease::PKG_DOMAIN,
+                        $res->getStatusCode()
+                    ));
             }
+
             $this->fs->dumpFile(
                 $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',
-                $this->baseRelease->getBaseConf($arch)
+                $this->baseRelease->getBaseConf()
             );
+
             $this->fs->mirror(
                 $pkgKeys = '/usr/share/keys',
                 $rootPkgKeys = $this->root . $pkgKeys

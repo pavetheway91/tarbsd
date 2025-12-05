@@ -3,9 +3,7 @@ namespace TarBSD\Util;
 
 class FreeBSDRelease implements \Stringable
 {
-    const PKGBASE_DOMAIN = 'pkgbase.freebsd.org';
-
-    const PKGBASE_DOMAIN_UNOFFICIAL = 'pkg.freebsd.org';
+    const PKG_DOMAIN = 'pkg.freebsd.org';
 
     public readonly int $major;
 
@@ -69,22 +67,15 @@ class FreeBSDRelease implements \Stringable
 
     public function getBaseConf(?string $arch = null) : string
     {
-        $keyLocation = $this->getDomain() == self::PKGBASE_DOMAIN_UNOFFICIAL ? 
+        $keyLocation = ($this->channel == 'LATEST' || $this->major < 15) ? 
             '/usr/share/keys/pkg'
-            : ('/usr/share/keys/pkgbase-' . $this->major);
+            : ('/usr/share/keys/pkgbase-${VERSION_MAJOR}');
 
         return sprintf(
             file_get_contents(TARBSD_STUBS . '/FreeBSD-base.conf'),
             $this->getBaseRepo($arch),
             $keyLocation
         );
-    }
-
-    public function getDomain() : string
-    {
-        return (is_int($this->minor) && $this->major >= 15) ?
-            self::PKGBASE_DOMAIN
-            : self::PKGBASE_DOMAIN_UNOFFICIAL;
     }
 
     public function getBaseRepo(?string $arch = null) : string
@@ -95,13 +86,13 @@ class FreeBSDRelease implements \Stringable
         {
             return sprintf(
                 'https://%s/%s/base_latest',
-                self::PKGBASE_DOMAIN_UNOFFICIAL,
+                self::PKG_DOMAIN,
                 $abi
             );
         }
         return sprintf(
             'https://%s/%s/base_release_%d',
-            $this->getDomain(),
+            self::PKG_DOMAIN,
             $abi,
             $this->minor
         );
