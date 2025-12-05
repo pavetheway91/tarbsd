@@ -4,3 +4,6 @@
 /tarbsd
 /tarbsd.yml
 /*.php
+/examples/*/tarbsd/etc/ssh
+/examples/*/wrk
+/examples/*/log
