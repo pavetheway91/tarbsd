@@ -153,6 +153,8 @@ class Compiler extends Command
             $id,
             $versionTag
         ));
+
+        return self::SUCCESS;
     }
 
     protected function stringifyConstants(array $constants) : string
@@ -565,6 +567,6 @@ BOOTSTRAP;
 }
 
 $app = new Application;
-$app->add(new Compiler);
+$app->addCommand(new Compiler);
 $app->setDefaultCommand('compile', true);
 $app->run();

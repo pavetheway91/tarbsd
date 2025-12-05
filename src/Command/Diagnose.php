@@ -26,5 +26,7 @@ class Diagnose extends AbstractCommand
         $output->writeln('  php: ' . PHP_VERSION);
         $output->writeln('  phar: ' . Phar::running(false));
         $output->writeln('  extensions: ' . implode(',', get_loaded_extensions()));
+
+        return self::SUCCESS;
     }
 }
