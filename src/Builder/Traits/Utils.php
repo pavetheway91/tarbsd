@@ -273,26 +273,6 @@ CMD;
         return implode(',', $out);
     }
 
-    final protected function hasZopfli() : bool
-    {
-        static $hasZopfli;
-
-        if (null === $hasZopfli)
-        {
-            try
-            {
-                Process::fromShellCommandline('zopfli -h')->mustRun();
-                $hasZopfli = true;
-            }
-            catch (\Exception $e)
-            {
-                $hasZopfli = false;
-            }
-        }
-
-        return $hasZopfli;
-    }
-
     final protected function hasPigz() : bool
     {
         static $hasPigz;

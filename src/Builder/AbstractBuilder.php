@@ -358,9 +358,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             $zlibItem = $this->cache->getItem(
                 hash_hmac_file('sha1', (string) $file, 'zlib')
             );
-            $zopfliItem = $this->cache->getItem(
-                hash_hmac_file('sha1', (string) $file, 'zopfli')
-            );
             $pigzItem = $this->cache->getItem(
                 hash_hmac_file('sha1', (string) $file, 'pigz')
             );
@@ -369,12 +366,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             {
                 $output->write(self::CHECK . ' ' . $file->getFilename() . '.gz (compressed using pigz) cached', true);
                 file_put_contents($file . '.gz', $pigzItem->get());
-                unlink((string) $file);
-            }
-            elseif ($zopfliItem->isHit())
-            {
-                $output->write(self::CHECK . ' ' . $file->getFilename() . '.gz (compressed using zopfli) cached', true);
-                file_put_contents($file . '.gz', $zopfliItem->get());
                 unlink((string) $file);
             }
             else
@@ -390,28 +381,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                     $progressIndicator->finish($file->getFilename() . ' compressed');
                     $pigzItem->set(file_get_contents($file . '.gz'))->expiresAt($expiration);
                     $this->cache->save($pigzItem);
-                }
-                elseif ($this->hasZopfli() && !$quick)
-                {
-                    $progressIndicator = $this->progressIndicator($output);
-                    $progressIndicator->start(sprintf(
-                        "compressing %s using zopfli, might take a while, will be cached.",
-                        $file->getFilename(),
-                    ));
-
-                    $p = Process::fromShellCommandline(
-                        'zopfli -v ' . $file,
-                        null, null, null, 1800
-                    )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
-                    {
-                        $progressIndicator->advance();
-                        $verboseOutput->write($buffer);
-                    });
-                    $progressIndicator->finish($file->getFilename() . ' compressed');
-
-                    $zopfliItem->set(file_get_contents($file . '.gz'))->expiresAt($expiration);
-                    unlink((string) $file);
-                    $this->cache->save($zopfliItem);
                 }
                 elseif ($zlibItem->isHit())
                 {
