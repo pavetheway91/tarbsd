@@ -1,3 +1,8 @@
+## 2025-12-06 ##
+* No functional changes, just some micro-optimization for phar app, forward compatibility
+  with Symfony 8 libraries and making sure that pkgbase keeps working if there are future
+  changes to the domain where base packages are distributed from.
+
 ## 2025-11-18 ##
 * Base packages for 15 (RELEASE/RC) are downloaded from the new repository run by
   the release engineering team.
