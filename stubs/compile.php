@@ -103,11 +103,13 @@ class Compiler extends Command
 
         $phar->setStub($this->genStub($id, $ports, $np));
 
-        $this->genBootstrap($phar, !$versionTag);
+        $debug = !$versionTag;
+
+        $this->genBootstrap($phar);
 
         $this->addOwnSrc($output, $phar, $ports, $prefix, $versionTag, $mockGh);
 
-        $this->addPackages($output, $phar, $ports, $np);
+        $this->addPackages($output, $phar, $ports, $np, $debug);
 
         $phar->compressFiles(Phar::GZ);
 
@@ -256,7 +258,7 @@ NOICONV;
         );
     }
 
-    protected function genBootstrap(Phar $phar, bool $isDev)
+    protected function genBootstrap(Phar $phar)
     {
         $bootstrap = <<<BOOTSTRAP
 <?php
@@ -265,6 +267,8 @@ use Composer\Autoload\ClassLoader;
 use %s as Initializer;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\ErrorHandler\ErrorHandler;
+use Symfony\Component\ErrorHandler\BufferingLogger;
 
 function getClassLoader() : ClassLoader
 {
@@ -298,9 +302,23 @@ function getClassLoader() : ClassLoader
 
 function run() : int
 {
-    error_reporting(%s);
-    ini_set('display_errors', 1);
     getClassLoader();
+
+    error_reporting(\E_ALL & ~\E_DEPRECATED & ~\E_USER_DEPRECATED);
+
+    if (class_exists(ErrorHandler::class))
+    {
+        ini_set('display_errors', 0);
+        @ini_set('zend.assertions', 1);
+        ini_set('assert.active', 1);
+        ini_set('assert.exception', 1);
+        ErrorHandler::register(new ErrorHandler(new BufferingLogger, true));
+    }
+    else
+    {
+        ini_set('display_errors', 1);
+    }
+
     \$app = new App;
     return \$app->run();
 }
@@ -320,8 +338,7 @@ BOOTSTRAP;
         $phar->addFromString('bootstrap.php', sprintf(
             $bootstrap,
             $this->initializer,
-            $files,
-            $isDev ? 'E_ALL' : 'E_ALL & ~E_DEPRECATED',
+            $files
         ));
 
         foreach([
@@ -409,7 +426,7 @@ BOOTSTRAP;
         ));
     }
 
-    protected function addPackages(OutputInterface $output, Phar $phar, bool $ports, bool $np)
+    protected function addPackages(OutputInterface $output, Phar $phar, bool $ports, bool $np, bool $debug)
     {
         $rootLen = strlen($this->root);
 
@@ -492,6 +509,10 @@ BOOTSTRAP;
                     '/^symfony\/polyfill-(iconv|mbstring|ctype|intl)/',
                     $package
                 ) && $np)
+                || (preg_match(
+                    '/^symfony\/(var-dumper|error-handler)/',
+                    $package
+                ) && !$debug)
             ) {
                 $output->write("skipping " . $package . "\n");
             }
