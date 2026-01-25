@@ -109,7 +109,7 @@ LOGO;
             if ($eolDate < $now)
             {
                 $output->writeln(sprintf(
-                    "%s PHP %s reached it's EOL in %s, please consider updating.",
+                    "%s PHP %s reached its EOL in %s, please consider updating.",
                     self::ERR,
                     $phpVer,
                     self::PHP_VERSIONS[$phpVer]['eolDate'],
@@ -118,7 +118,7 @@ LOGO;
             elseif ($activeSupportEndDate->modify('+6 months') < $now)
             {
                 $output->writeln(sprintf(
-                    "%s PHP %s reached end of it's active support on %s"
+                    "%s PHP %s reached end of its active support on %s"
                     . "\n   and will be EOL in %s. Please consider updating.",
                     self::ERR,
                     $phpVer,
