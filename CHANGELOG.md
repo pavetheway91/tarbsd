@@ -1,3 +1,7 @@
+## 2026-01-25 ##
+* More descriptive error messages if the builder happens to have runtime issues.
+* Symfony libraries were updated.
+
 ## 2025-12-06 ##
 * No functional changes, just some micro-optimization for phar app, forward compatibility
   with Symfony 8 libraries and making sure that pkgbase keeps working if there are future
