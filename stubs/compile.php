@@ -103,7 +103,7 @@ class Compiler extends Command
 
         $phar->setStub($this->genStub($id, $ports, $np));
 
-        $debug = !$versionTag;
+        $debug = true;
 
         $this->genBootstrap($phar);
 
