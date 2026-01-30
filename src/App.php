@@ -21,6 +21,8 @@ use Symfony\Component\HttpClient\NativeHttpClient;
 
 use Symfony\Component\Process\Process;
 
+use Composer\Autoload\ClassLoader;
+
 use DateTimeImmutable;
 
 class App extends Application implements EventSubscriberInterface
@@ -35,7 +37,7 @@ class App extends Application implements EventSubscriberInterface
 
     private readonly GlobalConfiguration $globalConfig;
 
-    public function __construct()
+    public function __construct(public readonly ?ClassLoader $classLoader = null)
     {
         Util\PlatformCheck::run();
 

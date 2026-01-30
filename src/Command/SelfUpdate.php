@@ -284,7 +284,7 @@ class SelfUpdate extends AbstractCommand
 
     protected function loadAllClasses() : void
     {
-        $classLoader = \TarBSD\getClassLoader();
+        $classLoader = $this->getApplication()->classLoader;
 
         foreach($classLoader->getPrefixesPsr4() as $ns => $dirs)
         {

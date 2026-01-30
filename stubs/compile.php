@@ -302,7 +302,7 @@ function getClassLoader() : ClassLoader
 
 function run() : int
 {
-    getClassLoader();
+    \$loader = getClassLoader();
 
     error_reporting(\E_ALL & ~\E_DEPRECATED & ~\E_USER_DEPRECATED);
 
@@ -319,7 +319,7 @@ function run() : int
         ini_set('display_errors', 1);
     }
 
-    \$app = new App;
+    \$app = new App(\$loader);
     return \$app->run();
 }
 
