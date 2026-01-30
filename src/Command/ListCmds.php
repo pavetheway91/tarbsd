@@ -32,11 +32,11 @@ class ListCmds extends AbstractCommand
             }
         }
 
-        $output->writeln('<comment>Available commands</comment>:');
+        $output->writeln('<comment> Available commands</comment>:');
         foreach($cmds as $name => $desc)
         {
             $output->writeln(sprintf(
-                '  <info>%s</info>%s',
+                '   <info>%s</info>%s',
                 str_pad($name, $maxCmdLen + 15, ' '),
                 $desc
             ));
