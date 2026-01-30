@@ -209,9 +209,13 @@ class SelfUpdate extends AbstractCommand
         return self::SUCCESS;
     }
 
-   protected function loadAllClasses() : void
+    protected function loadAllClasses() : void
     {
         $classLoader = $this->getApplication()->classLoader;
+
+        set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline, array $errcontext)
+        {
+        });
 
         foreach($classLoader->getPrefixesPsr4() as $ns => $dirs)
         {
@@ -228,17 +232,16 @@ class SelfUpdate extends AbstractCommand
                             '\\',
                             substr($relativeName, 0, strlen($relativeName) - 4)
                         );
-
                         try
                         {
                             @class_exists($className);
                         }
                         catch(\Throwable $e)
-                        {
-                        }
+                        {}
                     }
                 }
             }
         }
+        restore_error_handler();
     }
 }
