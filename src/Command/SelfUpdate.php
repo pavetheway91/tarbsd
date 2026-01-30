@@ -2,7 +2,6 @@
 namespace TarBSD\Command;
 
 use TarBSD\Util\SignatureChecker;
-use TarBSD\Builder;
 use TarBSD\App;
 
 use Symfony\Component\Console\Output\OutputInterface;
@@ -27,6 +26,8 @@ use Phar;
 )]
 class SelfUpdate extends AbstractCommand
 {
+    use VersionTrait;
+
     const REPO = 'pavetheway91/tarbsd';
 
     public function __construct()
@@ -54,9 +55,7 @@ class SelfUpdate extends AbstractCommand
             return self::FAILURE;
         }
 
-        $self = Phar::running(false);
-
-        if (!is_writable($self))
+        if (!is_writable($self = Phar::running(false)))
         {
             $output->writeln(sprintf(
                 "%s  %s is not writable",
@@ -78,8 +77,6 @@ class SelfUpdate extends AbstractCommand
 
         $latest = $this->getLatest(
             $client = $this->getApplication()->getHttpClient(),
-            App::getBuildDate(),
-            hash_file('sha256', $self),
             $preRelease
         );
 
@@ -115,7 +112,7 @@ class SelfUpdate extends AbstractCommand
 
             return $this->runUpdate(
                 $client, $output, $releaseName,
-                $phar, $size, $sig, $self, $perms
+                $phar, $size, $sig, $perms
             );
         }
         else
@@ -133,7 +130,6 @@ class SelfUpdate extends AbstractCommand
         string $phar,
         int $size,
         string $sig,
-        string $self,
         int $perms
     ) : int
     {
@@ -203,7 +199,7 @@ class SelfUpdate extends AbstractCommand
         $this->loadAllClasses();
         $output->writeln(self::CHECK . ' making sure nothing ugly happens during the update');
 
-        $fs->rename($tmpFile, $self, true);
+        $fs->rename($tmpFile, Phar::running(false), true);
 
         $output->writeln(sprintf(
             self::CHECK . " tarBSD builder was updated to %s",
@@ -213,76 +209,7 @@ class SelfUpdate extends AbstractCommand
         return self::SUCCESS;
     }
 
-    protected function getLatest(
-        HttpClientInterface $client,
-        DateTimeImmutable $currentBuildDate,
-        string $currentSHA256,
-        bool $preRelease
-    ) : ?array {
-        $res = $client->request(
-            'GET',
-            TARBSD_GITHUB_API . '/repos/' . self::REPO . '/releases?per_page=20',
-            [
-                'headers' => [
-                    'accept' => 'application/vnd.github+json',
-                    'X-GitHub-Api-Version' => '2022-11-28'
-                ],
-                'timeout' => 5
-            ]
-        );
-
-        if (($code = $res->getStatusCode()) !== 200)
-        {
-            throw new \Exception('api.github.com responded with: ' . $code);
-        }
-
-        $payload = json_decode($res->getContent(), true);
-
-        foreach($payload as $release)
-        {
-            $pub = new DateTimeImmutable($release['created_at']);
-            $name = $release['name'];
-
-            // some wiggle room between a tag time and a build time
-            $currentBuildDate = $currentBuildDate->modify('-1 hour');
-
-            if (
-                $pub > $currentBuildDate
-                && (!$release['prerelease'] || $preRelease)
-            ) {
-                $phar = $size = $sig = $sha256 = null;
-
-                foreach($release['assets'] as $asset)
-                {
-                    if (
-                        $asset['name'] === 'tarbsd'
-                        && preg_match('/sha256:([a-z0-9]{64})/', $asset['digest'], $m)
-                    ) {
-                        $phar = $asset['browser_download_url'];
-                        $size = $asset['size'];
-                        $sha256 = $m[1];
-                    }
-                    if ($asset['name'] === 'tarbsd.sig.secp384r1')
-                    {
-                        $sig = $asset['browser_download_url'];
-                    }
-                }
-
-                if ($phar && $sig && $sha256 !== $currentSHA256)
-                {
-                    return [
-                        $name,
-                        $phar,
-                        $size,
-                        $sig
-                    ];
-                }
-            }
-        }
-        return null;
-    }
-
-    protected function loadAllClasses() : void
+   protected function loadAllClasses() : void
     {
         $classLoader = $this->getApplication()->classLoader;
 

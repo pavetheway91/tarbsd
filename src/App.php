@@ -24,6 +24,7 @@ use Symfony\Component\Process\Process;
 use Composer\Autoload\ClassLoader;
 
 use DateTimeImmutable;
+use Phar;
 
 class App extends Application implements EventSubscriberInterface
 {
@@ -66,6 +67,15 @@ class App extends Application implements EventSubscriberInterface
         return $date;
     }
 
+    public static function hashPhar() : ?string
+    {
+        if ($phar = Phar::running(false))
+        {
+            return hash_file('sha256', $phar);
+        }
+        return null;
+    }
+
     public function commandEvent(ConsoleCommandEvent $event) : void
     {
         $output = $event->getOutput();
@@ -78,14 +88,33 @@ class App extends Application implements EventSubscriberInterface
             );
         }
 
+        $command = $event->getCommand()->getName();
+
+        if (static::amIRoot() && TARBSD_SELF_UPDATE && !in_array($command, ['self-update', 'version-check']))
+        {
+            $cache = $this->getCache();
+            $item = $cache->getItem(
+                hash_hmac('sha256', 'version_check', self::hashPhar())
+            );
+            if (!$item->isHit())
+            {
+                Process::fromShellCommandline(sprintf(
+                    "nohup %s version-check &",
+                    $self = Phar::running(false)
+                ))->run();
+                $item->set(true)->expiresAt(new DateTimeImmutable('+3 hours'));
+                $cache->save($item);
+            }
+        }
+
         if (
-            !in_array($name = $event->getCommand()->getName(), ['list', 'help', 'diagnose'])
+            !in_array($command, ['list', 'help', 'diagnose', 'version-check'])
             && !static::amIRoot()
         ) {
             $output->writeln(sprintf(
                 "%s tarBSD builder needs root privileges for %s command",
                 Command\AbstractCommand::ERR,
-                $event->getCommand()->getName()
+                $command
             ));
             $event->disableCommand();
         }
@@ -194,14 +223,6 @@ class App extends Application implements EventSubscriberInterface
     {
         return [
             new Command\ListCmds,
-            /**
-             * todo: replace this with own help
-             * command, which doesn't make empty
-             * promises about unimplemented features
-             * or confuse the user with too many
-             * options that aren't even in anyone's
-             * interest.
-             */
             new SymfonyHelpCommand,
             new Command\Build,
             new Command\Bootstrap,
@@ -209,7 +230,8 @@ class App extends Application implements EventSubscriberInterface
             new Command\WrkDestroy,
             new Command\SelfUpdate,
             new Command\Diagnose,
-            new Command\SelfCheckSig
+            new Command\SelfCheckSig,
+            new Command\VersionCheck
         ];
     }
 }

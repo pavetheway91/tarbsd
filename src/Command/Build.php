@@ -139,6 +139,8 @@ class Build extends AbstractCommand
             $output->writeln(MfsBuilder::CHECK . ' wrk/' . $formattedName . ' generated');
         }
 
+        $this->showUpdateMessage($output);
+
         return self::SUCCESS;
     }
 

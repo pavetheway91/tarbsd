@@ -7,8 +7,10 @@ use TarBSD\App;
 
 use Symfony\Component\Console\Command\Command as SfCommand;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Cache\CacheItem;
 
 use DateTimeImmutable;
+use Phar;
 
 abstract class AbstractCommand extends SfCommand implements Icons
 {
@@ -65,35 +67,25 @@ LOGO;
             ],
             self::LOGO
         );
+
         $output->writeln($logo);
     }
 
     protected function showVersion(OutputInterface $output) : void
     {
-        $style = '';
         $v = 'dev';
 
         if (TARBSD_VERSION)
         {
             $v = (TARBSD_PORTS ? 'ports-' : '') . TARBSD_VERSION;
-
-            if (TARBSD_SELF_UPDATE)
-            {
-                $buidDate = App::getBuildDate();
-
-                if ($buidDate < new DateTimeImmutable('-8 weeks'))
-                {
-                    $style = '<bg=yellow;options=bold>';
-                }
-            }
         }
 
         $output->writeln(sprintf(
-            " version: %s%s%s",
-            $style,
+            " version: %s",
             $v,
-            $style ? '</>' : ''
         ));
+
+        $this->showUpdateMessage($output);
 
         $phpVer = PHP_MAJOR_VERSION . '.' .  PHP_MINOR_VERSION;
 
@@ -124,6 +116,29 @@ LOGO;
                     $phpVer,
                     self::PHP_VERSIONS[$phpVer]['activeSupportEndDate'],
                     self::PHP_VERSIONS[$phpVer]['eolDate'],
+                ));
+            }
+        }
+    }
+
+    protected function getVersionCheckItem() : CacheItem
+    {
+        return $this->getApplication()->getCache()->getItem(
+            hash_hmac('sha256', 'update_available', App::hashPhar())
+        );
+    }
+
+    protected function showUpdateMessage(OutputInterface $output)
+    {
+        if (TARBSD_SELF_UPDATE)
+        {
+            $item = $this->getVersionCheckItem();
+            if ($item->isHit() && $item->get() === true)
+            {
+                $output->writeln(sprintf(
+                    "%s A newer version tarBSD builder is available, update with"
+                    . "\n   self-update command.",
+                    self::ERR
                 ));
             }
         }
