@@ -10,7 +10,8 @@ use Symfony\Component\Console\Attribute\Argument;
 
 #[AsCommand(
     name: 'wrk-init',
-    description: 'Initialize the wrk filesystem with a custom size'
+    description: 'Initialize the wrk filesystem with a custom size',
+    hidden: true
 )]
 class WrkInit extends AbstractCommand
 {
@@ -18,10 +19,15 @@ class WrkInit extends AbstractCommand
         OutputInterface $output,
         #[Argument('Size in gigs')] int $size,
     ) {
+        $output->writeln(sprintf(
+            "%s wrk-init command has been deprecated,\n   the file system grows automatially.",
+            self::ERR
+        ));
+
         if ($fs = WrkFs::get($cwd = getcwd()))
         {
             $output->writeln(sprintf(
-                "%s  %s exists already",
+                "%s %s exists already",
                 self::ERR,
                 $fs->mnt
             ));
@@ -31,7 +37,7 @@ class WrkInit extends AbstractCommand
         WrkFs::init($cwd, $size);
 
         $output->writeln(sprintf(
-            "%s  %s created",
+            "%s %s created",
             self::CHECK,
             realpath($cwd) . '/wrk'
         ));
