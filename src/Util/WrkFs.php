@@ -3,10 +3,21 @@ namespace TarBSD\Util;
 
 use Symfony\Component\Process\Process;
 use Symfony\Component\Filesystem\Filesystem;
+use Stringable;
 
-class WrkFs
+final class WrkFs implements Stringable
 {
-    public static function init(string $dir, int $size = 2) : bool
+    private array $md;
+
+    public function __construct(
+        public readonly string $id,
+        string $md,
+        public readonly string $mnt
+    ) {
+        $this->md = explode(',', $md);
+    }
+
+    public static function init(string $dir, int $size = 1) : bool
     {
         if (0 >= $size)
         {
@@ -35,7 +46,6 @@ class WrkFs
                 . 'zfs create -o compression=lz4 -o recordsize=4m '.  $fsId . "/root\n"
                 . 'zfs snapshot -r ' . $fsId . "/root@empty \n"
             )->mustRun();
-
             return true;
         }
 
@@ -58,22 +68,7 @@ class WrkFs
 
                 if ($id === $fsId)
                 {
-                    return new class($id, $md, $mnt)
-                    {
-                        public function __construct(
-                            public readonly string $id,
-                            public readonly string $md,
-                            public readonly string $mnt
-                        ) {}
-
-                        public function destroy() : void
-                        {
-                            Process::fromShellCommandline(sprintf(
-                                "zpool destroy -f %s && mdconfig -d -u %s",
-                                $this->id, $this->md
-                            ))->mustRun();
-                        }
-                    };
+                    return new static($id, $md, $mnt);
                 }
             }
         }
@@ -86,5 +81,62 @@ class WrkFs
         return 'tarbsd_' . substr(md5(
             realpath($dir ) . '/wrk'
         ), 0, 8);
+    }
+
+    public function destroy() : void
+    {
+        $mds = [];
+        foreach($this->md as $dev)
+        {
+            $mds[] = sprintf(
+                '&& mdconfig -d -u %s',
+                $dev
+            );
+        }
+        Process::fromShellCommandline(sprintf(
+            "zpool destroy -f %s %s",
+            $this->id, implode(' ', $mds)
+        ))->mustRun();
+    }
+
+    public function checkSize() : void
+    {
+        if ($this->getAvailable() < 768)
+        {
+            $this->grow();
+        }
+    }
+
+    public function grow(int $size = 1024) : void
+    {
+        $md = trim(
+            Process::fromShellCommandline(sprintf(
+                'mdconfig -s %sm',
+                $size
+            ))->mustRun()->getOutput(),
+            "\n"
+        );
+        $this->md[] = $md;
+        Process::fromShellCommandline(sprintf(
+            'zpool add %s %s && zfs set tarbsd:md=%s %s',
+            $this->id, $md, implode(',', $this->md), $this->id
+        ))->mustRun();
+    }
+
+    public function getAvailable() : int
+    {
+        $avail = trim(
+            Process::fromShellCommandline($cmd = sprintf(
+                'zfs list -Hp -o available -d 0 -p %s',
+                $this->id
+            ))->mustRun()->getOutput(),
+            "\n"
+        );
+        return (int) number_format($avail / 1048576, 0, '', '');
+    }
+
+    public function __toString() : string
+    {
+        return $this->id;
     }
 }

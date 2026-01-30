@@ -17,7 +17,7 @@ trait Installer
          */
         $arch = 'amd64';
 
-        $rootId = $this->fsId . '/root';
+        $rootId = $this->wrkFs . '/root';
 
         $abi = $this->baseRelease->getAbi($arch);
 
@@ -172,7 +172,7 @@ trait Installer
 
     final protected function installTarBalls(OutputInterface $output, OutputInterface $verboseOutput) : void
     {
-        $rootId = $this->fsId . '/root';
+        $rootId = $this->wrkFs . '/root';
         $distFiles = [];
         $distFileHash = hash_init('xxh128');
         foreach(['kernel.txz', 'base.txz'] as $file)
@@ -258,7 +258,7 @@ DEFAULTS);
 
     final protected function installPKGs(OutputInterface $output, OutputInterface $verboseOutput) : void
     {
-        $rootId = $this->fsId . '/root';
+        $rootId = $this->wrkFs . '/root';
 
         $packages = $this->getRequiredPackages();
 

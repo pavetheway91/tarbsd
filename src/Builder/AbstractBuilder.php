@@ -32,7 +32,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     protected readonly string $root;
 
-    protected readonly string $fsId;
+    protected readonly WrkFs $wrkFs;
 
     protected readonly string $filesDir;
 
@@ -70,7 +70,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->wrk = $config->getDir() . '/wrk';
         $this->root = $this->wrk . '/root';
         $this->filesDir = $config->getDir() . '/tarbsd';
-        $this->fsId = WrkFs::getId($this->config->getDir());
+        WrkFs::init($this->config->getDir());
+        $this->wrkFs = WrkFs::get($this->config->getDir());
 
         if ($distFilesOrBaseRelease instanceof FreeBSDRelease)
         {
@@ -111,8 +112,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $start = time();
         $this->bootPruned = false;
         $this->modules = null;
-
-        WrkFs::init($this->config->getDir());
 
         $f = (new Finder)->files()->in($this->wrk)->name(['*.img', 'tarbsd.*']);
         $this->fs->remove($f);

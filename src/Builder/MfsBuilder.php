@@ -241,7 +241,7 @@ CONF;
             'umount -f usr',
             $this->root,
         );
-
+        $this->wrkFs->checkSize();
         try
         {
             Process::fromShellCommandline(
@@ -264,6 +264,7 @@ CONF;
         $progressIndicator->start('compressing mfs image (gzip-' . $gzipLevel . ')');
         $this->zlibCompress($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
         $progressIndicator->finish('mfs image ready');
+        $this->wrkFs->checkSize();
 
         Process::fromShellCommandline(
             'makefs boot.img boot',
@@ -295,7 +296,7 @@ rm efi.img && rm boot.img
 rm cache/pmbr && rm cache/gptboot
 mdconfig -d -u "\$md"
 CMD;
-
+        $this->wrkFs->checkSize();
         Process::fromShellCommandline(
             $cmd, $this->wrk, null, null,  300
         )->mustRun(function ($type, $buffer) use ($verboseOutput)

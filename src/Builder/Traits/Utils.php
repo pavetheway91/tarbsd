@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Builder\Traits;
 
-use Symfony\Component\Console\Helper\ProgressIndicator;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
+use TarBSD\Util\ProgressIndicator;
 
 trait Utils
 {
@@ -18,15 +18,12 @@ trait Utils
 
     protected function progressIndicator(OutputInterface $output) : ProgressIndicator
     {
-        return new ProgressIndicator($output, 'verbose', 100, 
-            ['⠏', '⠛', '⠹', '⢸', '⣰', '⣤', '⣆', '⡇'],
-            '<info>✔</info>'
-        );
+        return new ProgressIndicator($output, $this->wrkFs);
     }
 
     final protected function rollback(string $snapshot) : void
     {
-        $rootId = $this->fsId . '/root';
+        $rootId = $this->wrkFs . '/root';
 
         Process::fromShellCommandline(
             'zfs rollback -r ' . $rootId . '@' . $snapshot
@@ -35,7 +32,7 @@ trait Utils
 
     final protected function snapshot(string $snapshot) : void
     {
-        $rootId = $this->fsId . '/root';
+        $rootId = $this->wrkFs . '/root';
 
         Process::fromShellCommandline(
             'zfs snapshot -r ' . $rootId . '@' . $snapshot
@@ -246,8 +243,7 @@ CMD;
         }
         $size = filesize($file);
         $mbSize = $size / 1048576;
-        $formatSize = number_format($mbSize, 0);
-        return (int) $formatSize;
+        return (int) number_format($mbSize, 0, '', '');
     }
 
     final protected function encodeTarOptions(array $arr) : string
