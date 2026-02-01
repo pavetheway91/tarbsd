@@ -1,20 +1,42 @@
 <?php declare(strict_types=1);
-namespace TarBSD\Command;
+namespace TarBSD\Util;
 
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use TarBSD\App;
-use DateTimeImmutable;
-use Phar;
 
-trait VersionTrait
+use DateTimeImmutable;
+
+class UpdateUtil
 {
-    protected function getLatest(
+    const REPO = 'pavetheway91/tarbsd';
+
+    const PUB_KEY_EC = <<<PEM
+-----BEGIN PUBLIC KEY-----
+MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEqmhBm7R/7/DWZS86Z9YIOy9VMEmai7pD
+HpzlkL8TRap+jCxPX9GIXEueNz6PXUY/rV0lY5nis1ZWInteYwIYnjC8eXVV4WAp
+CmPnnm1exuq4iHWn0MdVpnNE1WLGAO9P
+-----END PUBLIC KEY-----
+PEM;
+
+    public static function validateEC(string $phar, string $sig) : bool
+    {
+        $pubKey = openssl_get_publickey(self::PUB_KEY_EC);
+
+        return 1 === openssl_verify(
+            file_get_contents($phar),
+            base64_decode($sig),
+            $pubKey
+        );
+    }
+
+    public static function getLatest(
         HttpClientInterface $client,
         bool $preRelease
     ) : ?array {
+
         $res = $client->request(
             'GET',
-            TARBSD_GITHUB_API . '/repos/' . SelfUpdate::REPO . '/releases?per_page=20',
+            TARBSD_GITHUB_API . '/repos/' . self::REPO . '/releases?per_page=20',
             [
                 'headers' => [
                     'accept' => 'application/vnd.github+json',
@@ -30,6 +52,7 @@ trait VersionTrait
         }
 
         $payload = json_decode($res->getContent(), true);
+
         $currentBuildDate = App::getBuildDate();
         $currentSHA256 = App::hashPhar();
 
@@ -38,11 +61,8 @@ trait VersionTrait
             $pub = new DateTimeImmutable($release['created_at']);
             $name = $release['name'];
 
-            // some wiggle room between a tag time and a build time
-            $currentBuildDate = $currentBuildDate->modify('-1 hour');
-
             if (
-                $pub > $currentBuildDate
+                $pub >= $currentBuildDate
                 && (!$release['prerelease'] || $preRelease)
             ) {
                 $phar = $size = $sig = $sha256 = null;

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
-use TarBSD\Util\SignatureChecker;
+use TarBSD\Util\UpdateUtil;
 use TarBSD\App;
 
 use Symfony\Component\Console\Output\OutputInterface;
@@ -26,10 +26,6 @@ use Phar;
 )]
 class SelfUpdate extends AbstractCommand
 {
-    use VersionTrait;
-
-    const REPO = 'pavetheway91/tarbsd';
-
     public function __construct()
     {
         parent::__construct();
@@ -75,21 +71,16 @@ class SelfUpdate extends AbstractCommand
             return self::FAILURE;
         }
 
-        $latest = $this->getLatest(
-            $client = $this->getApplication()->getHttpClient(),
-            $preRelease
-        );
+        $client = $this->getApplication()->getHttpClient();
 
-        if ($latest)
+        if ([$releaseName, $phar, $size, $sig] = UpdateUtil::getLatest($client, $preRelease))
         {
-            [$releaseName, $phar, $size, $sig] = $latest;
-
             $helper = $this->getHelper('question');
 
             $question = new Question(sprintf(
                 "   There <g>is</> a new version available, you might\n   want to check what has changed first"
                 . "\n   %s\n   Proceed?",
-                'https://github.com/' . self::REPO . '/blob/main/CHANGELOG.md'
+                'https://github.com/' . UpdateUtil::REPO . '/blob/main/CHANGELOG.md'
             ));
             $question->setValidator(function ($value) : bool
             {
@@ -167,7 +158,7 @@ class SelfUpdate extends AbstractCommand
                     $progressBar->start();
                 }
                 $progressBar->advance(
-                    intval(($chunk->getOffset() / 205880752) * 100)
+                    intval(($chunk->getOffset() / $size) * 100)
                 );
                 fwrite($handle, $chunk->getContent());
             }
@@ -176,7 +167,7 @@ class SelfUpdate extends AbstractCommand
         $progressBar->finish();
         fclose($handle);
 
-        if (!SignatureChecker::validateEC(
+        if (!UpdateUtil::validateEC(
             $tmpFile,
             $res['sig']->getContent()
         )) {
@@ -197,7 +188,6 @@ class SelfUpdate extends AbstractCommand
          * it gets overriden.
          */
         $this->loadAllClasses();
-        $output->writeln(self::CHECK . ' making sure nothing ugly happens during the update');
 
         $fs->rename($tmpFile, Phar::running(false), true);
 

@@ -17,7 +17,7 @@ class ProgressIndicator extends Helper\ProgressIndicator
     public function advance() : void
     {
         static $i = 0;
-        if ($i++ % 10 != 0)
+        if ($i++ % 4 != 0)
         {
             $this->wrkFs->checkSize();
         }

@@ -56,12 +56,16 @@ class App extends Application implements EventSubscriberInterface
     {
         static $date;
 
-        if (TARBSD_BUILD_ID && null === $date)
+        if (TARBSD_VERSION && null === $date)
         {
-            $date = DateTimeImmutable::createFromFormat(
-                'U',
-                (string) Uuid::uuid_time(TARBSD_BUILD_ID)
-            );
+            if (preg_match('/(([0-9]{2})\.([0-9]{2})\.([0-9]{2}))/', TARBSD_VERSION, $m))
+            {
+                return  $date = DateTimeImmutable::createFromFormat(
+                    'y.m.d H:i:s e',
+                    $m[1] . ' 00:00:00 UTC'
+                );
+            }
+            throw new \Exception('failed to parse tarBSD version ' . $v);
         }
 
         return $date;
