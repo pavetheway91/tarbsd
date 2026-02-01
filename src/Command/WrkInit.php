@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Argument;
+
 use TarBSD\Util\WrkFs;
 use TarBSD\App;
-
-use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Attribute\Argument;
 
 #[AsCommand(
     name: 'wrk-init',

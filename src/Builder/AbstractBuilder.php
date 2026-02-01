@@ -1,13 +1,6 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Builder;
 
-use TarBSD\Configuration;
-use TarBSD\Util\FreeBSDRelease;
-use TarBSD\Util\Icons;
-use TarBSD\Util\Fstab;
-use TarBSD\Util\WrkFs;
-use TarBSD\App;
-
 use Symfony\Component\Cache\Adapter\AdapterInterface as CacheInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -17,6 +10,15 @@ use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
+
+use TarBSD\Util\FreeBSDRelease;
+use TarBSD\Configuration;
+use TarBSD\Util\Icons;
+use TarBSD\Util\Fstab;
+use TarBSD\Util\WrkFs;
+use TarBSD\Util\Misc;
+use TarBSD\App;
+
 use DateTimeImmutable;
 use SplFileInfo;
 
@@ -132,7 +134,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $this->prune($output, $verboseOutput);
 
-        $this->tarStream($this->filesDir, $this->root, $verboseOutput);
+        Misc::tarStream($this->filesDir, $this->root, $verboseOutput);
         $output->writeln(self::CHECK . ' copied overlay directory to the image');
 
         $this->prepare($output, $verboseOutput, $quick);
@@ -156,7 +158,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $output->writeln(sprintf(
             self::CHECK . " %s <info>size %sm</>, generated in %d seconds",
             substr($file = $this->wrk . '/tarbsd.img', strlen($cwd) + 1),
-            $this->getFileSizeM($file),
+            Misc::getFileSizeM($file),
             time() - $start
         ));
 
@@ -370,14 +372,14 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             }
             else
             {
-                if ($this->hasPigz() && !$quick)
+                if (Misc::hasPigz() && !$quick)
                 {
                     $progressIndicator = $this->progressIndicator($output);
                     $progressIndicator->start(sprintf(
                         "compressing %s using pigz-11, might take a while, will be cached.",
                         $file->getFilename(),
                     ));
-                    $this->pigzCompress((string) $file, 11, $progressIndicator);
+                    Misc::pigzCompress((string) $file, 11, $progressIndicator);
                     $progressIndicator->finish($file->getFilename() . ' compressed');
                     $pigzItem->set(file_get_contents($file . '.gz'))->expiresAt($expiration);
                     $this->cache->save($pigzItem);
@@ -395,7 +397,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                         "compressing %s",
                         $file->getFilename(),
                     ));
-                    $this->zlibCompress((string) $file, 9, $progressIndicator);
+                    Misc::zlibCompress((string) $file, 9, $progressIndicator);
                     $progressIndicator->finish($file->getFilename() . ' compressed');
                     $zlibItem->set(file_get_contents($file . '.gz'))->expiresAt($expiration);
                     $this->cache->save($zlibItem);
@@ -501,7 +503,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $dir = $this->config->getDir();
         $backupFile = $this->root . '/root/tarbsdBackup.tar';
 
-        $tarOptions = $this->encodeTarOptions([
+        $tarOptions = Misc::encodeTarOptions([
             'compression-level' => 19,
             'min-frame-in'      => '1M',
             'max-frame-in'      => '8M',

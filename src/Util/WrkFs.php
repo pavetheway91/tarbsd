@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Util;
 
-use Symfony\Component\Process\Process;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Process\Process;
 use Stringable;
 
 final class WrkFs implements Stringable

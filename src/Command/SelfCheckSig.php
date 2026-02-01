@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
-use TarBSD\Util\SignatureChecker;
-
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
+
+use TarBSD\Util\UpdateUtil;
 
 /**
  * Verifies that releases are properly
@@ -42,7 +42,7 @@ class SelfCheckSig extends AbstractCommand
         {
             $check = function($phar, $sigFile)
             {
-                return SignatureChecker::validateEC(
+                return UpdateUtil::validateEC(
                     $phar, file_get_contents($sigFile)
                 );
             };

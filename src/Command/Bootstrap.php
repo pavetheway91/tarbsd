@@ -1,20 +1,20 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
-use TarBSD\Builder;
-use TarBSD\Configuration;
-
-use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
+use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Question\Question;
-use Symfony\Component\Console\Question\ChoiceQuestion;
-use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
-use Symfony\Component\Finder\Finder;
 use Symfony\Component\Console\Cursor;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\Yaml\Yaml;
 use Symfony\Polyfill\Uuid\Uuid;
+
+use TarBSD\Configuration;
+use TarBSD\Builder;
 
 #[AsCommand(
     name: 'bootstrap',

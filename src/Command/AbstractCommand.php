@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
-use TarBSD\Util\Icons;
-use TarBSD\Builder;
-use TarBSD\App;
-
 use Symfony\Component\Console\Command\Command as SfCommand;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Cache\CacheItem;
+
+use TarBSD\Util\Icons;
+use TarBSD\Builder;
+use TarBSD\App;
 
 use DateTimeImmutable;
 use Phar;

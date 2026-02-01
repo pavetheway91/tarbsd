@@ -3,23 +3,19 @@ namespace TarBSD;
 
 use Symfony\Component\Cache\Adapter\FilesystemAdapter as FilesystemCache;
 use Symfony\Component\Console\Command\HelpCommand as SymfonyHelpCommand;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
-use Symfony\Component\Console\ConsoleEvents;
-use Symfony\Component\Console\Application;
-
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
-use Symfony\Polyfill\Uuid\Uuid;
-
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\HttpClient\NativeHttpClient;
-
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Console\ConsoleEvents;
+use Symfony\Component\Console\Application;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Finder\Finder;
+use Symfony\Polyfill\Uuid\Uuid;
 
 use Composer\Autoload\ClassLoader;
 
@@ -40,7 +36,7 @@ class App extends Application implements EventSubscriberInterface
 
     public function __construct(public readonly ?ClassLoader $classLoader = null)
     {
-        Util\PlatformCheck::run();
+        Util\Misc::platformCheck();
 
         parent::__construct('', TARBSD_VERSION ?: 'dev');
 

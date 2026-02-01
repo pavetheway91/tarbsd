@@ -1,9 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
-use TarBSD\Util\UpdateUtil;
-use TarBSD\App;
-
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -15,7 +13,8 @@ use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
-use Symfony\Contracts\HttpClient\HttpClientInterface;
+use TarBSD\Util\UpdateUtil;
+use TarBSD\App;
 
 use DateTimeImmutable;
 use Phar;

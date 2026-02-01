@@ -1,10 +1,9 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
-use TarBSD\Util\UpdateUtil;
-
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
+use TarBSD\Util\UpdateUtil;
 use DateTimeImmutable;
 
 #[AsCommand(

@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Builder\Traits;
 
-use TarBSD\App;
-use TarBSD\Util\FreeBSDRelease;
-
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
+
+use TarBSD\Util\Misc;
+use TarBSD\App;
 
 trait Installer
 {
@@ -298,7 +298,7 @@ DEFAULTS);
                 if (file_exists($pkgConfigDir))
                 {
                     $this->fs->mkdir($target = $this->root . '/usr/local/etc/pkg');
-                    $this->tarStream($pkgConfigDir, $target, $verboseOutput);
+                    Misc::tarStream($pkgConfigDir, $target, $verboseOutput);
                 }
                 $this->fs->mkdir(
                     $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion()

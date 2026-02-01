@@ -1,11 +1,6 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
-use TarBSD\Builder\MfsBuilder;
-use TarBSD\Util\FreeBSDRelease;
-use TarBSD\Configuration;
-use TarBSD\GlobalConfiguration;
-
 use Symfony\Component\Cache\Adapter\NullAdapter as NullCache;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
@@ -19,6 +14,12 @@ use Symfony\Component\Console\Output\StreamOutput;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
+
+use TarBSD\Builder\MfsBuilder;
+use TarBSD\Util\FreeBSDRelease;
+use TarBSD\Configuration;
+use TarBSD\GlobalConfiguration;
+
 use DateTimeImmutable;
 
 #[AsCommand(

@@ -4,7 +4,9 @@ namespace TarBSD\Builder;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
+
 use TarBSD\Util\Fstab;
+use TarBSD\Util\Misc;
 
 /**
  * MFS image has sort of two images actually.
@@ -211,7 +213,7 @@ CONF;
             $this->root
         )->mustRun();
 
-        $tarOptions = $this->encodeTarOptions([
+        $tarOptions = Misc::encodeTarOptions([
             'compression-level' => $zstdLevel,
             'min-frame-in'      => '512k',
             /**
@@ -243,11 +245,9 @@ CONF;
             $this->root,
         );
 
-        $this->wrkFs->checkSize();
         $this->wrkFs->checkSize(
-            $this->getFileSizeM($this->root . '/.usr.tar')
+            Misc::getFileSizeM($this->root) - Misc::getFileSizeM($this->root . '/usr')
         );
-
         try
         {
             Process::fromShellCommandline(
@@ -269,10 +269,10 @@ CONF;
         $this->wrkFs->checkSize();
         $progressIndicator = $this->progressIndicator($output);
         $progressIndicator->start('compressing mfs image (gzip-' . $gzipLevel . ')');
-        $this->zlibCompress($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
+        Misc::zlibCompress($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
         $progressIndicator->finish('mfs image ready');
 
-        $this->wrkFs->checkSize($this->getFileSizeM($this->wrk . '/boot'));
+        $this->wrkFs->checkSize(Misc::getFileSizeM($this->wrk . '/boot'));
         Process::fromShellCommandline(
             'makefs boot.img boot',
             $this->wrk,
@@ -282,7 +282,7 @@ CONF;
             $verboseOutput->write($buffer);
         });
 
-        $size = $this->getFileSizeM($this->wrk . '/boot.img');
+        $size = Misc::getFileSizeM($this->wrk . '/boot.img');
         $this->wrkFs->checkSize($size);
         $fullsize = strval($size + 1) . 'm';
         $size = strval($size) . 'm';
