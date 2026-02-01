@@ -14,6 +14,7 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Polyfill\Uuid\Uuid;
 
 use TarBSD\Configuration;
+use TarBSD\Util\Misc;
 use TarBSD\Builder;
 
 #[AsCommand(
@@ -93,7 +94,7 @@ class Bootstrap extends AbstractCommand
 
         $fs->dumpFile(
             $overlay . '/etc/hostid',
-            $hostid = Uuid::uuid_create(Uuid::UUID_TYPE_TIME) . "\n"
+            $hostid = Misc::genUuid() . "\n"
         );
         $fs->dumpFile(
             $overlay . '/etc/machine-id',

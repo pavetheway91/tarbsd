@@ -17,6 +17,8 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
+use TarBSD\Util\Misc;
+
 use OpenSSLAsymmetricKey;
 use Phar;
 
@@ -98,7 +100,7 @@ class Compiler extends Command
         $phar = new Phar(
             $tmpFile = $buildDir . '/tarbsd_' . bin2hex(random_bytes(6)) . '.phar',
             0,
-            $id = uuid_create(UUID_TYPE_TIME)
+            $id = Misc::genUuid()
         );
 
         $phar->setStub($this->genStub($id, $ports, $np));

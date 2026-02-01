@@ -10,6 +10,10 @@ use RecursiveIteratorIterator;
 
 class Misc
 {
+    const TIME_OFFSET_INT = 0x01B21DD213814000;
+
+    const TIME_OFFSET_BIN = "\x01\xb2\x1d\xd2\x13\x81\x40\x00";
+
     public static function platformCheck() : void
     {
         /**
@@ -199,9 +203,83 @@ class Misc
         return implode(',', $out);
     }
 
-    protected static function fs()
+    public static function genUuid() : string
+    {
+        $time = microtime(false);
+        $time = substr($time, 11).substr($time, 2, 7);
+
+        if (\PHP_INT_SIZE >= 8)
+        {
+            $time = str_pad(dechex($time + self::TIME_OFFSET_INT), 16, '0', \STR_PAD_LEFT);
+        }
+        else
+        {
+            $time = str_pad(self::toBinary($time), 8, "\0", \STR_PAD_LEFT);
+            $time = self::binaryAdd($time, self::TIME_OFFSET_BIN);
+            $time = bin2hex($time);
+        }
+
+        $clockSeq = random_int(0, 0x3FFF);
+
+        $node = sprintf('%06x%06x',
+            random_int(0, 0xFFFFFF) | 0x010000,
+            random_int(0, 0xFFFFFF)
+        );
+
+        return sprintf('%08s-%04s-1%03s-%04x-%012s',
+            substr($time, -8),
+            substr($time, -12, 4),
+            substr($time, -15, 3),
+            $clockSeq | 0x8000,
+            $node
+        );
+    }
+
+    private static function fs() : Filesystem
     {
         static $fs;
         return $fs ? $fs : $fs = new Filesystem;
+    }
+
+    private static function toBinary(string $digits) : string
+    {
+        $bytes = '';
+        $count = \strlen($digits);
+
+        while ($count)
+        {
+            $quotient = [];
+            $remainder = 0;
+
+            for ($i = 0; $i !== $count; ++$i)
+            {
+                $carry = $digits[$i] + $remainder * 10;
+                $digit = $carry >> 8;
+                $remainder = $carry & 0xFF;
+
+                if ($digit || $quotient)
+                {
+                    $quotient[] = $digit;
+                }
+            }
+
+            $bytes = \chr($remainder).$bytes;
+            $count = \count($digits = $quotient);
+        }
+
+        return $bytes;
+    }
+
+    private static function binaryAdd(string $a, string $b) : string
+    {
+        $sum = 0;
+        for ($i = 7; 0 <= $i; --$i)
+        {
+            $sum += \ord($a[$i]) + \ord($b[$i]);
+            $a[$i] = \chr($sum & 0xFF);
+            $sum >>= 8;
+        }
+
+        return $a;
     }
 }

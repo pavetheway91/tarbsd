@@ -17,7 +17,6 @@ class ComposerStaticInite42d72c82fee392c1f558ea9e43301cd
         'b6b991a57620e2fb6b2f66f03fe9ddc2' => __DIR__ . '/..' . '/symfony/string/Resources/functions.php',
         '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
         'def43f6c87e4f8dfd0c9e1b1bab14fe8' => __DIR__ . '/..' . '/symfony/polyfill-iconv/bootstrap.php',
-        '09f6b20656683369174dd6fa83b7e5fb' => __DIR__ . '/..' . '/symfony/polyfill-uuid/bootstrap.php',
         'd42703b55624106be50579447610593c' => __DIR__ . '/../..' . '/stubs/constants.php',
     );
 
@@ -28,7 +27,6 @@ class ComposerStaticInite42d72c82fee392c1f558ea9e43301cd
         ),
         'S' =>
         array (
-            'Symfony\\Polyfill\\Uuid\\' => 22,
             'Symfony\\Polyfill\\Php85\\' => 23,
             'Symfony\\Polyfill\\Php83\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
@@ -66,10 +64,6 @@ class ComposerStaticInite42d72c82fee392c1f558ea9e43301cd
         'TarBSD\\' =>
         array (
             0 => __DIR__ . '/../..' . '/src',
-        ),
-        'Symfony\\Polyfill\\Uuid\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-uuid',
         ),
         'Symfony\\Polyfill\\Php85\\' =>
         array (
