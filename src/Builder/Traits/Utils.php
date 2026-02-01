@@ -5,6 +5,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 use TarBSD\Util\ProgressIndicator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 trait Utils
 {
@@ -240,6 +242,18 @@ CMD;
                 "%s does not exist",
                 $file
             ));
+        }
+        if (is_dir($file))
+        {
+            $size = 0;
+            $i = new RecursiveDirectoryIterator($file, RecursiveDirectoryIterator::SKIP_DOTS);
+            foreach(new RecursiveIteratorIterator($i) as $object){
+                $size += $object->getSize();
+            }
+        }
+        else
+        {
+            $size = filesize($file);
         }
         $size = filesize($file);
         $mbSize = $size / 1048576;

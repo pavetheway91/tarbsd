@@ -41,9 +41,10 @@ final class WrkFs implements Stringable
             );
 
             Process::fromShellCommandline(
-                'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -m '
+                'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -O compression=lz4 -m '
                 . $mnt . ' ' . $fsId . ' /dev/' . $md . "\n"
-                . 'zfs create -o compression=lz4 -o recordsize=4m '.  $fsId . "/root\n"
+                . 'zfs create -o compression=zstd -o recordsize=4m '.  $fsId . "/root\n"
+                . 'zfs create -o compression=lz4 -o recordsize=4m '.  $fsId . "/cache\n"
                 . 'zfs snapshot -r ' . $fsId . "/root@empty \n"
             )->mustRun();
             return true;
@@ -99,6 +100,15 @@ final class WrkFs implements Stringable
         ))->mustRun();
     }
 
+    public function tightCompression(bool $setting)
+    {
+        Process::fromShellCommandline(sprintf(
+            "zfs set compression=%s %s/root",
+            $setting ? 'zstd' : 'lz4',
+            $this->id
+        ))->mustRun();
+    }
+
     public function checkSize() : void
     {
         if ($this->getAvailable() < 768)
@@ -107,7 +117,7 @@ final class WrkFs implements Stringable
         }
     }
 
-    public function grow(int $size = 1024) : void
+    public function grow(int $size = 512) : void
     {
         $md = trim(
             Process::fromShellCommandline(sprintf(

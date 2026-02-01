@@ -108,6 +108,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     final public function build(OutputInterface $output, OutputInterface $verboseOutput, bool $quick) : SplFileInfo
     {
         $this->dispatcher->addSubscriber($this);
+        $this->wrkFs->tightCompression(true);
 
         $start = time();
         $this->bootPruned = false;

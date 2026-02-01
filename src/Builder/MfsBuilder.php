@@ -224,8 +224,8 @@ CONF;
         ]);
 
         $progressIndicator = $this->progressIndicator($output);
+        $this->wrkFs->tightCompression(false);
         $progressIndicator->start('compressing usr.tar (zstd-' . $zstdLevel . ')');
-
         Process::fromShellCommandline(
             "tar -v --zstd --options zstd:$tarOptions -cf ../.usr.tar * .root",
             $this->root . '/usr',
@@ -236,6 +236,7 @@ CONF;
             $verboseOutput->write($buffer);
         });
         $progressIndicator->finish('usr.tar ready');
+        $this->wrkFs->tightCompression(true);
 
         $umountUsr = Process::fromShellCommandline(
             'umount -f usr',
