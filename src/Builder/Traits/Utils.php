@@ -255,7 +255,6 @@ CMD;
         {
             $size = filesize($file);
         }
-        $size = filesize($file);
         $mbSize = $size / 1048576;
         return (int) number_format($mbSize, 0, '', '');
     }
