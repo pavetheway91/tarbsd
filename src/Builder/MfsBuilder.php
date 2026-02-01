@@ -242,7 +242,12 @@ CONF;
             'umount -f usr',
             $this->root,
         );
+
         $this->wrkFs->checkSize();
+        $this->wrkFs->checkSize(
+            $this->getFileSizeM($this->root . '/.usr.tar')
+        );
+
         try
         {
             Process::fromShellCommandline(
@@ -261,12 +266,13 @@ CONF;
         }
         $umountUsr->mustRun();
 
+        $this->wrkFs->checkSize();
         $progressIndicator = $this->progressIndicator($output);
         $progressIndicator->start('compressing mfs image (gzip-' . $gzipLevel . ')');
         $this->zlibCompress($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
         $progressIndicator->finish('mfs image ready');
-        $this->wrkFs->checkSize();
 
+        $this->wrkFs->checkSize($this->getFileSizeM($this->wrk . '/boot'));
         Process::fromShellCommandline(
             'makefs boot.img boot',
             $this->wrk,
@@ -277,6 +283,7 @@ CONF;
         });
 
         $size = $this->getFileSizeM($this->wrk . '/boot.img');
+        $this->wrkFs->checkSize($size);
         $fullsize = strval($size + 1) . 'm';
         $size = strval($size) . 'm';
 
@@ -297,7 +304,7 @@ rm efi.img && rm boot.img
 rm cache/pmbr && rm cache/gptboot
 mdconfig -d -u "\$md"
 CMD;
-        $this->wrkFs->checkSize();
+
         Process::fromShellCommandline(
             $cmd, $this->wrk, null, null,  300
         )->mustRun(function ($type, $buffer) use ($verboseOutput)

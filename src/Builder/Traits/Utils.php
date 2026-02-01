@@ -23,24 +23,6 @@ trait Utils
         return new ProgressIndicator($output, $this->wrkFs);
     }
 
-    final protected function rollback(string $snapshot) : void
-    {
-        $rootId = $this->wrkFs . '/root';
-
-        Process::fromShellCommandline(
-            'zfs rollback -r ' . $rootId . '@' . $snapshot
-        )->mustRun();
-    }
-
-    final protected function snapshot(string $snapshot) : void
-    {
-        $rootId = $this->wrkFs . '/root';
-
-        Process::fromShellCommandline(
-            'zfs snapshot -r ' . $rootId . '@' . $snapshot
-        )->mustRun();
-    }
-
     final protected function hasKernelModule(string $name) : bool
     {
         if (true !== $this->bootPruned)

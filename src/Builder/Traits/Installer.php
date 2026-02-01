@@ -37,12 +37,15 @@ trait Installer
         try
         {
             Process::fromShellCommandline('zfs get all ' . $rootId . '@installed')->mustRun();
-            $output->writeln(self::CHECK . $msg = ' base system unchanged, using snapshot');
+            $output->writeln(self::CHECK . $msg = sprintf(
+                ' base system (%s) unchanged, using snapshot',
+                $this->getInstalledVersion()
+            ));
             $verboseOutput->writeln($msg);
         }
         catch (\Exception $e)
         {
-            $this->rollback('empty');
+            $this->wrkFs->rollback('empty');
 
             $res = $this->httpClient->request('GET', $url = $this->baseRelease->getBaseRepo($arch), [
                 'max_redirects' => 0,
@@ -160,7 +163,7 @@ trait Installer
 
                 $this->finalizeInstall();
                 file_put_contents($distFileHashFile, $distFileHash);
-                $this->snapshot('installed');
+                $this->wrkFs->snapshot('installed');
             }
             catch (\Exception $e)
             {
@@ -205,7 +208,7 @@ trait Installer
         }
         catch (\Exception $e)
         {
-            $this->rollback('empty');
+            $this->wrkFs->rollback('empty');
             foreach($distFiles as $file => $fullPath)
             {
                 $cmd = 'tar -xvf ' . $fullPath . ' -C ' . $this->root;
@@ -229,7 +232,7 @@ trait Installer
             $this->runFreeBSDUpdate($output, $verboseOutput);
             $this->finalizeInstall();
             file_put_contents($distFileHashFile, $distFileHash);
-            $this->snapshot('installed');
+            $this->wrkFs->snapshot('installed');
         }
     }
 
@@ -284,11 +287,11 @@ DEFAULTS);
             Process::fromShellCommandline('zfs get all ' . $rootId . '@pkgsInstalled')->mustRun();
             $output->writeln(self::CHECK . $msg = ' package list unchanged, using snapshot');
             $verboseOutput->writeln($msg);
-            $this->rollback('pkgsInstalled');
+            $this->wrkFs->rollback('pkgsInstalled');
         }
         catch (\Exception $e)
         {
-            $this->rollback('installed');
+            $this->wrkFs->rollback('installed');
             $this->fs->mkdir($this->wrk . '/cache');
             if (count($packages) > 0)
             {
@@ -341,7 +344,7 @@ DEFAULTS);
                 $umountPkgCache->mustRun();
             }
             file_put_contents($packagesHashFile, $packagesHash);
-            $this->snapshot('pkgsInstalled');
+            $this->wrkFs->snapshot('pkgsInstalled');
         }
     }
 

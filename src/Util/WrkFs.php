@@ -43,8 +43,8 @@ final class WrkFs implements Stringable
             Process::fromShellCommandline(
                 'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -O compression=lz4 -m '
                 . $mnt . ' ' . $fsId . ' /dev/' . $md . "\n"
-                . 'zfs create -o compression=zstd -o recordsize=4m '.  $fsId . "/root\n"
-                . 'zfs create -o compression=lz4 -o recordsize=4m '.  $fsId . "/cache\n"
+                . 'zfs create -o compression=zstd -o recordsize=4m ' .  $fsId . "/root\n"
+                . 'zfs create -o compression=lz4 -o recordsize=4m ' .  $fsId . "/cache\n"
                 . 'zfs snapshot -r ' . $fsId . "/root@empty \n"
             )->mustRun();
             return true;
@@ -109,15 +109,26 @@ final class WrkFs implements Stringable
         ))->mustRun();
     }
 
-    public function checkSize() : void
+    public function checkSize(int $size = null) : void
     {
-        if ($this->getAvailable() < 768)
+        if ($size)
         {
-            $this->grow();
+            $needed = $size - $this->getAvailable();
+            if ($needed > 0)
+            {
+                $this->grow(intval($needed  * 1.5));
+            }
+        }
+        else
+        {
+            if ($this->getAvailable() < 768)
+            {
+                $this->grow(512);
+            }
         }
     }
 
-    public function grow(int $size = 512) : void
+    public function grow(int $size) : void
     {
         $md = trim(
             Process::fromShellCommandline(sprintf(
@@ -143,6 +154,20 @@ final class WrkFs implements Stringable
             "\n"
         );
         return (int) number_format($avail / 1048576, 0, '', '');
+    }
+
+    public function rollback(string $snapshot) : void
+    {
+        Process::fromShellCommandline(
+            'zfs rollback -r ' . $this->id . '/root@' . $snapshot
+        )->mustRun();
+    }
+
+    public function snapshot(string $snapshot) : void
+    {
+        Process::fromShellCommandline(
+            'zfs snapshot -r ' . $this->id . '/root@' . $snapshot
+        )->mustRun();
     }
 
     public function __toString() : string
