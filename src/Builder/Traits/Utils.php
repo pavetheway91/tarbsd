@@ -10,6 +10,9 @@ use TarBSD\Util\ProgressIndicator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+use phpseclib3\Crypt\RSA;
+use phpseclib3\Crypt\EC;
+
 trait Utils
 {
     protected function getKernelModuleDirs() : array
@@ -50,25 +53,38 @@ trait Utils
     final protected function ensureSSHkeysExist(OutputInterface $output, OutputInterface $verboseOutput) : void
     {
         $this->fs->mkdir($keys = $this->filesDir . '/etc/ssh');
-        $new = false;
         foreach(['rsa', 'ecdsa', 'ed25519'] as $alg)
         {
             $keyFile = $keys . '/ssh_host_' . $alg . '_key';
-            $keyFilePub = $keyFile . '.pub';
-
-            if (!$this->fs->exists($keyFile))
+            if (!file_exists($keyFile))
             {
-                $cmd = <<<CMD
-/usr/bin/ssh-keygen -q -t $alg -f $keyFile -N ""
-/usr/bin/ssh-keygen -l -f $keyFilePub
-CMD;
-                $new = true;
-                Process::fromShellCommandline($cmd)->mustRun();
+                RSA::useInternalEngine();
+                EC::useInternalEngine();
+                switch($alg)
+                {
+                    case 'rsa':
+                        $key = RSA::createKey();
+                        break;
+                    case 'ecdsa':
+                        $key = EC::createKey('nistp256');
+                        break;
+                    case 'ed25519':
+                        $key = EC::createKey('ed25519');
+                        break;
+                }
+                $this->fs->dumpFile(
+                    $keyFile,
+                    $key->toString('OpenSSH')
+                );
+                $this->fs->chmod($keyFile, 0600);
+                $this->fs->dumpFile(
+                    $keyFile . '.pub',
+                    $key->getPublicKey()->toString('OpenSSH')
+                );
+                $output->writeln(
+                    self::CHECK . ' generated ' . $alg . ' SSH host key to tarbsd/etc/ssh'
+                );
             }
-        }
-        if ($new)
-        {
-            $output->writeln(self::CHECK . ' generated SSH host keys to the overlay directory');
         }
     }
 

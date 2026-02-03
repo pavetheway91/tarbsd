@@ -3,7 +3,7 @@
         'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '487788e0c0a3ebd02d5e4a84cfc4836223c1a409',
+        'reference' => '602d1fcea8af218ba8f43c9c00d0db9ce1705684',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,11 +13,26 @@
         '__root__' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '487788e0c0a3ebd02d5e4a84cfc4836223c1a409',
+            'reference' => '602d1fcea8af218ba8f43c9c00d0db9ce1705684',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'paragonie/constant_time_encoding' => array(
+            'pretty_version' => 'v3.1.3',
+            'version' => '3.1.3.0',
+            'reference' => 'd5b01a39b3415c2cd581d3bd3a3575c1ebbd8e77',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../paragonie/constant_time_encoding',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'paragonie/random_compat' => array(
+            'dev_requirement' => false,
+            'replaced' => array(
+                0 => '*',
+            ),
         ),
         'php-http/async-client-implementation' => array(
             'dev_requirement' => false,
@@ -30,6 +45,15 @@
             'provided' => array(
                 0 => '*',
             ),
+        ),
+        'phpseclib/phpseclib' => array(
+            'pretty_version' => '3.0.49',
+            'version' => '3.0.49.0',
+            'reference' => '6233a1e12584754e6b5daa69fe1289b47775c1b9',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../phpseclib/phpseclib',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'psr/cache' => array(
             'pretty_version' => '3.0.0',

@@ -18,6 +18,10 @@
         "symfony/event-dispatcher": "^7.4",
         "symfony/http-client": "^7.4",
         "symfony/error-handler": "^7.4",
-        "symfony/polyfill-iconv": "^1.32"
+        "symfony/polyfill-iconv": "^1.32",
+        "phpseclib/phpseclib": "^3.0"
+    },
+    "replace": {
+        "paragonie/random_compat": "*"
     }
 }
