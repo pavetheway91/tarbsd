@@ -409,7 +409,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     private function busyBoxify(OutputInterface $output, OutputInterface $verboseOutput) : void
     {
         $progressIndicator = $this->progressIndicator($output);
-        $progressIndicator->start('busybofiying');
+        $progressIndicator->start('busyboxifying');
         
         $bysyBoxCMDs = explode("\n", file_get_contents(TARBSD_STUBS . '/busybox'));
         $bysyBoxCMDs = array_flip($bysyBoxCMDs);
@@ -443,9 +443,9 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                     if (isset($bysyBoxCMDs[$name]))
                     {
                         $this->fs->symlink('../../bin/busybox', $path);
+                        $progressIndicator->advance();
                     }
                 }
-                $progressIndicator->advance();
             }
         }
 
@@ -462,20 +462,14 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 ) {
                     if (isset($bysyBoxCMDs[$name]))
                     {
-                        /*
-                        $this->fs->hardlink(
-                            $this->root . '/bin/busybox',
-                            $bin
-                        );*/
-                        $path = $this->root . '/bin/' . $name;
-                        $this->fs->remove($path);
+                        $this->fs->remove($path = $this->root . '/bin/' . $name);
                         $this->fs->symlink('busybox', $path);
+                        $progressIndicator->advance();
                     }
                 }
-                $progressIndicator->advance();
             }
         }
-
+    
         $f = (new Finder)->files()->in([$this->root . '/sbin/']);
         foreach($f as $bin)
         {
@@ -486,15 +480,13 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                     $name = $bin->getFileName();
                     if (isset($bysyBoxCMDs[$name]))
                     {
-                        $path = $this->root . '/sbin/' . $name;
-                        $this->fs->remove($path);
+                        $this->fs->remove($path = $this->root . '/sbin/' . $name);
                         $this->fs->symlink('../bin/busybox', $path);
+                        $progressIndicator->advance();
                     }
                 }
-                $progressIndicator->advance();
             }
         }
-
         $progressIndicator->finish('busyboxified');
     }
 
