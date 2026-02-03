@@ -1,3 +1,13 @@
+## 2026-02-nn [upcoming] ##
+* Building images from tarballs is deprecated. Feature will continue to work for the time being, but will be removed eventually.
+* Work file system will grow automatically to accomodate building bigger images
+  * wrk-init command has been deprecated
+* Builder doesn't rely on OpenSSH to generate SSH host keys to the image
+  * Builder can be run on systems without OpenSSH
+* Few minor bugs have been fixed.
+
+### GitHub version only ###
+* Application will automatically check if there's a newer version available and notify the user
 ## 2026-01-25 ##
 * More descriptive error messages if the builder happens to have runtime issues.
 * Symfony libraries were updated.
