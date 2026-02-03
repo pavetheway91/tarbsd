@@ -109,7 +109,7 @@ final class WrkFs implements Stringable
         ))->mustRun();
     }
 
-    public function checkSize(int $size = null) : void
+    public function checkSize(?int $size = null) : void
     {
         if ($size)
         {
