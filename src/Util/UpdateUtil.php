@@ -53,7 +53,7 @@ PEM;
 
         $payload = json_decode($res->getContent(), true);
 
-        $currentBuildDate = App::getBuildDate();
+        $currentBuildDate = App::getReleaseDate();
         $currentSHA256 = App::hashPhar();
 
         foreach($payload as $release)

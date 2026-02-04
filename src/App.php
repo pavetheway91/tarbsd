@@ -48,7 +48,7 @@ class App extends Application implements EventSubscriberInterface
         $this->globalConfig = new GlobalConfiguration;
     }
 
-    public static function getBuildDate() : ?DateTimeImmutable
+    public static function getReleaseDate() : ?DateTimeImmutable
     {
         static $date;
 
