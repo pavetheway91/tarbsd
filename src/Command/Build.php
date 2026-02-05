@@ -17,6 +17,7 @@ use Symfony\Component\Finder\Finder;
 
 use TarBSD\Builder\MfsBuilder;
 use TarBSD\Util\FreeBSDRelease;
+use TarBSD\Util\Misc;
 use TarBSD\Configuration;
 use TarBSD\GlobalConfiguration;
 
@@ -137,6 +138,10 @@ class Build extends AbstractCommand
 
         foreach($formats as $format)
         {
+            $builder->wrkFs->checkSize(Misc::getFileSizeM(
+                $builder->wrk . '/tarbsd.img'
+            ));
+
             Process::fromShellCommandline(sprintf(
                 "qemu-img convert -f raw -O %s %s %s",
                 $format,

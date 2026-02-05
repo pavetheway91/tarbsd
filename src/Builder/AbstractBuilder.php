@@ -30,11 +30,11 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     use Traits\Utils;
 
-    protected readonly string $wrk;
+    public readonly WrkFs $wrkFs;
+
+    public readonly string $wrk;
 
     protected readonly string $root;
-
-    protected readonly WrkFs $wrkFs;
 
     protected readonly string $filesDir;
 
