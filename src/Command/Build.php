@@ -99,6 +99,13 @@ class Build extends AbstractCommand
         {
             $this->showLogo($output);
             $this->showVersion($output);
+            if ($distFilesInput)
+            {
+                $output->writeln(
+                    MfsBuilder::ERR . " Tarball installation method has been deprecated"
+                    . "and and\n   will be removed in a future release."
+                );
+            }
             if (!$fs->exists($logDir = $conf->getDir() . '/log'))
             {
                 $fs->mkdir($logDir);
