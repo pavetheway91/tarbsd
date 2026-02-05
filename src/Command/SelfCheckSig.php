@@ -12,7 +12,7 @@ use TarBSD\Util\UpdateUtil;
  * signed before they go to GitHub.
  */
 #[AsCommand(
-    name: 'checkSig',
+    name: 'check-sig',
     hidden: true
 )]
 class SelfCheckSig extends AbstractCommand
