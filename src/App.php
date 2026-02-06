@@ -112,7 +112,7 @@ class App extends Application implements EventSubscriberInterface
         }
 
         if (
-            !in_array($command, ['list', 'help', 'diagnose', 'version-check'])
+            !in_array($command, ['list', 'help', 'diagnose', 'version-check', 'debug'])
             && !static::amIRoot()
         ) {
             $output->writeln(sprintf(
@@ -235,7 +235,8 @@ class App extends Application implements EventSubscriberInterface
             new Command\SelfUpdate,
             new Command\Diagnose,
             new Command\SelfCheckSig,
-            new Command\VersionCheck
+            new Command\VersionCheck,
+            new Command\Debug
         ];
     }
 }

@@ -81,8 +81,9 @@ LOGO;
         }
 
         $output->writeln(sprintf(
-            " version: %s",
+            " version: %s%s",
             $v,
+            (defined('TARBSD_DEBUG') && TARBSD_DEBUG) ? '  <comment>debug mode</>' : ''
         ));
 
         $this->showUpdateMessage($output);

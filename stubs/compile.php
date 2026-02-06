@@ -100,12 +100,10 @@ class Compiler extends Command
         }
 
         $this->genBootstrap();
+        $this->addOwnSrc($output, $ports, $prefix, $versionTag, $production = $ports || $key);
+        $this->addPackages($output, $ports, $production);
 
-        $this->addOwnSrc($output, $ports, $prefix, $versionTag);
-
-        $this->addPackages($output, $ports);
         $fs = new Filesystem;
-
         $fs->mkdir($out = dirname(__DIR__) . '/out');
         $fs->remove((new Finder)->in($out));
 
@@ -166,7 +164,8 @@ class Compiler extends Command
         OutputInterface $output,
         bool $ports,
         string $prefix,
-        ?string $versionTag
+        ?string $versionTag,
+        bool $production
     ) {
         $this->addFile(__DIR__ . '/../LICENSE');
 
@@ -183,7 +182,7 @@ class Compiler extends Command
 
         $constants = [];
         $constants['TARBSD_GITHUB_API'] = 'https://api.github.com';
-        $constants['TARBSD_SELF_UPDATE'] = (!$ports && $versionTag);
+        $constants['TARBSD_SELF_UPDATE'] = (!$ports && $production);
         $constants['TARBSD_PORTS'] = $ports;
         $constants['TARBSD_VERSION'] = $versionTag;
         $constants['TARBSD_PREFIX'] = $prefix;
@@ -219,7 +218,8 @@ class Compiler extends Command
 
     protected function addPackages(
         OutputInterface $output,
-        bool $ports
+        bool $ports,
+        bool $production
     ) {
         $allSkipped = [];
 
@@ -228,10 +228,12 @@ class Compiler extends Command
             ->depth(2)
             ->name('composer.json');
 
+        $skip = $ports ? ['symfony/polyfill-iconv'] : [];
+
         foreach($finder as $package)
         {
             $name = $package->getRelativePath();
-            if (!$ports || $name !== 'symfony/polyfill-iconv')
+            if (!in_array($name, $skip))
             {
                 $output->write("adding files for " . $name . ' ');
                 $added = $skipped = [];
@@ -668,12 +670,25 @@ return new class()
     {
         \$loader = \$this->getClassLoader();
 
-        error_reporting(\E_ALL & ~\E_DEPRECATED & ~\E_USER_DEPRECATED);
-        ini_set('display_errors', 0);
-        @ini_set('zend.assertions', 1);
-        ini_set('assert.active', 1);
-        ini_set('assert.exception', 1);
-        ErrorHandler::register(new ErrorHandler(new BufferingLogger, true));
+        if (
+            (!TARBSD_PORTS && !TARBSD_SELF_UPDATE)
+            ||
+            (file_exists(\$debug = '/tmp/tarbsd.debug') && filemtime(\$debug) > (time() - 3600))
+        ) {
+            error_reporting(\E_ALL & ~\E_DEPRECATED & ~\E_USER_DEPRECATED);
+            ini_set('display_errors', 0);
+            @ini_set('zend.assertions', 1);
+            ini_set('assert.active', 1);
+            ini_set('assert.exception', 1);
+            ErrorHandler::register(new ErrorHandler(new BufferingLogger, true));
+            define('TARBSD_DEBUG', true);
+        }
+        else
+        {
+            error_reporting(E_ERROR | E_PARSE);
+            ini_set('display_errors', 1);
+            define('TARBSD_DEBUG', false);
+        }
 
         return (new App(\$loader))->run();
     }
