@@ -34,7 +34,7 @@ final class WrkFs implements Stringable
 
             $md = trim(
                 Process::fromShellCommandline(sprintf(
-                    'mdconfig -s %dG',
+                    'mdconfig -s %dG -S 4096',
                     $size)
                 )->mustRun()->getOutput(),
                 "\n"
@@ -132,7 +132,7 @@ final class WrkFs implements Stringable
     {
         $md = trim(
             Process::fromShellCommandline(sprintf(
-                'mdconfig -s %sm',
+                'mdconfig -s %sm -S 4096',
                 $size
             ))->mustRun()->getOutput(),
             "\n"
