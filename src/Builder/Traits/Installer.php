@@ -301,7 +301,7 @@ DEFAULTS);
                     Misc::tarStream($pkgConfigDir, $target, $verboseOutput);
                 }
                 $this->fs->mkdir(
-                    $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion()
+                    $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion(false)
                 );
                 $umountPkg = $this->preparePKG($cache, true);
 
@@ -459,11 +459,16 @@ DEFAULTS);
         $this->fs->remove($updateDir);
     }
 
-    final protected function getInstalledVersion() : string
+    final protected function getInstalledVersion(bool $patch = true) : string
     {
-        return trim(
+        $out = trim(
             Process::fromShellCommandline('bin/freebsd-version', $this->root)->mustRun()->getOutput(),
             "\n"
         );
+        if (!$patch)
+        {
+            $out = preg_replace('/(\-p[0-9]{1,2})$/', '', $out);
+        }
+        return $out;
     }
 }
