@@ -95,7 +95,7 @@ trait Installer
                 $this->root . '/etc/resolv.conf'
             );
             $this->fs->mkdir($pkgCache = App::CACHE_DIR . '/pkgbase_' . $arch);
-            $umountPkgCache = $this->preparePKG($pkgCache);
+            $umountPkgCache = $this->preparePKG($pkgCache, false);
 
             try
             {
@@ -303,18 +303,27 @@ DEFAULTS);
                 $this->fs->mkdir(
                     $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion()
                 );
-                $umountPkgCache = $this->preparePKG($cache);
+                $umountPkg = $this->preparePKG($cache, true);
 
                 try
                 {
                     $pkg = sprintf('pkg -c %s ', $this->root);
+
+                    $progressIndicator = $this->progressIndicator($output);    
+                    $progressIndicator->start('updating package database');
+                    Process::fromShellCommandline(
+                        $pkg . ' update', null, null, null, 7200
+                    )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                    {
+                        $progressIndicator->advance();
+                        $verboseOutput->write($buffer);
+                    });
+                    $progressIndicator->finish('package database updated');
+    
                     $progressIndicator = $this->progressIndicator($output);
                     $progressIndicator->start('downloading packages');
                     Process::fromShellCommandline(
-                        $pkg . ' update', null, null, null, 7200
-                    )->mustRun();
-                    Process::fromShellCommandline(
-                        $pkg . ' install -F -y ' . implode(' ', $packages),
+                        $pkg . ' install -F -y -U ' . implode(' ', $packages),
                         null, null, null, 7200
                     )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
                     {
@@ -322,6 +331,7 @@ DEFAULTS);
                         $verboseOutput->write($buffer);
                     });
                     $progressIndicator->finish('packages downloaded');
+
                     $progressIndicator = $this->progressIndicator($output);
                     $progressIndicator->start('installing packages');
                     $installCmd = $pkg . ' install -U -y ' . implode(' ', $packages);
@@ -338,29 +348,44 @@ DEFAULTS);
                 }
                 catch (\Exception $e)
                 {
-                    $umountPkgCache->mustRun();
+                    $umountPkg->mustRun();
                     throw $e;
                 }
-                $umountPkgCache->mustRun();
+                $umountPkg->mustRun();
             }
             file_put_contents($packagesHashFile, $packagesHash);
             $this->wrkFs->snapshot('pkgsInstalled');
         }
     }
 
-    final protected function preparePKG(string $cacheLocation) : Process
+    final protected function preparePKG(string $cacheLocation, bool $tmpfs) : Process
     {
         $nullfs = $this->root . '/var/cache/pkg';
-
+        $pkgdb = $this->root . '/var/db/pkg';
         $this->fs->mkdir($nullfs);
 
-        Process::fromShellCommandline(
-            'mount_nullfs -o rw ' . $cacheLocation . ' ' . $nullfs
-        )->mustRun();
+        if ($tmpfs)
+        {
+            Process::fromShellCommandline(sprintf(
+                'mount_nullfs -o rw %s %s && mount -t tmpfs tmpfs %s',
+                $cacheLocation, $nullfs, $pkgdb
+            ))->mustRun();
+    
+            return Process::fromShellCommandline(sprintf(
+                'umount -f %s && umount -f %s',
+                $nullfs, $pkgdb
+            ));
+        }
 
-        return Process::fromShellCommandline(
-            'umount -f ' . $nullfs
-        );
+        Process::fromShellCommandline(sprintf(
+            'mount_nullfs -o rw %s %s',
+            $cacheLocation, $nullfs
+        ))->mustRun();
+
+        return Process::fromShellCommandline(sprintf(
+            'umount -f %s',
+            $nullfs
+        ));
     }
 
     final protected function runFreeBSDUpdate(OutputInterface $output, OutputInterface $verboseOutput) : void
