@@ -276,6 +276,7 @@ class Compiler extends Command
                 $output->write("skipping " . $name . "\n");
             }
         }
+        $this->addFromString('vendor/skipped', implode("\n", $allSkipped));
     }
 
     protected function acceptFile(string $package, string $file) : bool
