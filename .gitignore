@@ -7,3 +7,4 @@
 /examples/*/tarbsd/etc/ssh
 /examples/*/wrk
 /examples/*/log
+/.cache
