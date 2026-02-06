@@ -44,14 +44,11 @@ It'll ask few questions, create a configuration file as well as an overlay direc
 
 ### Building the image ###
 ```
-# pkgbase method, RELEASE version
+# RELEASE version
 tarbsd build --release 15.0
 
-# pkgbase method, LATEST here could mean STABLE or CURRENT depending on version
+# LATEST here could mean STABLE or CURRENT depending on version
 tarbsd build --release 15-LATEST
-
-# tarball (base.txz and kernel.txz) method
-tarbsd build --distfiles /cdrom
 ```
 
 First build will take longer, but subsequent ones are quicker. It uses in-memory zfs pool, so everyting is snappy and there's no unnecesary writes to your storage medium. ZFS also allows builder to use snapshots to restore the image to a an earlier state before each build. The pool is 2 gigs by default. To initialize a bigger or a smaller one, issue wrk-init command first.
