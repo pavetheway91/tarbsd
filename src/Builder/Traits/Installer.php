@@ -10,13 +10,8 @@ use TarBSD\App;
 
 trait Installer
 {
-    final protected function installPkgBase(OutputInterface $output, OutputInterface $verboseOutput) : void
+    final protected function installPkgBase(OutputInterface $output, OutputInterface $verboseOutput, string $arch) : void
     {
-        /**
-         * Due to lack of testing others
-         */
-        $arch = 'amd64';
-
         $rootId = $this->wrkFs . '/root';
 
         $abi = $this->baseRelease->getAbi($arch);
@@ -259,7 +254,7 @@ tarbsd_zpool_enable="YES"
 DEFAULTS);
     }
 
-    final protected function installPKGs(OutputInterface $output, OutputInterface $verboseOutput) : void
+    final protected function installPKGs(OutputInterface $output, OutputInterface $verboseOutput, string $arch) : void
     {
         $rootId = $this->wrkFs . '/root';
 
@@ -301,7 +296,7 @@ DEFAULTS);
                     Misc::tarStream($pkgConfigDir, $target, $verboseOutput);
                 }
                 $this->fs->mkdir(
-                    $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion(false)
+                    $cache = $this->wrk . '/cache/pkg-' . $this->getInstalledVersion(false) . '-' . $arch
                 );
                 $umountPkg = $this->preparePKG($cache, true);
 

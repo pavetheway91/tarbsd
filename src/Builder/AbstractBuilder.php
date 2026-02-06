@@ -121,16 +121,18 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $this->ensureSSHkeysExist($output, $verboseOutput);
 
+        $arch = 'amd64';
+
         if (isset($this->baseRelease))
         {
-            $this->installPkgBase($output, $verboseOutput);
+            $this->installPkgBase($output, $verboseOutput, $arch);
         }
         else
         {
             $this->installTarBalls($output, $verboseOutput);
         }
 
-        $this->installPKGs($output, $verboseOutput);
+        $this->installPKGs($output, $verboseOutput, $arch);
 
         $this->prune($output, $verboseOutput);
 
