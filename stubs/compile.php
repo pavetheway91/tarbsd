@@ -302,6 +302,9 @@ class Compiler extends Command
                         . '|NoPrivateNetworkHttpClient|Curl'
                     . ')/';
                 break;
+            case 'symfony/http-client-contracts':
+                $skipRegex = '/(Test\/)/';
+                break;
             case 'symfony/console':
                 $skipRegex = '/(Helper\/(Tree|Table))/';
                 $extensions = array_merge($extensions, [
@@ -314,10 +317,18 @@ class Compiler extends Command
             case 'symfony/process':
                 $skipRegex = '/(Windows|Php)/';
                 break;
+            case 'symfony/var-dumper':
+                $skipRegex = '/(Server|Html|Test|Command|(Caster\/('
+                . 'Imagine|Gd|Gmp|Img|Memca|Mysql|Pdo|Redis|Xml|Dom|'
+                . 'Amqp|Doctrine|FFI|PgSql|Sqlite|Curl)))/';
+                break;
+            case 'symfony/error-handler':
+                $skipRegex = '/(html|Html|Test|Command)/';
+                break;
             case 'phpseclib/phpseclib':
                 $skipRegex = '/(phpseclib\/(System|Net|'
                     . '(Crypt\/(AES|Rijndael|T|S|Ch|RC|DSA|DH|Salsa|(([a-zA-Z]+)fish)))'
-                . ')|JWK|Putty|DES)/';
+                . ')|JWK|Putty|DES|brainpool|prime|sect|nist[^p])/';
                 break;
         }
         if (isset($skipRegex) && preg_match($skipRegex, $file))
@@ -644,8 +655,7 @@ STUB;
 <?php
 namespace TarBSD;
 use Composer\Autoload\ClassLoader;
-use Symfony\Component\ErrorHandler\ErrorHandler;
-use Symfony\Component\ErrorHandler\BufferingLogger;
+use Symfony\Component\ErrorHandler\Debug;
 use Closure;
 
 if (!class_exists(ClassLoader::class, false))
@@ -676,12 +686,7 @@ return new class()
             ||
             (file_exists(\$debug = '/tmp/tarbsd.debug') && filemtime(\$debug) > (time() - 3600))
         ) {
-            error_reporting(\E_ALL & ~\E_DEPRECATED & ~\E_USER_DEPRECATED);
-            ini_set('display_errors', 0);
-            @ini_set('zend.assertions', 1);
-            ini_set('assert.active', 1);
-            ini_set('assert.exception', 1);
-            ErrorHandler::register(new ErrorHandler(new BufferingLogger, true));
+            Debug::enable();
             define('TARBSD_DEBUG', true);
         }
         else
