@@ -78,11 +78,7 @@ class MfsBuilder extends AbstractBuilder
             )->mustRun();
             foreach(['pmbr', 'gptboot'] as $legacyBootFile)
             {
-                $fs->remove($target = $this->wrk . '/cache/' . $legacyBootFile);
-                $fs->rename(
-                    $this->root . '/boot/' . $legacyBootFile,
-                    $target
-                );
+                $fs->rename($this->root . '/boot/' . $legacyBootFile, $this->wrk . '/cache/' . $legacyBootFile, true);
             }
         }
         elseif ($platform === 'aarch64-uefi')
@@ -101,10 +97,7 @@ class MfsBuilder extends AbstractBuilder
 
         $load = ['tarfs'];
         $finder = new Finder;
-        $finder->files()->in([
-            $this->root . '/boot/kernel',
-            $this->root . '/boot/modules',
-        ]);
+        $finder->files()->in([$this->root . '/boot/kernel', $this->root . '/boot/modules']);
 
         foreach(($modules = $this->getEarlyModules()) as $module)
         {
@@ -115,10 +108,7 @@ class MfsBuilder extends AbstractBuilder
         {
             foreach($finder as $file)
             {
-                $this->fs->rename(
-                    (string) $file,
-                    $boot . '/boot/kernel/' . $file->getFilename()
-                );
+                $this->fs->rename((string) $file, $boot . '/boot/kernel/' . $file->getFilename());
                 $load[] = substr($file->getBasename(), 0, -3);
             }
         }
@@ -147,11 +137,9 @@ CONF;
         }
         $fs->dumpFile($boot . '/boot/loader.conf', $loaderConf);
 
-        $kernelFiles = (new Finder)->files()->in(
+        $this->gzipFiles((new Finder)->files()->in(
             $boot . '/boot/kernel'
-        )->name(['kernel', '*.ko']);
-
-        $this->gzipFiles($kernelFiles, $output, $verboseOutput, $quick);
+        )->name(['kernel', '*.ko']), $output, $verboseOutput, $quick);
     }
 
     protected function pruneBoot(OutputInterface $output, OutputInterface $verboseOutput) : void
@@ -255,9 +243,7 @@ CONF;
             $this->root,
         );
 
-        $this->wrkFs->checkSize(
-            Misc::getFileSizeM($this->root) - Misc::getFileSizeM($this->root . '/usr')
-        );
+        $this->wrkFs->checkSize(Misc::getFileSizeM($this->root) - Misc::getFileSizeM($this->root . '/usr'));
         try
         {
             Process::fromShellCommandline(
