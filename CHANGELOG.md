@@ -1,13 +1,19 @@
 ## 2026-02-nn [upcoming] ##
-* Building images from tarballs is deprecated. Feature will continue to work for the time being, but will be removed eventually.
-* Work file system will grow automatically to accomodate building bigger images
-  * wrk-init command has been deprecated
-* Builder doesn't rely on OpenSSH to generate SSH host keys to the image
-  * Builder can be run on systems without OpenSSH
+* Aarch64 images with uefi loader.
+  * Set "platform: aarch64-uefi" in tarbsd.yml.
+  * Likely wont't boot on every random board there is.
+* Package install step has gotten a speed improvement.
+* Work file system will grow automatically to accomodate building bigger images, wrk-init
+  command has been deprecated.
+* build --release [version] can be shortened to build -r [version]
+* Builder doesn't rely on OpenSSH to generate SSH host keys to the image any more and thus,
+  it can be run on systems without OpenSSH.
+* Building images from tarballs is deprecated. Feature will continue to work for the time
+  being, but will be removed eventually.
 * Few minor bugs have been fixed.
+* [GitHub version only] Application will automatically check if there's a newer version
+  available and notify the user.
 
-### GitHub version only ###
-* Application will automatically check if there's a newer version available and notify the user
 ## 2026-01-25 ##
 * More descriptive error messages if the builder happens to have runtime issues.
 * Symfony libraries were updated.
