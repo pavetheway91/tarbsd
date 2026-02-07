@@ -8,4 +8,4 @@
 /examples/*/wrk
 /examples/*/log
 /.cache
-/.*.sh
+/*.sh
