@@ -73,7 +73,7 @@ class MfsBuilder extends AbstractBuilder
             $fs->rename($this->root . '/boot/loader_lua', $boot . '/boot/loader');
             $fs->rename($this->root . '/boot/loader.efi', $efiDir . '/EFI/BOOT/BOOTX64.efi');
             Process::fromShellCommandline(
-                'makefs -t msdos -s 748k -o fat_type=12,sectors_per_cluster=1 efi.img efi',
+                'makefs -t msdos -s 748k -o fat_type=12,sectors_per_cluster=1,volume_label=EFISYS efi.img efi',
                 $this->wrk
             )->mustRun();
             foreach(['pmbr', 'gptboot'] as $legacyBootFile)
@@ -86,7 +86,7 @@ class MfsBuilder extends AbstractBuilder
             $fs->rename($this->root . '/boot/loader_lua.efi', $boot . '/boot/loader.efi');
             $fs->rename($this->root . '/boot/loader.efi', $efiDir . '/EFI/BOOT/BOOTAA64.efi');
             Process::fromShellCommandline(
-                'makefs -t msdos -s 960k -o fat_type=12,sectors_per_cluster=1 efi.img efi',
+                'makefs -t msdos -s 960k -o fat_type=12,sectors_per_cluster=1,volume_label=EFISYS efi.img efi',
                 $this->wrk
             )->mustRun();
         }
