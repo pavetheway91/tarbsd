@@ -3,6 +3,7 @@ root_sshkey: null
 backup: true
 busybox: false
 ssh: openssh
+platform: amd64
 features:
     zfs: false
     geli: false

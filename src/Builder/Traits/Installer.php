@@ -101,21 +101,25 @@ trait Installer
                     $abi,
                     $this->baseRelease->getOsVersion()
                 );
-
+    
+                $progressIndicator = $this->progressIndicator($output);
+                $progressIndicator->start('downloading base packages');
                 Process::fromShellCommandline(
                     $pkg . ' update', null, null, null, 1800
-                )->mustRun();
+                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
+                {
+                    $progressIndicator->advance();
+                    $verboseOutput->write($buffer);
+                });
                 $availableBasePkgs = Process::fromShellCommandline(
                     $pkg . ' search FreeBSD-'
                 )->mustRun()->getOutput();
-
                 $basePkgRegex = explode("\n", file_get_contents(TARBSD_STUBS . '/basepkgs'));
                 $basePkgRegex[] = 'kernel-generic';
                 $basePkgRegex = sprintf(
                     '/^(FreeBSD-(%s))-([1-9][0-9])/',
                     implode('|', $basePkgRegex)
                 );
-
                 $pkgs = [];
                 foreach(explode("\n", $availableBasePkgs) as $pkgName)
                 {
@@ -125,9 +129,6 @@ trait Installer
                     }
                 }
                 $pkgs = " \\\n" . implode(" \\\n", $pkgs);
-
-                $progressIndicator = $this->progressIndicator($output);
-                $progressIndicator->start('downloading base packages');
                 Process::fromShellCommandline(
                     $pkg . ' install -U -F -y ' . $pkgs, null, null, null, 1800
                 )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)

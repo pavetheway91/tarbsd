@@ -19,6 +19,7 @@ class Configuration
             'backup' => isset($input['backup']) ? $input['backup'] : true,
             'busybox' => isset($input['busybox']) ? $input['busybox'] : true,
             'ssh' => isset($input['ssh']) ? $input['ssh'] : null,
+            'platform' => isset($input['platform']) ? $input['platform'] : 'amd64',
             'features' => isset($input['features']) ? $input['features'] : [],
             'modules' => isset($input['modules']) ? $input['modules'] : ['early' => [], 'late' => []],
             'packages' => isset($input['packages']) ? $input['packages'] : [],
@@ -43,7 +44,12 @@ class Configuration
         {
             throw new \Exception;
         }
-
+        if (!in_array($data['platform'], ['amd64', 'aarch64-uefi']))
+        {
+            throw new \Exception(
+                'unkown platform ' . $data['platform']
+            );
+        }
         $this->data = $data;
     }
 
@@ -63,6 +69,15 @@ class Configuration
             Yaml::parseFile($file),
             $dir
         );
+    }
+
+    public function getPlatform() : array
+    {
+        $exploded = explode("-", $this->data['platform']);
+        return [
+            $exploded[0],
+            $this->data['platform']
+        ];
     }
 
     public function getDir() : string

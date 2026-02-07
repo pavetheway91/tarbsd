@@ -35,7 +35,7 @@ class MfsBuilder extends AbstractBuilder
         return $fstab;
     }
 
-    protected function prepare(OutputInterface $output, OutputInterface $verboseOutput, bool $quick) : void
+    protected function prepare(OutputInterface $output, OutputInterface $verboseOutput, bool $quick, string $platform) : void
     {
         $fs = $this->fs;
 
@@ -43,15 +43,6 @@ class MfsBuilder extends AbstractBuilder
         $fs->remove($boot = $this->wrk . '/boot');
 
         $fs->mkdir($efiDir . '/EFI/BOOT');
-        $fs->rename(
-            $this->root . '/boot/loader.efi',
-            $efiDir . '/EFI/BOOT/BOOTX64.efi'
-        );
-
-        Process::fromShellCommandline(
-            'makefs -t msdos -s 748k -o fat_type=12,sectors_per_cluster=1 efi.img efi',
-            $this->wrk
-        )->mustRun();
 
         $fs->mkdir($boot . '/boot/kernel');
 
@@ -61,7 +52,6 @@ class MfsBuilder extends AbstractBuilder
         }
 
         foreach([
-            'boot/loader_lua'           => true,
             'boot/lua'                  => true,
             'boot/defaults'             => true,
             'boot/kernel/kernel'        => true,
@@ -78,15 +68,35 @@ class MfsBuilder extends AbstractBuilder
                 $fs->copy($this->root . '/' . $file, $boot . '/' . $file);
             }
         }
-        $fs->rename($boot . '/boot/loader_lua', $boot . '/boot/loader');
-
-        foreach(['pmbr', 'gptboot'] as $legacyBootFile)
+        if ($platform === 'amd64')
         {
-            $fs->remove($target = $this->wrk . '/cache/' . $legacyBootFile);
-            $fs->rename(
-                $this->root . '/boot/' . $legacyBootFile,
-                $target
-            );
+            $fs->rename($this->root . '/boot/loader_lua', $boot . '/boot/loader');
+            $fs->rename($this->root . '/boot/loader.efi', $efiDir . '/EFI/BOOT/BOOTX64.efi');
+            Process::fromShellCommandline(
+                'makefs -t msdos -s 748k -o fat_type=12,sectors_per_cluster=1 efi.img efi',
+                $this->wrk
+            )->mustRun();
+            foreach(['pmbr', 'gptboot'] as $legacyBootFile)
+            {
+                $fs->remove($target = $this->wrk . '/cache/' . $legacyBootFile);
+                $fs->rename(
+                    $this->root . '/boot/' . $legacyBootFile,
+                    $target
+                );
+            }
+        }
+        elseif ($platform === 'aarch64-uefi')
+        {
+            $fs->rename($this->root . '/boot/loader_lua.efi', $boot . '/boot/loader.efi');
+            $fs->rename($this->root . '/boot/loader.efi', $efiDir . '/EFI/BOOT/BOOTAA64.efi');
+            Process::fromShellCommandline(
+                'makefs -t msdos -s 960k -o fat_type=12,sectors_per_cluster=1 efi.img efi',
+                $this->wrk
+            )->mustRun();
+        }
+        else
+        {
+            throw new \Exception;
         }
 
         $load = ['tarfs'];
@@ -174,7 +184,7 @@ CONF;
         $this->fs->remove($finder);
     }
 
-    protected function buildImage(OutputInterface $output, OutputInterface $verboseOutput, bool $quick) : void
+    protected function buildImage(OutputInterface $output, OutputInterface $verboseOutput, bool $quick, string $platform) : void
     {
         $zstdLevel = $quick ? 12 : 19;
         $gzipLevel = $quick ? 6 : 9;
@@ -282,13 +292,19 @@ CONF;
             $verboseOutput->write($buffer);
         });
 
+        $this->finalizeImage($output, $verboseOutput, $platform);
+    }
+
+    protected function finalizeImage(OutputInterface $output, OutputInterface $verboseOutput, string $platform) : void
+    {
         $size = Misc::getFileSizeM($this->wrk . '/boot.img');
         $this->wrkFs->checkSize($size);
         $fullsize = strval($size + 1) . 'm';
         $size = strval($size) . 'm';
 
-        // Does this need something different for aarch64?
-        $cmd = <<<CMD
+        if ($platform === 'amd64')
+        {
+            $cmd = <<<CMD
 truncate -s $fullsize tarbsd.img
 md=\$(mdconfig -f tarbsd.img)
 
@@ -304,6 +320,27 @@ rm efi.img && rm boot.img
 rm cache/pmbr && rm cache/gptboot
 mdconfig -d -u "\$md"
 CMD;
+        }
+        elseif ($platform === 'aarch64-uefi')
+        {
+            $cmd = <<<CMD
+truncate -s $fullsize tarbsd.img
+md=\$(mdconfig -f tarbsd.img)
+
+gpart create -s gpt "\$md"
+gpart add -t efi -s 960k "\$md"
+gpart add -t freebsd-ufs -s $size "\$md"
+
+dd if=efi.img of=/dev/"\$md"p1 bs=128k
+dd if=boot.img of=/dev/"\$md"p2 bs=128k
+rm efi.img && rm boot.img
+mdconfig -d -u "\$md"
+CMD;
+        }
+        else
+        {
+            throw new \Exception;
+        }
 
         Process::fromShellCommandline(
             $cmd, $this->wrk, null, null,  300

@@ -51,7 +51,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     abstract protected function genFsTab() : Fstab;
 
     abstract protected function prepare(
-        OutputInterface $output, OutputInterface $verboseOutput, bool $quick
+        OutputInterface $output, OutputInterface $verboseOutput, bool $quick, string $platform
     ) : void;
 
     abstract protected function pruneBoot(
@@ -59,7 +59,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     ) : void;
 
     abstract protected function buildImage(
-        OutputInterface $output, OutputInterface $verboseOutput, bool $quick
+        OutputInterface $output, OutputInterface $verboseOutput, bool $quick, string $platform
     ) : void;
 
     final public function __construct(
@@ -119,9 +119,14 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $f = (new Finder)->files()->in($this->wrk)->name(['*.img', 'tarbsd.*']);
         $this->fs->remove($f);
 
-        $this->ensureSSHkeysExist($output, $verboseOutput);
+        [$arch, $platform] = $this->config->getPlatform();
 
-        $arch = 'amd64';
+        $output->writeln(sprintf(
+            ' building image for %s',
+            $platform
+        ));
+
+        $this->ensureSSHkeysExist($output, $verboseOutput);
 
         if (isset($this->baseRelease))
         {
@@ -139,7 +144,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         Misc::tarStream($this->filesDir, $this->root, $verboseOutput);
         $output->writeln(self::CHECK . ' copied overlay directory to the image');
 
-        $this->prepare($output, $verboseOutput, $quick);
+        $this->prepare($output, $verboseOutput, $quick, $platform);
 
         if ($this->config->backup())
         {
@@ -153,7 +158,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $this->finalizeRoot($output, $verboseOutput);
 
-        $this->buildImage($output, $verboseOutput, $quick);
+        $this->buildImage($output, $verboseOutput, $quick, $platform);
 
         $cwd = getcwd();
 
