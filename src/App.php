@@ -71,11 +71,7 @@ class App extends Application implements EventSubscriberInterface
     {
         if ($phar = Phar::running(false))
         {
-            return hash_hmac(
-                'sha256',
-                file_get_contents($phar),
-                strval(filemtime($phar))
-            );
+            return hash_file('sha256', $phar);
         }
         return null;
     }
