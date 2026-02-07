@@ -81,7 +81,7 @@ class MfsBuilder extends AbstractBuilder
                 $fs->rename($this->root . '/boot/' . $legacyBootFile, $this->wrk . '/cache/' . $legacyBootFile, true);
             }
         }
-        elseif ($platform === 'aarch64-uefi')
+        elseif ($platform === 'aarch64')
         {
             $fs->rename($this->root . '/boot/loader_lua.efi', $boot . '/boot/loader.efi');
             $fs->rename($this->root . '/boot/loader.efi', $efiDir . '/EFI/BOOT/BOOTAA64.efi');
@@ -307,7 +307,7 @@ rm cache/pmbr && rm cache/gptboot
 mdconfig -d -u "\$md"
 CMD;
         }
-        elseif ($platform === 'aarch64-uefi')
+        elseif ($platform === 'aarch64')
         {
             $cmd = <<<CMD
 truncate -s $fullsize tarbsd.img

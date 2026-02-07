@@ -44,7 +44,7 @@ class Configuration
         {
             throw new \Exception;
         }
-        if (!in_array($data['platform'], ['amd64', 'aarch64-uefi']))
+        if (!in_array($data['platform'], ['amd64', 'aarch64']))
         {
             throw new \Exception(
                 'unkown platform ' . $data['platform']
