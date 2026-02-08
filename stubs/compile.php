@@ -29,6 +29,8 @@ class Compiler extends Command
 {
     const REGEX_LICENSE = '{(license|copying|copyright)(\.[a-z]{2,3}|)$}Di';
 
+    const REGEX_ATTRIBUTE = '/(\#\[(\\\\|)(Attribute|ReturnTypeWillChange))/';
+
     private const SIG = 0x00010000;
 
     private const PHAR_ENT_PERM_MASK = 0x000001FF;
@@ -158,6 +160,8 @@ class Compiler extends Command
         ));
         $this->addFile(__DIR__ . '/../vendor/composer/LICENSE');
         $this->addFile(__DIR__ . '/../vendor/composer/ClassLoader.php');
+        $this->addFile(__DIR__ . '/../vendor/composer/InstalledVersions.php');
+        $this->addFile(__DIR__ . '/../vendor/composer/installed.php');
     }
 
     protected function addOwnSrc(
@@ -431,12 +435,16 @@ class Compiler extends Command
 
     protected function readFile(string $file) : string
     {
-        if ($this->minify && substr(realpath($file), strlen($this->root) + 1, 6) === 'vendor')
-        {
-            if (pathinfo($file, PATHINFO_EXTENSION) === 'php')
-            {
-                return php_strip_whitespace($file);
-            }
+        if (
+            $this->minify
+            &&
+            substr(realpath($file), strlen($this->root) + 1, 6) === 'vendor'
+            &&
+            pathinfo($file, PATHINFO_EXTENSION) === 'php'
+            &&
+            !preg_match(self::REGEX_ATTRIBUTE, file_get_contents($file))
+        ) {
+            return php_strip_whitespace($file);
         }
         return file_get_contents($file);
     }
