@@ -63,7 +63,7 @@ trait Utils
                 switch($alg)
                 {
                     case 'rsa':
-                        $key = RSA::createKey();
+                        $key = RSA::createKey(3072);
                         break;
                     case 'ecdsa':
                         $key = EC::createKey('nistp256');
