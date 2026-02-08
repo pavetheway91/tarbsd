@@ -82,6 +82,9 @@ Replaces many applications with [busybox](https://en.wikipedia.org/wiki/BusyBox)
 ### ssh (dropbear|openssh|null) ###
 Dropbear is slightly smaller. tarBSD does some tricks here to share the host keys between the two, so you can switch easily without re-keying clients. No OpenSSH also means no base kerberos.
 
+### platform ###
+Amd64 (default) or aarch64.
+
 ### features ###
 Things such as ZFS, bhyve and wireguard etc that are only needed by some and thus, are opt-in. Depending on feature, it will include relevant kernel modules, userland tools and sometimes packages. Please, suggest new ones (or send pr) if you think something is missing.
 
@@ -102,7 +105,6 @@ List of packages to be installed.
   * linsysfs
 * SSH is on by default unless there's no SSH program. You can disable it by setting sshd_enabled="NO" or dropbear_enable="NO" in etc/rc.conf.
 * Base packages and compressed kernels are cached at /var/cache/tarbsd and this cache is shared across all tarbsd projects you might have. Other things such as port packages are cached locally at the project up until next boot.
-* Images are amd64 only at the moment. I'll add aarch64, once I've had time to test it.
 * Random reads across various places in /usr might be slightly slow due to obvious reason. Depending on applications, this might or might not be noticeable. Usually however, services are started at boot and that's it, so I guess this doesn't matter much for most. There are some tunables in tar, which might help, but I haven't researched them extremely closely yet.
 
 ## Contributing ##

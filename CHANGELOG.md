@@ -1,7 +1,5 @@
-## 2026-02-nn [upcoming] ##
-* Aarch64 support.
-  * Set "platform: aarch64" in tarbsd.yml.
-  * Likely wont't boot on every random board there is.
+## 2026-02-08 ##
+* Aarch64 support. To build an aarch64 image, set "platform: aarch64" in tarbsd.yml.
 * Package install step has gotten a speed improvement.
 * Work file system will grow automatically to accomodate building bigger images, wrk-init
   command has been deprecated.
