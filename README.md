@@ -51,7 +51,7 @@ tarbsd build --release 15.0
 tarbsd build --release 15-LATEST
 ```
 
-First build will take longer, but subsequent ones are quicker. It uses in-memory zfs pool, so everyting is snappy and there's no unnecesary writes to your storage medium. ZFS also allows builder to use snapshots to restore the image to a an earlier state before each build. The pool is 2 gigs by default. To initialize a bigger or a smaller one, issue wrk-init command first.
+First build will take longer, but subsequent ones are quicker. It uses in-memory zfs pool for building, so everyting is snappy and there's no unnecesary writes to your storage medium. ZFS also allows builder to use snapshots to restore the image to a an earlier state before each build.
 
 When in hurry, pass --quick option to the builder. You'll get the image quicker, but it will be bigger and require more memory to boot. For small images, size difference might not be huge, but it gets bigger as /usr gets bigger. Useful for builds that are intended to be just prototypes anyway.
 ```
