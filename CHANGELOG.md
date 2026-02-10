@@ -1,3 +1,7 @@
+## 2026-02-10 ##
+* tarBSD motd got broken in previous version and has been fixed.
+* Building FreeBSD 14 images for aarch64 works now.
+
 ## 2026-02-08 ##
 * Aarch64 support. To build an aarch64 image, set "platform: aarch64" in tarbsd.yml.
 * Package install step has gotten a speed improvement.
