@@ -303,7 +303,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             'delete' => false
         ]);
 
-        $fs->copy(TARBSD_STUBS . '/motd', $this->root . '/etc/motd.template');
+        $fs->copy(TARBSD_STUBS . '/motd', $this->root . '/etc/motd.template', true);
 
         $pwHash = $this->config->getRootPwHash();
         $key = $this->config->getRootSshKey();

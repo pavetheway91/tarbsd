@@ -59,13 +59,14 @@ class MfsBuilder extends AbstractBuilder
             'boot/kernel/linker.hints'  => false,
             'boot/device.hints'         => false
         ] as $file => $take) {
+            $src = $this->root . '/' . $file;
             if ($take)
             {
-                $fs->rename($this->root . '/' . $file, $boot . '/' . $file);
+                $fs->rename($src, $boot . '/' . $file);
             }
-            else
+            elseif ($fs->exists($src))
             {
-                $fs->copy($this->root . '/' . $file, $boot . '/' . $file);
+                $fs->copy($src, $boot . '/' . $file);
             }
         }
         if ($platform === 'amd64')
