@@ -96,7 +96,7 @@ List of packages to be installed.
 
 ## Other miscellaneous things ##
 * tarBSD lives in memory. If you need non-volatile storage, you need to mount it. If you mount something in /usr (which is read-only), make a corressponding empty directory to tarbsd/usr, so it can be mounted.
-* Becaus the image is built using in-memory file system, the system running the builder needs to have adequate amount of usable memory. Old Raspberry pis likely will struggle.
+* Because the image is built using in-memory file system, the system running the builder needs to have adequate amount of usable memory. Old Raspberry pis likely will struggle.
 * Many applications might be missing, but libraries are mostly there. Vast majority of packages should just work.
 * tarBSD requires [tarfs](https://man.freebsd.org/cgi/man.cgi?tarfs(5)), which was introduced in 14.2. Older releases are not supported.
 * Builder will automatically add fstab line for following pseudo filesystems if the kernel module is present either through a feature or manual include:
