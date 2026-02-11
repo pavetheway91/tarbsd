@@ -385,7 +385,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 {
                     $progressIndicator = $this->progressIndicator($output);
                     $progressIndicator->start(sprintf(
-                        "compressing %s using pigz-11, might take a while, will be cached.",
+                        "compressing %s using pigz-11, might take a while",
                         $file->getFilename(),
                     ));
                     Misc::pigzCompress((string) $file, 11, $progressIndicator);
