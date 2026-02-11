@@ -13,12 +13,11 @@ Because most of tarBSD is in a tightly compressed ([zstd-19](https://github.com/
 
 ## Installing the builder tool ##
 ### pkg/ports ###
-There are several flavoured packages available. If you have other PHP packages in your system, choose the package name suffix according to them. Corresponding port can be found from sysutils/tarbsd-builder in the ports tree.
-```
-pkg install tarbsd-builder-php84
-```
+[sysutils/tarbsd-builder](https://www.freshports.org/sysutils/tarbsd-builder) is available in the ports tree. Compared to the GitHub version, it installs dependencies and manages any potential changes to them automatically.
+
 ### GitHub release ###
-Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need an existing FreeBSD system with PHP >= 8.2 along with some extensions. GitHub version can be updated with the self-update command.
+Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need an existing FreeBSD system with PHP >= 8.2 along with some extensions. GitHub version can be updated with the self-update command. Compared to the port version, updates are available immidiatelly upon release.
+
 ```
 # make tarbsd builder executable
 # and move it to /usr/local/bin
