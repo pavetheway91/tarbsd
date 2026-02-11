@@ -41,9 +41,9 @@ class Compiler extends Command
 
     private readonly string $initializer;
 
-    private bool $compress = true;
+    private bool $compress;
 
-    private bool $minify = true;
+    private bool $minify;
 
     private bool $zopfli = false;
 
@@ -79,9 +79,12 @@ class Compiler extends Command
         #[Option('Version tag')] ?string $versionTag = null,
         #[Option('Signature key file')] ?string $key = null,
         #[Option('Signature key password')] ?string $pw = null,
-        #[Option('Prefix')] string $prefix = '/usr/local'
+        #[Option('Prefix')] string $prefix = '/usr/local',
+        #[Option('Compress')] bool $compress = true,
+        #[Option('Minify')] bool $minify = true
     ) {
         $start = time();
+
         if ($key)
         {
             $key = openssl_pkey_get_private('file://' . $key, $pw);
@@ -93,6 +96,14 @@ class Compiler extends Command
             }
             $versionTag = $versionTag ?: gmdate('y.m.d');
         }
+
+        if (($ports || $key) && (!$compress || !$minify))
+        {
+            throw new \Exception;
+        }
+
+        $this->compress = $compress;
+        $this->minify = $minify;
 
         if ($ports && !$versionTag)
         {
