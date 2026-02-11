@@ -248,7 +248,7 @@ CONF;
         try
         {
             Process::fromShellCommandline(
-                'mount -t tmpfs -o size=1m tmpfs root/usr && makefs -b 5% boot/mfsroot root',
+                'mount -t tmpfs -o size=1m tmpfs root/usr && makefs -b 5% boot/mfsroot root && rm root/.usr.tar',
                 $this->wrk,
                 null, null, 1800
             )->mustRun(function ($type, $buffer) use ($verboseOutput)
@@ -280,7 +280,7 @@ CONF;
         $this->wrkFs->checkSize(Misc::getFileSizeM($this->wrk . '/boot'));
 
         Process::fromShellCommandline(
-            'makefs boot.img boot',
+            'makefs boot.img boot && rm boot/mfsroot.gz',
             $this->wrk,
             null, null, 1800
         )->mustRun(function ($type, $buffer) use ($verboseOutput, $progressIndicator)
