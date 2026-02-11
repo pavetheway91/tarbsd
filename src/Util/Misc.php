@@ -108,6 +108,37 @@ class Misc
         ))->mustRun();
     }
 
+    public static function dd(string $from, string $to, ProgressIndicator $progressIndicator) : void
+    {
+        if (!is_resource($fromHandle = fopen($from, 'r')))
+        {
+            throw new \Exception(sprintf(
+                'failed to open %s for read',
+                $from
+            ));
+        }
+        if (!is_resource($toHandle = fopen($to, 'c')))
+        {
+            throw new \Exception(sprintf(
+                'failed to open %s for write',
+                $to
+            ));
+        }
+        while($buf = fread($fromHandle, 1024 * 1024))
+        {
+            if (!is_int(fwrite($toHandle, $buf)))
+            {
+                throw new \Exception(sprintf(
+                    'failed to write to %s',
+                    $to
+                ));
+            }
+            $progressIndicator->advance();
+        }
+        fclose($fromHandle);
+        fclose($toHandle);
+    }
+
     /**
      * Unlike /usr/bin/gzip, this gives real-time
      * progress updates allowing progress indicator

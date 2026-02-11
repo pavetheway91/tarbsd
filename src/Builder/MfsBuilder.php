@@ -297,32 +297,25 @@ CONF;
 
         if ($platform === 'amd64')
         {
-            $cmd = <<<CMD
-md=$md
-gpart create -s gpt "\$md"
-gpart add -b 40 -s 472 -t freebsd-boot "\$md"
-gpart add -t efi -s 748k "\$md"
-gpart add -t freebsd-ufs -s $size "\$md"
-gpart bootcode -b cache/pmbr -p cache/gptboot -i 1 "\$md"
-
-dd if=efi.img of=/dev/"\$md"p2 bs=128k
-dd if=boot.img of=/dev/"\$md"p3 bs=128k
-rm efi.img && rm boot.img
-rm cache/pmbr && rm cache/gptboot
+            $gpartCmd = <<<CMD
+gpart create -s gpt $md
+gpart add -b 40 -s 472 -t freebsd-boot $md
+gpart add -t efi -s 748k $md
+gpart add -t freebsd-ufs -s $size $md
+gpart bootcode -b cache/pmbr -p cache/gptboot -i 1 $md
 CMD;
+            $efiDev = '/dev/' . $md . 'p2';
+            $bootDev = '/dev/' . $md . 'p3';
         }
         elseif ($platform === 'aarch64')
         {
-            $cmd = <<<CMD
-md=$md
-gpart create -s gpt "\$md"
-gpart add -t efi -s 960k "\$md"
-gpart add -t freebsd-ufs -s $size "\$md"
-
-dd if=efi.img of=/dev/"\$md"p1 bs=128k
-dd if=boot.img of=/dev/"\$md"p2 bs=128k
-rm efi.img && rm boot.img
+            $gpartCmd = <<<CMD
+gpart create -s gpt $md
+gpart add -t efi -s 960k $md
+gpart add -t freebsd-ufs -s $size $md
 CMD;
+            $efiDev = '/dev/' . $md . 'p1';
+            $bootDev = '/dev/' . $md . 'p2';
         }
         else
         {
@@ -332,12 +325,14 @@ CMD;
         try
         {
             Process::fromShellCommandline(
-                $cmd, $this->wrk, null, null,  300
+                $gpartCmd, $this->wrk, null, null,  300
             )->mustRun(function ($type, $buffer) use ($verboseOutput, $progressIndicator)
             {
                 $verboseOutput->write($buffer);
                 $progressIndicator->advance();
             });
+            Misc::dd($this->wrk . '/efi.img', $efiDev, $progressIndicator);
+            Misc::dd($this->wrk . '/boot.img', $bootDev, $progressIndicator);
         }
         catch (\Exception $e)
         {
@@ -346,6 +341,10 @@ CMD;
         }
         $progressIndicator->finish('image written');
         Misc::mdDestroy($this->md);
+        $this->fs->remove($this->wrk . '/efi.img');
+        $this->fs->remove($this->wrk . '/boot.img');
+        $this->fs->remove($this->wrk . '/cache/pmbr');
+        $this->fs->remove($this->wrk . '/cache/gptboot');
         $this->md = null;
     }
 
