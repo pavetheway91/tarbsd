@@ -5,6 +5,7 @@ use Symfony\Component\Console\SignalRegistry\SignalMap;
 use Symfony\Component\Console\Event\ConsoleSignalEvent;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
+use TarBSD\Util\Misc;
 
 trait SignalHandler
 {
@@ -68,6 +69,11 @@ trait SignalHandler
                     ->depth(0);
 
                 $this->fs->remove($f);
+
+                if ($this->md)
+                {
+                    Misc::mdDestroy($this->md);
+                }
 
                 $output->writeln(self::CHECK . ' rm\'d temporary files');
                 break;

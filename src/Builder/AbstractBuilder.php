@@ -42,6 +42,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     protected ?array $modules;
 
+    public ?string $md = null;
+
     protected readonly Filesystem $fs;
 
     private readonly string $distributionFiles;

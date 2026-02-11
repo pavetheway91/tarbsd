@@ -61,6 +61,53 @@ class Misc
         }
     }
 
+    public static function truncate(string $file, int $size) : void
+    {
+        if (!$handle = fopen($file, 'w+'))
+        {
+            throw new \Exception(sprintf(
+                'failed to open %s for write',
+                $file
+            ));
+        }
+        if (!ftruncate($handle, $size))
+        {
+            throw new \Exception(sprintf(
+                'failed to truncate %s',
+                $file
+            ));
+        }
+        fclose($handle);
+    }
+
+    public static function mdCreate(int|string $fileOrSize) : string
+    {
+        if (is_string($fileOrSize))
+        {
+            $md = Process::fromShellCommandline(sprintf(
+                'mdconfig -f %s',
+                $fileOrSize
+            ))->mustRun()->getOutput();
+        }
+        else
+        {
+            Process::fromShellCommandline(sprintf(
+                'mdconfig -s %sm -S 4096',
+                $fileOrSize
+            ))->mustRun()->getOutput();
+        }
+
+        return trim($md, "\n");
+    }
+
+    public static function mdDestroy(string $device) : void
+    {
+        Process::fromShellCommandline(sprintf(
+            'mdconfig -d -u %s',
+            $device
+        ))->mustRun();
+    }
+
     /**
      * Unlike /usr/bin/gzip, this gives real-time
      * progress updates allowing progress indicator

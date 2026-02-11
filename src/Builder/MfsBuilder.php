@@ -269,32 +269,36 @@ CONF;
         Misc::zlibCompress($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
         $progressIndicator->finish('mfs image ready');
 
+        $this->writeFile($output, $verboseOutput, $platform);
+    }
+
+    protected function writeFile(OutputInterface $output, OutputInterface $verboseOutput, string $platform) : void
+    {
+        $progressIndicator = $this->progressIndicator($output);
+        $progressIndicator->start('writing image');
+
         $this->wrkFs->checkSize(Misc::getFileSizeM($this->wrk . '/boot'));
+
         Process::fromShellCommandline(
             'makefs boot.img boot',
             $this->wrk,
             null, null, 1800
-        )->mustRun(function ($type, $buffer) use ($verboseOutput)
+        )->mustRun(function ($type, $buffer) use ($verboseOutput, $progressIndicator)
         {
             $verboseOutput->write($buffer);
+            $progressIndicator->advance();
         });
 
-        $this->finalizeImage($output, $verboseOutput, $platform);
-    }
-
-    protected function finalizeImage(OutputInterface $output, OutputInterface $verboseOutput, string $platform) : void
-    {
         $size = Misc::getFileSizeM($this->wrk . '/boot.img');
         $this->wrkFs->checkSize($size);
-        $fullsize = strval($size + 1) . 'm';
+        Misc::truncate($disk = $this->wrk . '/tarbsd.img', ($size + 1) * 1024 * 1024);
+        $md = $this->md = Misc::mdCreate($disk);
         $size = strval($size) . 'm';
 
         if ($platform === 'amd64')
         {
             $cmd = <<<CMD
-truncate -s $fullsize tarbsd.img
-md=\$(mdconfig -f tarbsd.img)
-
+md=$md
 gpart create -s gpt "\$md"
 gpart add -b 40 -s 472 -t freebsd-boot "\$md"
 gpart add -t efi -s 748k "\$md"
@@ -305,15 +309,12 @@ dd if=efi.img of=/dev/"\$md"p2 bs=128k
 dd if=boot.img of=/dev/"\$md"p3 bs=128k
 rm efi.img && rm boot.img
 rm cache/pmbr && rm cache/gptboot
-mdconfig -d -u "\$md"
 CMD;
         }
         elseif ($platform === 'aarch64')
         {
             $cmd = <<<CMD
-truncate -s $fullsize tarbsd.img
-md=\$(mdconfig -f tarbsd.img)
-
+md=$md
 gpart create -s gpt "\$md"
 gpart add -t efi -s 960k "\$md"
 gpart add -t freebsd-ufs -s $size "\$md"
@@ -321,7 +322,6 @@ gpart add -t freebsd-ufs -s $size "\$md"
 dd if=efi.img of=/dev/"\$md"p1 bs=128k
 dd if=boot.img of=/dev/"\$md"p2 bs=128k
 rm efi.img && rm boot.img
-mdconfig -d -u "\$md"
 CMD;
         }
         else
@@ -329,12 +329,24 @@ CMD;
             throw new \Exception;
         }
 
-        Process::fromShellCommandline(
-            $cmd, $this->wrk, null, null,  300
-        )->mustRun(function ($type, $buffer) use ($verboseOutput)
+        try
         {
-            $verboseOutput->write($buffer);
-        });
+            Process::fromShellCommandline(
+                $cmd, $this->wrk, null, null,  300
+            )->mustRun(function ($type, $buffer) use ($verboseOutput, $progressIndicator)
+            {
+                $verboseOutput->write($buffer);
+                $progressIndicator->advance();
+            });
+        }
+        catch (\Exception $e)
+        {
+            Misc::mdDestroy($this->md);
+            throw $e;
+        }
+        $progressIndicator->finish('image written');
+        Misc::mdDestroy($this->md);
+        $this->md = null;
     }
 
     /**
