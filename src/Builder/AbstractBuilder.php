@@ -124,7 +124,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         [$arch, $platform] = $this->config->getPlatform();
 
         $output->writeln(sprintf(
-            ' building image for %s',
+            self::CHECK . ' building image for <comment>%s</>',
             $platform
         ));
 
