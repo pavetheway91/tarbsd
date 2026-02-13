@@ -91,7 +91,7 @@ class Misc
         }
         else
         {
-            Process::fromShellCommandline(sprintf(
+            $md = Process::fromShellCommandline(sprintf(
                 'mdconfig -s %sm -S 4096',
                 $fileOrSize
             ))->mustRun()->getOutput();

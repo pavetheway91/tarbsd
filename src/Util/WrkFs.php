@@ -32,13 +32,7 @@ final class WrkFs implements Stringable
                 $mnt = realpath($dir ) . '/wrk'
             );
 
-            $md = trim(
-                Process::fromShellCommandline(sprintf(
-                    'mdconfig -s %dG -S 4096',
-                    $size)
-                )->mustRun()->getOutput(),
-                "\n"
-            );
+            $md = Misc::mdCreate($size * 1024);
 
             Process::fromShellCommandline(
                 'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -O compression=lz4 -m '
@@ -128,22 +122,6 @@ final class WrkFs implements Stringable
         }
     }
 
-    public function grow(int $size) : void
-    {
-        $md = trim(
-            Process::fromShellCommandline(sprintf(
-                'mdconfig -s %sm -S 4096',
-                $size
-            ))->mustRun()->getOutput(),
-            "\n"
-        );
-        $this->md[] = $md;
-        Process::fromShellCommandline(sprintf(
-            'zpool add %s %s && zfs set tarbsd:md=%s %s',
-            $this->id, $md, implode(',', $this->md), $this->id
-        ))->mustRun();
-    }
-
     public function getAvailable() : int
     {
         $avail = trim(
@@ -173,5 +151,15 @@ final class WrkFs implements Stringable
     public function __toString() : string
     {
         return $this->id;
+    }
+
+    private function grow(int $size) : void
+    {
+        $this->md[] = $md = Misc::mdCreate($size);
+
+        Process::fromShellCommandline(sprintf(
+            'zpool add %s %s && zfs set tarbsd:md=%s %s',
+            $this->id, $md, implode(',', $this->md), $this->id
+        ))->mustRun();
     }
 }
