@@ -110,7 +110,7 @@ final class WrkFs implements Stringable
             $needed = $size - $this->getAvailable();
             if ($needed > 0)
             {
-                $this->grow(intval($needed  * 1.5));
+                $this->grow(intval(($needed + 32)  * 1.5));
             }
         }
         else
