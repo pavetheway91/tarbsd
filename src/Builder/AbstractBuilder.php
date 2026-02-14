@@ -3,6 +3,8 @@ namespace TarBSD\Builder;
 
 use Symfony\Component\Cache\Adapter\AdapterInterface as CacheInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Console\SignalRegistry\SignalMap;
+use Symfony\Component\Console\Event\ConsoleSignalEvent;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
@@ -24,11 +26,7 @@ use SplFileInfo;
 
 abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 {
-    use Traits\SignalHandler;
-
-    use Traits\Installer;
-
-    use Traits\Utils;
+    use Utils;
 
     public readonly WrkFs $wrkFs;
 
@@ -48,7 +46,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     private readonly string $distributionFiles;
 
-    private readonly FreeBSDRelease $baseRelease;
+    private readonly ?FreeBSDRelease $baseRelease;
 
     abstract protected function genFsTab() : Fstab;
 
@@ -83,6 +81,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         }
         else
         {
+            $this->baseRelease = null;
             $this->distributionFiles = $distFilesOrBaseRelease;
         }
 
@@ -100,13 +99,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 $this->filesDir
             ));
         }
-    }
-
-    final public static function getSubscribedEvents() : array
-    {
-        return [
-            ConsoleEvents::SIGNAL   => 'handleSignal',
-        ];
     }
 
     final public function build(OutputInterface $output, OutputInterface $verboseOutput, bool $quick) : SplFileInfo
@@ -130,16 +122,22 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $this->ensureSSHkeysExist($output, $verboseOutput);
 
-        if (isset($this->baseRelease))
+        $installer = new Installer(
+            $this->root, $this->wrk, $this->wrkFs,
+            $this->baseRelease,
+            isset($this->distributionFiles) ? $this->distributionFiles : null,
+            $this->fs, $this->config, $this->httpClient
+        );
+        if ($this->baseRelease)
         {
-            $this->installPkgBase($output, $verboseOutput, $arch);
+            $installer->installPkgBase($output, $verboseOutput, $arch);
         }
         else
         {
-            $this->installTarBalls($output, $verboseOutput);
+            $installer->installTarBalls($output, $verboseOutput);
         }
 
-        $this->installPKGs($output, $verboseOutput, $arch);
+        $installer->installPKGs($output, $verboseOutput, $arch);
 
         $this->prune($output, $verboseOutput);
 
@@ -174,6 +172,84 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->dispatcher->removeSubscriber($this);
 
         return new SplFileInfo($file);
+    }
+
+    final public static function getSubscribedEvents() : array
+    {
+        return [
+            ConsoleEvents::SIGNAL   => 'handleSignal',
+        ];
+    }
+
+    final public function handleSignal(ConsoleSignalEvent $event) : void
+    {
+        switch($event->getHandlingSignal())
+        {
+            case \SIGINT:
+            case \SIGTERM:
+                $output = $event->getOutput();
+
+                $output->writeln(sprintf(
+                    "\n%s received %s signal, cleaning things up...",
+                    self::ERR,
+                    SignalMap::getSignalName($event->getHandlingSignal())
+                ));
+
+                $df = Process::fromShellCommandline(
+                    'df -t tmpfs,nullfs --libxo=json'
+                );
+                $df = json_decode($df->mustRun()->getOutput(), true);
+
+                $mounts = false;
+
+                foreach($df['storage-system-information']['filesystem'] as $fs)
+                {
+                    if (str_starts_with($fs['mounted-on'], $this->wrk))
+                    {
+                        $mounts = true;
+                        try
+                        {
+                            Process::fromShellCommandline(sprintf(
+                                'umount -f %s',
+                                $fs['mounted-on']
+                            ))->mustRun();
+                            $output->writeln(sprintf(
+                                '%s umounted %s',
+                                self::CHECK,
+                                $fs['mounted-on']
+                            ));
+                        }
+                        catch (\Exception $e)
+                        {
+                            $output->writeln(sprintf(
+                                '%s failed to umount %s',
+                                self::ERR,
+                                $fs['mounted-on']
+                            ));
+                        }
+                    }
+                }
+
+                if (!$mounts)
+                {
+                    $output->writeln(self::CHECK . ' no temporary mounts');
+                }
+
+                $f = (new Finder)
+                    ->in($this->wrk)
+                    ->name(['*.img', 'boot', 'efi'])
+                    ->depth(0);
+
+                $this->fs->remove($f);
+
+                if ($this->md)
+                {
+                    Misc::mdDestroy($this->md);
+                }
+
+                $output->writeln(self::CHECK . ' rm\'d temporary files');
+                break;
+        }
     }
 
     final protected function prune(OutputInterface $output, OutputInterface $verboseOutput) : void

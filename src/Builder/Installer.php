@@ -1,16 +1,39 @@
 <?php declare(strict_types=1);
-namespace TarBSD\Builder\Traits;
+namespace TarBSD\Builder;
 
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 
+use TarBSD\Util\FreeBSDRelease;
+use TarBSD\Configuration;
+use TarBSD\Util\Icons;
+use TarBSD\Util\WrkFs;
 use TarBSD\Util\Misc;
 use TarBSD\App;
 
-trait Installer
+class Installer implements Icons
 {
-    final protected function installPkgBase(OutputInterface $output, OutputInterface $verboseOutput, string $arch) : void
+    use Utils;
+
+    private readonly string $filesDir;
+
+    public function __construct(
+        private readonly string $root,
+        private readonly string $wrk,
+        private readonly WrkFs $wrkFs,
+        private readonly ?FreeBSDRelease $baseRelease,
+        private readonly ?string $distributionFiles,
+        private readonly Filesystem $fs,
+        private readonly Configuration $config,
+        private readonly HttpClientInterface $httpClient
+    ) {
+        $this->filesDir = $config->getDir() . '/tarbsd';
+    }
+
+    final public function installPkgBase(OutputInterface $output, OutputInterface $verboseOutput, string $arch) : void
     {
         $rootId = $this->wrkFs . '/root';
 
@@ -169,7 +192,7 @@ trait Installer
         }
     }
 
-    final protected function installTarBalls(OutputInterface $output, OutputInterface $verboseOutput) : void
+    final public function installTarBalls(OutputInterface $output, OutputInterface $verboseOutput) : void
     {
         $rootId = $this->wrkFs . '/root';
         $distFiles = [];
@@ -255,7 +278,7 @@ tarbsd_zpool_enable="YES"
 DEFAULTS);
     }
 
-    final protected function installPKGs(OutputInterface $output, OutputInterface $verboseOutput, string $arch) : void
+    final public function installPKGs(OutputInterface $output, OutputInterface $verboseOutput, string $arch) : void
     {
         $rootId = $this->wrkFs . '/root';
 

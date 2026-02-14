@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace TarBSD\Builder\Traits;
+namespace TarBSD\Builder;
 
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
