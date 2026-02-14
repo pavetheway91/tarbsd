@@ -14,20 +14,17 @@ class Configuration
         private readonly string $dir
     ) {
         $data = [
-            'root_pwhash' => isset($input['root_pwhash']) ? $input['root_pwhash'] : null,
-            'root_sshkey' => isset($input['root_sshkey']) ? $input['root_sshkey'] : null,
-            'backup' => isset($input['backup']) ? $input['backup'] : true,
-            'busybox' => isset($input['busybox']) ? $input['busybox'] : true,
-            'ssh' => isset($input['ssh']) ? $input['ssh'] : null,
-            'platform' => isset($input['platform']) ? $input['platform'] : 'amd64',
-            'features' => isset($input['features']) ? $input['features'] : [],
-            'modules' => isset($input['modules']) ? $input['modules'] : ['early' => [], 'late' => []],
-            'packages' => isset($input['packages']) ? $input['packages'] : [],
+            'root_pwhash'   => $input['root_pwhash'] ?? null,
+            'root_sshkey'   => $input['root_sshkey'] ?? null,
+            'backup'        => $input['backup'] ?? true,
+            'busybox'       => $input['busybox'] ?? false,
+            'ssh'           => $input['ssh'] ?? null,
+            'platform'      => $input['platform'] ?? 'amd64',
+            'features'      => $input['features'] ?? [],
+            'modules'       => $input['modules'] ?? ['early' => [], 'late' => []],
+            'packages'      => $input['packages'] ?? [],
         ];
-
-        $featureMap = $this->featureMap();
-
-        foreach($featureMap as $name => $class)
+        foreach(($featureMap = $this->featureMap()) as $name => $class)
         {
             if (isset($data['features'][$name]))
             {
@@ -42,7 +39,7 @@ class Configuration
         }
         if (count($data['features']) > count($featureMap))
         {
-            throw new \Exception;
+            throw new \Exception('unlnown feature');
         }
         if (!in_array($data['platform'], ['amd64', 'aarch64']))
         {
@@ -167,7 +164,6 @@ class Configuration
                     $name = $ns . $f->getBasename('.php'),
                     Feature\AbstractFeature::class)
                 ) {
-
                     $map[$name::NAME] = $name;
                 }
             }
