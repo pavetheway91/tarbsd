@@ -330,6 +330,7 @@ DEFAULTS);
 
                     $progressIndicator = $this->progressIndicator($output);    
                     $progressIndicator->start('updating package database');
+                    $this->wrkFs->tightCompression(false);
                     Process::fromShellCommandline(
                         $pkg . ' update', null, null, null, 7200
                     )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
@@ -338,7 +339,8 @@ DEFAULTS);
                         $verboseOutput->write($buffer);
                     });
                     $progressIndicator->finish('package database updated');
-    
+                    $this->wrkFs->tightCompression(true);
+
                     $progressIndicator = $this->progressIndicator($output);
                     $progressIndicator->start('downloading packages');
                     Process::fromShellCommandline(

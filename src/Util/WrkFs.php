@@ -97,8 +97,9 @@ final class WrkFs implements Stringable
     public function tightCompression(bool $setting)
     {
         Process::fromShellCommandline(sprintf(
-            "zfs set compression=%s %s/root",
+            "zfs set compression=%s recordsize=%s %s/root",
             $setting ? 'zstd' : 'lz4',
+            $setting ? '4m' : '128k',
             $this->id
         ))->mustRun();
     }
