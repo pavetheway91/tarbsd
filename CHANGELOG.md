@@ -1,3 +1,11 @@
+## [upcoming] ##
+* Bsdinstall feature, which makes it easier to use tarBSD as an alternative FreeBSD
+  installer.
+    * Set "bsdinstall: true" in the feature section of tarbsd.yml to enable.
+* Building an image takes less memory.
+* Edge-case bug, which might cause build to fail has been fixed.
+* Small cosmetic UI improvements.
+
 ## 2026-02-10 ##
 * tarBSD motd got broken in previous version and has been fixed.
 * Building FreeBSD 14 images for aarch64 works now.
