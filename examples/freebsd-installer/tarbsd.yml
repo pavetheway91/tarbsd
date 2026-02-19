@@ -1,0 +1,26 @@
+# password is tarbsd
+root_pwhash: $2y$12$/F982r2u63jVY51Ym2bhIOGTaG7RAoctF8ubhoGRUda5BBBibKXOC
+# copy-paste your SSH key here
+root_sshkey: null
+backup: true
+busybox: false
+ssh: openssh
+features:
+    zfs: true
+    bsdinstall: true
+    geli: false
+    pf: false
+    ipfw: false
+    wireguard: false
+    wifi: false
+    bhyve: false
+    jails: false
+    ntpd: false
+    rescue: false
+modules:
+    early:
+    late:
+packages:
+    - tmux
+    - nano
+    - htop

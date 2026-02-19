@@ -1,0 +1,4 @@
+
+# /var/tmp symlinked to /tmp too
+tmpfs	/tmp		tmpfs	rw,nosuid,mode=1777             0	0
+tmpfs	/var/run	tmpfs	rw,nosuid,noexec,size=8M        0	0
