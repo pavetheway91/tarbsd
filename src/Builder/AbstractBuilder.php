@@ -63,7 +63,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     ) : void;
 
     final public function __construct(
-        private readonly Configuration $config,
+        protected readonly Configuration $config,
         private readonly CacheInterface $cache,
         private string|FreeBSDRelease $distFilesOrBaseRelease,
         private readonly EventDispatcher $dispatcher,
@@ -139,12 +139,12 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $installer->installPKGs($output, $verboseOutput, $arch);
 
-        $this->prune($output, $verboseOutput);
-
         Misc::tarStream($this->filesDir, $this->root, $verboseOutput);
         $output->writeln(self::CHECK . ' copied overlay directory to the image');
 
         $this->prepare($output, $verboseOutput, $quick, $platform);
+
+        $this->prune($output, $verboseOutput);
 
         if ($this->config->backup())
         {

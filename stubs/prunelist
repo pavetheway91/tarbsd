@@ -57,7 +57,6 @@ usr/share/openssl
 usr/share/nls
 usr/tests
 usr/sbin/bsdconfig
-usr/libexec/bsdinstall
 var/db/pkg
 usr/sbin/pkg
 var/db/etcupdate

@@ -79,7 +79,7 @@ class MfsBuilder extends AbstractBuilder
             )->mustRun();
             foreach(['pmbr', 'gptboot'] as $legacyBootFile)
             {
-                $fs->rename($this->root . '/boot/' . $legacyBootFile, $this->wrk . '/cache/' . $legacyBootFile, true);
+                $fs->copy($this->root . '/boot/' . $legacyBootFile, $this->wrk . '/cache/' . $legacyBootFile, true);
             }
         }
         elseif ($platform === 'aarch64')
@@ -122,10 +122,12 @@ vfs.root.mountfrom="ufs:/dev/md0"
 beastie_disable="YES"
 autoboot_delay="3"
 entropy_cache_load="NO"
-vfs.zfs.min_auto_ashift=12
-
 CONF;
-
+        if ($this->config->features()['zfs']->isEnabled())
+        {
+            $loaderConf .= "\nvfs.zfs.min_auto_ashift=12";
+        }
+        $loaderConf .= "\n";
         foreach($load as $ext)
         {
             $loaderConf .= "\n" . $ext . '_load="YES"';
@@ -149,7 +151,10 @@ CONF;
         $finder->files()
             ->in($this->root . '/boot')
             ->notName('*.ko')
-            ->notName('*.hints');
+            ->notName('*.hints')
+            ->notName('pmbr')
+            ->notName('gptboot')
+            ->notName('gptzfsboot');
         $this->fs->remove($finder);
 
         $finder = new Finder;

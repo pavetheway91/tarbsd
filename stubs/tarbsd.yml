@@ -6,6 +6,7 @@ ssh: openssh
 platform: amd64
 features:
     zfs: false
+    bsdinstall: false
     geli: false
     pf: true
     ipfw: false
