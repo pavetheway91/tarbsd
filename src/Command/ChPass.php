@@ -13,7 +13,7 @@ use Symfony\Component\Yaml\Yaml;
 )]
 class ChPass extends Bootstrap
 {
-    protected function __invoke(InputInterface $input, OutputInterface $output) : int
+    public function __invoke(InputInterface $input, OutputInterface $output) : int
     {
         $cwd = getcwd();
 

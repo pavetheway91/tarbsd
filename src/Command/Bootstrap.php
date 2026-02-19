@@ -25,7 +25,7 @@ class Bootstrap extends AbstractCommand
 {
     const ZONE_INFO = '/usr/share/zoneinfo/';
 
-    protected function __invoke(InputInterface $input, OutputInterface $output) : int
+    public function __invoke(InputInterface $input, OutputInterface $output) : int
     {
         $cwd = getcwd();
 
