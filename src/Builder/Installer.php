@@ -368,6 +368,10 @@ DEFAULTS);
                 }
                 $umountPkg->mustRun();
             }
+            else
+            {
+                $output->writeln(self::CHECK . $msg = ' no packages to install');
+            }
             file_put_contents($packagesHashFile, $packagesHash);
             $this->wrkFs->snapshot('pkgsInstalled');
         }
