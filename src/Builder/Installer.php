@@ -159,10 +159,8 @@ class Installer implements Icons
                     $progressIndicator->advance();
                     $verboseOutput->write($buffer);
                 });
-                $progressIndicator->finish('base packages downloaded');
 
-                $progressIndicator = $this->progressIndicator($output);
-                $progressIndicator->start('installing base packages');
+                $progressIndicator->setMessage('installing base packages');
                 $installCmd = $pkg . ' install -U -y ' . $pkgs;
                 $verboseOutput->writeln($installCmd);
                 Process::fromShellCommandline(
@@ -338,11 +336,9 @@ DEFAULTS);
                         $progressIndicator->advance();
                         $verboseOutput->write($buffer);
                     });
-                    $progressIndicator->finish('package database updated');
                     $this->wrkFs->tightCompression(true);
 
-                    $progressIndicator = $this->progressIndicator($output);
-                    $progressIndicator->start('downloading packages');
+                    $progressIndicator->setMessage('downloading packages');
                     Process::fromShellCommandline(
                         $pkg . ' install -F -y -U ' . implode(' ', $packages),
                         null, null, null, 7200
@@ -351,10 +347,8 @@ DEFAULTS);
                         $progressIndicator->advance();
                         $verboseOutput->write($buffer);
                     });
-                    $progressIndicator->finish('packages downloaded');
 
-                    $progressIndicator = $this->progressIndicator($output);
-                    $progressIndicator->start('installing packages');
+                    $progressIndicator->setMessage('installing packages');
                     $installCmd = $pkg . ' install -U -y ' . implode(' ', $packages);
                     $verboseOutput->writeln($installCmd);
                     Process::fromShellCommandline(

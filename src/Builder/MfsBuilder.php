@@ -241,7 +241,7 @@ CONF;
             $progressIndicator->advance();
             $verboseOutput->write($buffer);
         });
-        $progressIndicator->finish('usr.tar ready');
+        //$progressIndicator->finish('usr.tar ready');
         $this->wrkFs->tightCompression(true);
 
         $umountUsr = Process::fromShellCommandline(
@@ -269,10 +269,10 @@ CONF;
         $umountUsr->mustRun();
 
         $this->wrkFs->checkSize();
-        $progressIndicator = $this->progressIndicator($output);
-        $progressIndicator->start('compressing mfs image (gzip-' . $gzipLevel . ')');
+        //$progressIndicator = $this->progressIndicator($output);
+        $progressIndicator->setMessage('compressing mfs image (gzip-' . $gzipLevel . ')');
         Misc::zlibCompress($this->wrk . '/boot/mfsroot', $gzipLevel, $progressIndicator);
-        $progressIndicator->finish('mfs image ready');
+        $progressIndicator->finish('image compressed');
 
         $this->writeFile($output, $verboseOutput, $platform);
     }
