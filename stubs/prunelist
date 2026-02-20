@@ -65,6 +65,11 @@ usr/local/share/doc
 usr/local/share/man
 usr/local/share/examples
 usr/local/lib/*.a
+usr/local/lib/*/*.a
+usr/local/lib/*/*/*.a
+usr/local/lib/*/*/*/*.a
+usr/local/lib/*/*/*/*/*.a
+usr/local/lib/*/*/*/*/*/*.a
 sbin/bectl
 bin/ed
 bin/red
