@@ -132,7 +132,7 @@ final class WrkFs implements Stringable
             ))->mustRun()->getOutput(),
             "\n"
         );
-        return (int) number_format($avail / 1048576, 0, '', '');
+        return (int) ceil($avail / 1048576);
     }
 
     public function rollback(string $snapshot) : void

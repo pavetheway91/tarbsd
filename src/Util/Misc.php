@@ -254,8 +254,7 @@ class Misc
         {
             $size = filesize($file);
         }
-        $mbSize = $size / 1048576;
-        return (int) number_format($mbSize, 0, '', '');
+        return (int) ceil($size / 1048576);
     }
 
     public static function encodeTarOptions(array $arr) : string
