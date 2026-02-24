@@ -182,9 +182,7 @@ class Build extends AbstractCommand
         catch(\Exception $e)
         {
             throw new \Exception(
-                "please install qemu-tools package to use random image formats\n"
-                . "pkg install qemu-tools \n"
-                . "tools flavour of emulators/qemu in ports"
+                "please install qemu or qemu-tools package to use random image formats"
             );
         }
         $notfound = [];
