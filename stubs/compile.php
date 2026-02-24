@@ -673,8 +673,10 @@ STUB;
     private const BOOTSTRAP = <<<BOOTSTRAP
 <?php
 namespace TarBSD;
-use Composer\Autoload\ClassLoader;
+
 use Symfony\Component\ErrorHandler\Debug;
+use Symfony\Component\Finder\Finder;
+use Composer\Autoload\ClassLoader;
 use Closure;
 
 if (!class_exists(ClassLoader::class, false))
@@ -682,7 +684,7 @@ if (!class_exists(ClassLoader::class, false))
     require __DIR__ . '/vendor/composer/ClassLoader.php';
 }
 
-return new class()
+return new class() extends ClassLoader
 {
     public const __ROOT__ = __DIR__;
 
@@ -696,10 +698,31 @@ return new class()
 
     const CLASSMAP = %s;
 
+    public function __construct()
+    {
+        parent::__construct(self::__VENDOR__);
+
+        \$init = Closure::bind(function (\$that)
+        {
+            \$that->prefixLengthsPsr4 = \$that::PREFIX_LENGTHS;
+            \$that->prefixDirsPsr4 = \$that::PREFIXES;
+            \$that->classMap = \$that::CLASSMAP;
+        }, null, ClassLoader::class);
+
+        \$init(\$this);
+        \$this->register();
+
+        foreach(self::FILES as \$file)
+        {
+            if (is_file(\$file))
+            {
+                require \$file;
+            }
+        }
+    }
+
     public function run() : int
     {
-        \$loader = \$this->getClassLoader();
-
         if (
             (!TARBSD_PORTS && !TARBSD_SELF_UPDATE)
             ||
@@ -715,36 +738,49 @@ return new class()
             define('TARBSD_DEBUG', false);
         }
 
-        return (new App(\$loader))->run();
+        return (new App(\$this))->run();
     }
 
-    public function getClassLoader() : ClassLoader
+    public function loadAllClasses() : void
     {
-        static \$loader;
-        if (null === \$loader)
+        \$include = function(string \$file) : void
         {
-            self::getInitializer(\$loader = new ClassLoader)->__invoke();
-            \$loader->register();
-            foreach(self::FILES as \$file)
+            if (!in_array(\$file, get_included_files()))
             {
-                if (is_file(\$file))
+                set_error_handler(function(int \$errno, string \$errstr, string \$errfile, int \$errline){});
+
+                try
                 {
-                    require \$file;
+                    include \$file;
+                }
+                catch (\Throwable \$e) {}
+
+                restore_error_handler();
+            }
+        };
+
+        foreach(\$this->getPrefixesPsr4() as \$ns => \$dirs)
+        {
+            foreach((new Finder)->files()->in(\$dirs)->name('*.php') as \$file)
+            {
+                if (!preg_match('/Resources/', \$file->getRelativePathName()))
+                {
+                    \$include((string) \$file);
                 }
             }
         }
-        return \$loader;
-    }
 
-    public static function getInitializer(ClassLoader \$loader) : Closure
-    {
-        \$that = static::class;
-        return Closure::bind(function () use (\$loader, \$that)
+        foreach(\$this->getClassMap() as \$class => \$file)
         {
-            \$loader->prefixLengthsPsr4 = \$that::PREFIX_LENGTHS;
-            \$loader->prefixDirsPsr4 = \$that::PREFIXES;
-            \$loader->classMap = \$that::CLASSMAP;
-        }, null, ClassLoader::class);
+            if (
+                !class_exists(\$class, false)
+                && !interface_exists(\$class, false)
+                && !trait_exists(\$class, false)
+                && !enum_exists(\$class, false)
+            ) {
+                \$include(\$file);
+            }
+        }
     }
 };
 BOOTSTRAP;

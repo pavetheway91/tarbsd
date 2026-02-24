@@ -11,7 +11,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Finder\Finder;
 
 use TarBSD\Util\UpdateUtil;
 use TarBSD\App;
@@ -39,8 +38,8 @@ class SelfUpdate extends AbstractCommand
         InputInterface $input,
         OutputInterface $output,
         #[Option('Accept pre-release')] bool $preRelease = false
-    ) : int
-    {
+    ) : int {
+
         if (!TARBSD_SELF_UPDATE)
         {
             $output->writeln(sprintf(
@@ -121,8 +120,8 @@ class SelfUpdate extends AbstractCommand
         int $size,
         string $sig,
         int $perms
-    ) : int
-    {
+    ) : int {
+
         $tmpFile = '/tmp/' . 'tarbsd_update_' . bin2hex(random_bytes(8));
 
         if (!is_resource($handle = fopen($tmpFile, 'w')))
@@ -186,7 +185,7 @@ class SelfUpdate extends AbstractCommand
          * in the current phar archive before
          * it gets overriden.
          */
-        $this->loadAllClasses();
+        $this->getApplication()->classLoader->loadAllClasses();
 
         $fs->rename($tmpFile, Phar::running(false), true);
 
@@ -196,41 +195,5 @@ class SelfUpdate extends AbstractCommand
         ));
 
         return self::SUCCESS;
-    }
-
-    protected function loadAllClasses() : void
-    {
-        $classLoader = $this->getApplication()->classLoader;
-
-        set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline, array $errcontext)
-        {
-        });
-
-        foreach($classLoader->getPrefixesPsr4() as $ns => $dirs)
-        {
-            if (!preg_match('/Polyfill/', $ns))
-            {
-                foreach((new Finder)->files()->in($dirs)->name('*.php') as $file)
-                {
-                    $relativeName = $file->getRelativePathName();
-
-                    if (ctype_upper($relativeName[0]))
-                    {
-                        $className = $ns . preg_replace(
-                            '/\//',
-                            '\\',
-                            substr($relativeName, 0, strlen($relativeName) - 4)
-                        );
-                        try
-                        {
-                            @class_exists($className);
-                        }
-                        catch(\Throwable $e)
-                        {}
-                    }
-                }
-            }
-        }
-        restore_error_handler();
     }
 }
