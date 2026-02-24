@@ -29,7 +29,7 @@ class Compiler extends Command
 {
     const REGEX_LICENSE = '{(license|copying|copyright)(\.[a-z]{2,3}|)$}Di';
 
-    const REGEX_ATTRIBUTE = '/(\#\[(\\\\|)(Attribute|ReturnTypeWillChange))/';
+    const REGEX_ATTRIBUTE = '{(\#\[(\\\\|)([a-z0-9_]+)(\]|\())}Di';
 
     private const SIG = 0x00010000;
 
