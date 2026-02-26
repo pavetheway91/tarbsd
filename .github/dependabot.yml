@@ -13,6 +13,14 @@ updates:
       applies-to: version-updates
       patterns:
         - "psr*"
+    paragonie:
+      applies-to: version-updates
+      patterns:
+        - "paragonie*"
+    phpseclib:
+      applies-to: version-updates
+      patterns:
+        - "phpseclib*"
   ignore:
       - dependency-name: "symfony*"
         update-types: ["version-update:semver-major"]
