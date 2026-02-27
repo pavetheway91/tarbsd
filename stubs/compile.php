@@ -173,6 +173,7 @@ class Compiler extends Command
         $this->addFile(__DIR__ . '/../vendor/composer/ClassLoader.php');
         $this->addFile(__DIR__ . '/../vendor/composer/InstalledVersions.php');
         $this->addFile(__DIR__ . '/../vendor/composer/installed.php');
+        $this->addFile(__DIR__ . '/../vendor/composer/platform_check.php');
     }
 
     protected function addOwnSrc(
@@ -683,6 +684,7 @@ if (!class_exists(ClassLoader::class, false))
 {
     require __DIR__ . '/vendor/composer/ClassLoader.php';
 }
+require __DIR__ . '/vendor/composer/platform_check.php';
 
 return new class() extends ClassLoader
 {
