@@ -7,13 +7,10 @@ use Symfony\Component\Process\Process;
 use TarBSD\Util\ProgressIndicator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use phpseclib3\Math\BigInteger;
 
 class Misc
 {
-    const TIME_OFFSET_INT = 0x01B21DD213814000;
-
-    const TIME_OFFSET_BIN = "\x01\xb2\x1d\xd2\x13\x81\x40\x00";
-
     public static function platformCheck() : void
     {
         /**
@@ -285,16 +282,9 @@ class Misc
         $time = microtime(false);
         $time = substr($time, 11).substr($time, 2, 7);
 
-        if (\PHP_INT_SIZE >= 8)
-        {
-            $time = str_pad(dechex($time + self::TIME_OFFSET_INT), 16, '0', \STR_PAD_LEFT);
-        }
-        else
-        {
-            $time = str_pad(self::toBinary($time), 8, "\0", \STR_PAD_LEFT);
-            $time = self::binaryAdd($time, self::TIME_OFFSET_BIN);
-            $time = bin2hex($time);
-        }
+        $time = new BigInteger($time);
+        $time = $time->add(new BigInteger('122192928000000000'));
+        $time = str_pad($time->toHex(), 16, '0', STR_PAD_LEFT);
 
         $clockSeq = random_int(0, 0x3FFF);
 
@@ -316,47 +306,5 @@ class Misc
     {
         static $fs;
         return $fs ? $fs : $fs = new Filesystem;
-    }
-
-    private static function toBinary(string $digits) : string
-    {
-        $bytes = '';
-        $count = \strlen($digits);
-
-        while ($count)
-        {
-            $quotient = [];
-            $remainder = 0;
-
-            for ($i = 0; $i !== $count; ++$i)
-            {
-                $carry = $digits[$i] + $remainder * 10;
-                $digit = $carry >> 8;
-                $remainder = $carry & 0xFF;
-
-                if ($digit || $quotient)
-                {
-                    $quotient[] = $digit;
-                }
-            }
-
-            $bytes = \chr($remainder).$bytes;
-            $count = \count($digits = $quotient);
-        }
-
-        return $bytes;
-    }
-
-    private static function binaryAdd(string $a, string $b) : string
-    {
-        $sum = 0;
-        for ($i = 7; 0 <= $i; --$i)
-        {
-            $sum += \ord($a[$i]) + \ord($b[$i]);
-            $a[$i] = \chr($sum & 0xFF);
-            $sum >>= 8;
-        }
-
-        return $a;
     }
 }
