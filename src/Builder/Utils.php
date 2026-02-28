@@ -58,29 +58,51 @@ trait Utils
             $keyFile = $keys . '/ssh_host_' . $alg . '_key';
             if (!file_exists($keyFile))
             {
-                RSA::useInternalEngine();
-                EC::useInternalEngine();
                 switch($alg)
                 {
                     case 'rsa':
-                        $key = RSA::createKey(3072);
+                        $key = openssl_pkey_new([
+                            'private_key_type'  => OPENSSL_KEYTYPE_RSA,
+                            'private_key_bits'  => 3072
+                        ]);
+                        openssl_pkey_export($key, $pem);
+                        $key = RSA::load($pem);
                         break;
                     case 'ecdsa':
-                        $key = EC::createKey('nistp256');
+                        $key = openssl_pkey_new([
+                            'private_key_type'  => OPENSSL_KEYTYPE_EC,
+                            'curve_name'        => 'prime256v1'
+                        ]);
+                        openssl_pkey_export($key, $pem);
+                        $key = EC::load($pem);
                         break;
                     case 'ed25519':
-                        $key = EC::createKey('ed25519');
+                        if (defined('OPENSSL_KEYTYPE_ED25519'))
+                        {
+                            $key = openssl_pkey_new([
+                                'private_key_type'  => OPENSSL_KEYTYPE_ED25519,
+                            ]);
+                            openssl_pkey_export($key, $pem);
+                            $key = EC::load($pem);
+                        }
+                        else
+                        {
+                            $key = EC::createKey('ed25519');
+                        }
                         break;
                 }
+
                 $this->fs->dumpFile(
                     $keyFile,
                     $key->toString('OpenSSH')
                 );
                 $this->fs->chmod($keyFile, 0600);
+
                 $this->fs->dumpFile(
                     $keyFile . '.pub',
                     $key->getPublicKey()->toString('OpenSSH')
                 );
+
                 $output->writeln(
                     self::CHECK . ' generated ' . $alg . ' SSH host key to tarbsd/etc/ssh'
                 );
