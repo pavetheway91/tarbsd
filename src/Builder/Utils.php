@@ -10,6 +10,7 @@ use TarBSD\Util\ProgressIndicator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+use phpseclib3\Crypt\Common\Formats\Keys\OpenSSH;
 use phpseclib3\Crypt\RSA;
 use phpseclib3\Crypt\EC;
 
@@ -58,6 +59,7 @@ trait Utils
             $keyFile = $keys . '/ssh_host_' . $alg . '_key';
             if (!file_exists($keyFile))
             {
+                OpenSSH::setComment("tarBSD-builder-generated-key");
                 switch($alg)
                 {
                     case 'rsa':
