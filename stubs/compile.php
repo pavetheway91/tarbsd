@@ -208,26 +208,13 @@ class Compiler extends Command
         $stubFiles = 0;
         $output->write("adding files for stubs ");
         foreach(
-            (new Finder)->files()->in(__DIR__)->depth('0')->notname('*.php')->sortByName()->reverseSorting()
+            (new Finder)->files()->in(__DIR__)->notname('*.php')->sortByName()->reverseSorting()
             as $file
         ) {
             $this->addFile($file);
             $stubFiles++;
         }
-        foreach(
-            (new Finder)->directories()->in(__DIR__)->depth('0')
-            as $dir
-        ) {
-            $dir = (string) $dir;
-            foreach((new Finder)->files()->in($dir) as $file)
-            {
-                if ($file->isFile())
-                {
-                    $this->addFile($file);
-                    $stubFiles++;
-                }
-            }
-        }
+
         $output->writeln(sprintf("%d files", $stubFiles));
         $output->writeln($constantsStr);
     }
