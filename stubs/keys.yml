@@ -1,0 +1,8 @@
+pkgbase-15:
+  trusted:
+    awskms-15:
+      function: sha256
+      fingerprint: 1d7b45d20fa8d6ed26f9b4a13ac81a6b5df860b9fe644d07b87e92298ba72595
+    backup-signing-15:
+      function: sha256
+      fingerprint: 56a77bdcb6c3cf7984729c6138bd5617c24aa0d466b3b604c96205b2c5629f3c

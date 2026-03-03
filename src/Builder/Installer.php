@@ -6,6 +6,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Yaml\Yaml;
 
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\Configuration;
@@ -96,18 +97,28 @@ class Installer implements Icons
                 $pkgKeys = '/usr/share/keys',
                 $rootPkgKeys = $this->root . $pkgKeys
             );
-            $f = (new Finder)->directories()->in(TARBSD_STUBS . '/keys')->depth(0);
-            foreach($f as $dir)
+
+            foreach(Yaml::parseFile(TARBSD_STUBS . '/keys.yml') as $release => $keys)
             {
-                if (!$this->fs->exists($target = $rootPkgKeys . '/' . $dir->getFileName()))
+                if (!$this->fs->exists($dir = $rootPkgKeys . '/' . $release . '/trusted'))
                 {
-                    $this->fs->mirror((string) $dir, $target);
-                    if (!$this->fs->exists($revoked = $target . '/revoked'))
+                    foreach($keys['trusted'] as $key => $data)
                     {
-                        $this->fs->mkdir($revoked);
+                        $this->fs->dumpFile(
+                            $dir . '/' . $key,
+                            sprintf(
+                                "function: \"%s\"\nfingerprint: \"%s\"\n",
+                                $data['function'], $data['fingerprint']
+                            )
+                        );
                     }
                 }
+                if (!$this->fs->exists($revoked = $rootPkgKeys . '/' . $release . '/revoked'))
+                {
+                    $this->fs->mkdir($revoked);
+                }
             }
+
             $this->fs->copy(
                 TARBSD_STUBS . '/overlay/etc/resolv.conf',
                 $this->root . '/etc/resolv.conf'
