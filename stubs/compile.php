@@ -420,15 +420,16 @@ class Compiler extends Command
         $file = (string) $file;
         $this->addFromString(
             substr(realpath($file), strlen($this->root) + 1),
-            $this->readFile($file)
+            $this->readFile($file),
+            fileperms($file)
         );
     }
 
-    protected function addFromString(string $path, string $contents)
+    protected function addFromString(string $path, string $contents, int $perms = 0555) : void
     {
         $this->files[$path] = $this->processFile(
             $path, $contents,
-            0555, 0
+            $perms, 0
         );
     }
 
