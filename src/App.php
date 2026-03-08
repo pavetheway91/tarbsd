@@ -227,7 +227,6 @@ class App extends Application implements EventSubscriberInterface
             new Command\Build,
             new Command\Bootstrap,
             new Command\ChPass,
-            new Command\WrkInit,
             new Command\WrkDestroy,
             new Command\SelfUpdate,
             new Command\Diagnose,
