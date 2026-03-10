@@ -39,7 +39,7 @@ class Configuration
         }
         if (count($data['features']) > count($featureMap))
         {
-            throw new \Exception('unlnown feature');
+            throw new \Exception('unknown feature');
         }
         if (!in_array($data['platform'], ['amd64', 'aarch64']))
         {
