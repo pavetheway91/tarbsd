@@ -15,7 +15,6 @@ use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
-use Symfony\Polyfill\Uuid\Uuid;
 
 use Composer\Autoload\ClassLoader;
 

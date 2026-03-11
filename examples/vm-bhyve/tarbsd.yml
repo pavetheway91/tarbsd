@@ -7,6 +7,7 @@ busybox: false
 ssh: openssh
 features:
     zfs: true
+    bsdinstall: false
     geli: false
     pf: true
     ipfw: false
