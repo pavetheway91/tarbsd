@@ -69,8 +69,10 @@ tarbsd build --release 15.0 -v
 
 ## tarbsd.yml options ##
 ### root_pwhash ###
+A hashed root password.
 
 ### root_sshkey ###
+SSH key (public version).
 
 ### backup ###
 Backup tarbsd.yml as well as the overlay directory inside the image. If you loose the computer, which created the image, you've got backup inside the image itself assuming it runs on another computer and you haven't lost that one too.
