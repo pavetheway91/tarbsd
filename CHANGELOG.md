@@ -1,3 +1,7 @@
+## [UPCOMING] ##
+* Previously deprecated wrk-init command has been removed.
+* Generated images are roughly 7% smaller thanks to file system optimizations.
+
 ## 2026-03-01 ##
 * Bsdinstall feature, which makes it easier to use tarBSD as an alternative FreeBSD
   installer for cloud hosts for example.
