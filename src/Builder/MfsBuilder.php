@@ -285,7 +285,7 @@ CONF;
         $this->wrkFs->checkSize(Misc::getFileSizeM($this->wrk . '/boot'));
 
         Process::fromShellCommandline(
-            'makefs boot.img boot && rm boot/mfsroot.gz',
+            'makefs -b 0% -o optimization=space,minfree=0 boot.img boot && rm boot/mfsroot.gz',
             $this->wrk,
             null, null, 1800
         )->mustRun(function ($type, $buffer) use ($verboseOutput, $progressIndicator)
