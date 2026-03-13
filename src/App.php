@@ -142,7 +142,7 @@ class App extends Application implements EventSubscriberInterface
                             $f = (new Finder)
                                 ->files()
                                 ->in($pkgCache)
-                                ->date('until 60 days ago');
+                                ->date('until 90 days ago');
                             $fs->remove($f);
 
                             $f = (new Finder)
