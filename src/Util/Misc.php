@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Util;
 
+use Symfony\Component\Console\Helper\ProgressIndicator;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
-use TarBSD\Util\ProgressIndicator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use phpseclib3\Math\BigInteger;
