@@ -27,7 +27,7 @@ final class WrkFs implements Stringable
                 $mnt = realpath($dir ) . '/wrk'
             );
 
-            $md = Misc::mdCreate(1024);
+            $md = Misc::mdCreate(1536);
 
             Process::fromShellCommandline(
                 'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -O compression=lz4 -m '
