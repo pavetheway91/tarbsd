@@ -11,7 +11,6 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Console\Cursor;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
-use Symfony\Polyfill\Uuid\Uuid;
 
 use TarBSD\Configuration;
 use TarBSD\Util\Misc;
