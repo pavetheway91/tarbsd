@@ -17,13 +17,8 @@ final class WrkFs implements Stringable
         $this->md = explode(',', $md);
     }
 
-    public static function init(string $dir, int $size = 1) : bool
+    public static function init(string $dir) : bool
     {
-        if (0 >= $size)
-        {
-            throw new \Exception('pool size must be greater than zero');
-        }
-
         if (!static::get($dir))
         {
             $fsId = static::getId($dir);
@@ -32,7 +27,7 @@ final class WrkFs implements Stringable
                 $mnt = realpath($dir ) . '/wrk'
             );
 
-            $md = Misc::mdCreate($size * 1024);
+            $md = Misc::mdCreate(1024);
 
             Process::fromShellCommandline(
                 'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -O compression=lz4 -m '

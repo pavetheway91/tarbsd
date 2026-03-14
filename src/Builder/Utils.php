@@ -1,11 +1,10 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Builder;
 
+use Symfony\Component\Console\Helper\ProgressIndicator;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
-
-use TarBSD\Util\ProgressIndicator;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -26,7 +25,10 @@ trait Utils
 
     protected function progressIndicator(OutputInterface $output) : ProgressIndicator
     {
-        return new ProgressIndicator($output, $this->wrkFs);
+        return new ProgressIndicator($output, 'verbose', 100,
+            ['⠏', '⠛', '⠹', '⢸', '⣰', '⣤', '⣆', '⡇'],
+            '<info>✔</info>'
+        );
     }
 
     final protected function hasKernelModule(string $name) : bool

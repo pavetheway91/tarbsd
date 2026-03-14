@@ -29,7 +29,8 @@ class Installer implements Icons
         private readonly ?string $distributionFiles,
         private readonly Filesystem $fs,
         private readonly Configuration $config,
-        private readonly HttpClientInterface $httpClient
+        private readonly HttpClientInterface $httpClient,
+        private readonly Process $wrkFsSize
     ) {
         $this->filesDir = $config->getDir() . '/tarbsd';
     }
@@ -195,6 +196,7 @@ class Installer implements Icons
             }
             catch (\Exception $e)
             {
+                $this->wrkFsSize->stop();
                 $umountPkgCache->mustRun();
                 throw $e;
             }
@@ -374,6 +376,7 @@ DEFAULTS);
                 }
                 catch (\Exception $e)
                 {
+                    $this->wrkFsSize->stop();
                     $umountPkg->mustRun();
                     throw $e;
                 }

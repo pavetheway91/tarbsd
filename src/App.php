@@ -231,7 +231,8 @@ class App extends Application implements EventSubscriberInterface
             new Command\Diagnose,
             new Command\SelfCheckSig,
             new Command\VersionCheck,
-            new Command\Debug
+            new Command\Debug,
+            new Command\WrkFsSize
         ];
     }
 }

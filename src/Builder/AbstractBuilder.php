@@ -23,6 +23,7 @@ use TarBSD\App;
 
 use DateTimeImmutable;
 use SplFileInfo;
+use Phar;
 
 abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 {
@@ -47,6 +48,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     private readonly string $distributionFiles;
 
     private readonly ?FreeBSDRelease $baseRelease;
+
+    protected Process $wrkFsSize;
 
     abstract protected function genFsTab() : Fstab;
 
@@ -103,9 +106,16 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     final public function build(OutputInterface $output, OutputInterface $verboseOutput, bool $quick) : SplFileInfo
     {
-        $this->dispatcher->addSubscriber($this);
         $this->wrkFs->tightCompression(true);
 
+        $this->wrkFsSize = Process::fromShellCommandline(sprintf(
+            "%s wrkfssize",
+            $self = Phar::running(false)
+        ), $this->config->getDir(), null, null, 7200);
+        $this->wrkFsSize->start();
+
+        $this->dispatcher->addSubscriber($this);
+    
         $start = time();
         $this->bootPruned = false;
         $this->modules = null;
@@ -126,7 +136,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             $this->root, $this->wrk, $this->wrkFs,
             $this->baseRelease,
             isset($this->distributionFiles) ? $this->distributionFiles : null,
-            $this->fs, $this->config, $this->httpClient
+            $this->fs, $this->config, $this->httpClient, $this->wrkFsSize
         );
         if ($this->baseRelease)
         {
@@ -170,6 +180,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         ));
 
         $this->dispatcher->removeSubscriber($this);
+        $this->wrkFsSize->stop();
 
         return new SplFileInfo($file);
     }
@@ -187,6 +198,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         {
             case \SIGINT:
             case \SIGTERM:
+                $this->wrkFsSize->stop();
                 $output = $event->getOutput();
 
                 $output->writeln(sprintf(
