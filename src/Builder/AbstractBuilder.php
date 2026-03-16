@@ -109,13 +109,20 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->wrkFs->tightCompression(true);
 
         $this->wrkFsSize = Process::fromShellCommandline(sprintf(
-            "%s wrkfssize",
-            $self = Phar::running(false)
+            "php %s wrkfssize",
+            realpath($_SERVER['SCRIPT_FILENAME'])
         ), $this->config->getDir(), null, null, 7200);
-        $this->wrkFsSize->start();
+
+        $this->wrkFsSize->start(function($type, $buffer)
+        {
+            if (Process::ERR === $type)
+            {
+                throw new \Exception($buffer);
+            }
+        });
 
         $this->dispatcher->addSubscriber($this);
-    
+
         $start = time();
         $this->bootPruned = false;
         $this->modules = null;
