@@ -61,8 +61,13 @@ class Configuration
         {
             throw new \Exception('Backup setting must be bool');
         }
-        if (!is_string($data['root_pwhash']) || !preg_match('/^\$2y\$([0-9]{2})\$([a-zA-Z0-9\.]{53})$/', $data['root_pwhash']))
-        {
+        if (!is_string($data['root_pwhash'])
+            || (
+                !preg_match('/^\$2y\$([0-9]{2})\$([a-zA-Z0-9\.\/]{53})$/', $data['root_pwhash'])
+                &&
+                !preg_match('/^\$(5|6)\$((rounds\=([0-9]+)\$)|)([a-zA-Z0-9\.\/]+)\$([a-zA-Z0-9\.\/]{43,86})$/', $data['root_pwhash'])
+            )
+        ) {
             throw new \Exception('Invalid root password hash');
         }
         $this->data = $data;
