@@ -1,6 +1,8 @@
 ## [UPCOMING] ##
-* Previously deprecated wrk-init command has been removed.
 * Generated images are roughly 7% smaller thanks to file system optimizations.
+* Previously deprecated wrk-init command has been removed.
+* Work file system size checks were moved to a separate background process.
+* More input validation at various places.
 
 ## 2026-03-01 ##
 * Bsdinstall feature, which makes it easier to use tarBSD as an alternative FreeBSD
