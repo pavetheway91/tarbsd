@@ -5,9 +5,13 @@ use Symfony\Component\Console\Helper\ProgressIndicator;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
+
+use phpseclib3\Math\BigInteger;
+use phpseclib3\Crypt\EC;
+use phpseclib3\Crypt\RSA;
+
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use phpseclib3\Math\BigInteger;
 
 class Misc
 {
@@ -54,6 +58,50 @@ class Misc
             {
                 exit("\n\ttarBSD builder cannot run due to following issues:\n\t\t"
                 . implode("\n\t\t", $issues) . "\n\n");
+            }
+        }
+    }
+
+    public static function validatePublicKey(?string $value, bool $bootstrap) : void
+    {
+        if (!$value)
+        {
+            return;
+        }
+
+        try
+        {
+            $key = EC\Formats\Keys\OpenSSH::load($value);
+            if (isset($key['dA']))
+            {
+                throw new \Exception($bootstrap ?
+                    'Public key required'
+                    :
+                    'Public key required in tarbsd.yml'
+                );
+            }
+        }
+        catch (\Exception $e)
+        {
+            try
+            {
+                $key = RSA\Formats\Keys\OpenSSH::load($value);
+                if ($key['isPublicKey'] !== true)
+                {
+                    throw new \Exception($bootstrap ?
+                        'Public key required'
+                        :
+                        'Public key required in tarbsd.yml'
+                    );
+                }
+            }
+            catch (\Exception $e)
+            {
+                throw new \Exception($bootstrap ?
+                    'This doesn\'t seem like a SSH key'
+                    :
+                    'Invalid SSH key in tarbsd.yml'
+                );
             }
         }
     }

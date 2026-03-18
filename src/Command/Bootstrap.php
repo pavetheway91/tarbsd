@@ -171,13 +171,7 @@ class Bootstrap extends AbstractCommand
         );
         $question->setValidator(function ($value) : string|null
         {
-            if (
-                is_string($value)
-                &&
-                (!preg_match('/^(?:ssh-)?(rsa|ed25519|ecdsa|dss)/', $value) || strlen($value) < 80)
-            ) {
-                throw new \Exception('This doesn\'t seem like a SSH key');
-            }
+            Misc::validatePublicKey($value, true);
             return $value;
         });
 

@@ -3,6 +3,7 @@ namespace TarBSD;
 
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
+use TarBSD\Util\Misc;
 use Generator;
 
 class Configuration
@@ -47,6 +48,8 @@ class Configuration
                 'unkown platform ' . $data['platform']
             );
         }
+        Misc::validatePublicKey($data['root_sshkey'], false);
+
         $this->data = $data;
     }
 
