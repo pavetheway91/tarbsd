@@ -42,14 +42,29 @@ class Configuration
         {
             throw new \Exception('unknown feature');
         }
-        if (!in_array($data['platform'], ['amd64', 'aarch64']))
+        if (!is_string($data['platform']) || !in_array($data['platform'], ['amd64', 'aarch64']))
         {
             throw new \Exception(
                 'unkown platform ' . $data['platform']
             );
         }
         Misc::validatePublicKey($data['root_sshkey'], false);
-
+        if (!in_array($data['ssh'], ['openssh', 'dropbear', null], true))
+        {
+            throw new \Exception('Invalid SSH program ' . $data['ssh']);
+        }
+        if (!is_bool($data['busybox']))
+        {
+            throw new \Exception('Busybox setting must be bool');
+        }
+        if (!is_bool($data['backup']))
+        {
+            throw new \Exception('Backup setting must be bool');
+        }
+        if (!is_string($data['root_pwhash']) || !preg_match('/^\$2y\$([0-9]{2})\$([a-zA-Z0-9\.]{53})$/', $data['root_pwhash']))
+        {
+            throw new \Exception('Invalid root password hash');
+        }
         $this->data = $data;
     }
 
