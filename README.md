@@ -13,9 +13,14 @@ Because most of tarBSD is in a tightly compressed ([zstd-19](https://github.com/
 
 ## Installing the builder tool ##
 ### pkg/ports ###
+
+[![Packaging status](https://repology.org/badge/version-for-repo/freebsd/tarbsd-builder.svg)](https://www.freshports.org/sysutils/tarbsd-builder)
+
 [sysutils/tarbsd-builder](https://www.freshports.org/sysutils/tarbsd-builder) is available in the ports tree. Compared to the GitHub version, it installs dependencies and manages any potential changes to them automatically.
 
 ### GitHub release ###
+[![Packaging status](https://img.shields.io/github/v/release/pavetheway91/tarbsd?display_name=release&label=GitHub%20Release&color=%234c1)](https://github.com/pavetheway91/tarbsd/releases)
+
 Download it from the [releases](https://github.com/pavetheway91/tarbsd/releases) page. In order to run it, you'll need an existing FreeBSD system with PHP >= 8.2 along with some extensions. GitHub version can be updated with the self-update command. Compared to the port version, updates are available immidiatelly upon release.
 
 ```
