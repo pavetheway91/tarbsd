@@ -47,8 +47,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     private readonly string $distributionFiles;
 
-    private readonly ?FreeBSDRelease $baseRelease;
-
     protected Process $wrkFsSize;
 
     abstract protected function genFsTab() : Fstab;
@@ -68,7 +66,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     final public function __construct(
         protected readonly Configuration $config,
         private readonly CacheInterface $cache,
-        private string|FreeBSDRelease $distFilesOrBaseRelease,
+        private readonly FreeBSDRelease $release,
         private readonly EventDispatcher $dispatcher,
         private readonly HttpClientInterface $httpClient
     ) {
@@ -77,22 +75,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->filesDir = $config->getDir() . '/tarbsd';
         WrkFs::init($this->config->getDir());
         $this->wrkFs = WrkFs::get($this->config->getDir());
-
-        if ($distFilesOrBaseRelease instanceof FreeBSDRelease)
-        {
-            $this->baseRelease = $distFilesOrBaseRelease;
-        }
-        else
-        {
-            $this->baseRelease = null;
-            $this->distributionFiles = $distFilesOrBaseRelease;
-        }
-
-        /**
-         * todo: decorate this in a way
-         * that it tells verbose output
-         * what it does
-         **/
         $this->fs = new Filesystem;
 
         if (!$this->fs->exists($this->filesDir))
@@ -141,18 +123,11 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $installer = new Installer(
             $this->root, $this->wrk, $this->wrkFs,
-            $this->baseRelease,
-            isset($this->distributionFiles) ? $this->distributionFiles : null,
-            $this->fs, $this->config, $this->httpClient, $this->wrkFsSize
+            $this->release, $this->fs, $this->config,
+            $this->httpClient, $this->wrkFsSize
         );
-        if ($this->baseRelease)
-        {
-            $installer->installPkgBase($output, $verboseOutput, $arch);
-        }
-        else
-        {
-            $installer->installTarBalls($output, $verboseOutput);
-        }
+
+        $installer->installPkgBase($output, $verboseOutput, $arch);
 
         $installer->installPKGs($output, $verboseOutput, $arch);
 

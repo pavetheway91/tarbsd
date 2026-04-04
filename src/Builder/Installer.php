@@ -26,7 +26,6 @@ class Installer implements Icons
         private readonly string $wrk,
         private readonly WrkFs $wrkFs,
         private readonly ?FreeBSDRelease $baseRelease,
-        private readonly ?string $distributionFiles,
         private readonly Filesystem $fs,
         private readonly Configuration $config,
         private readonly HttpClientInterface $httpClient,
@@ -203,69 +202,6 @@ class Installer implements Icons
         }
     }
 
-    final public function installTarBalls(OutputInterface $output, OutputInterface $verboseOutput) : void
-    {
-        $rootId = $this->wrkFs . '/root';
-        $distFiles = [];
-        $distFileHash = hash_init('xxh128');
-        foreach(['kernel.txz', 'base.txz'] as $file)
-        {
-            if (!file_exists($fullPath = $this->distributionFiles . $file))
-            {
-                throw new \Exception;
-            }
-            hash_update_file($distFileHash, $fullPath);
-            $distFiles[$file] = $fullPath;
-        }
-        if (TARBSD_BUILD_ID)
-        {
-            hash_update($distFileHash, TARBSD_BUILD_ID);
-        }
-        $distFileHash = hash_final($distFileHash);
-
-        if (
-            !file_exists($distFileHashFile = $this->wrk . '/distFileHash')
-            || file_get_contents($distFileHashFile) !== $distFileHash
-        ) {
-            Process::fromShellCommandline('zfs destroy -r ' . $rootId . '@installed')->run();
-        }
-
-        try
-        {
-            Process::fromShellCommandline('zfs get all ' . $rootId . '@installed')->mustRun();
-            $output->writeln(self::CHECK . $msg = ' base system unchanged, using snapshot');
-            $verboseOutput->writeln($msg);
-        }
-        catch (\Exception $e)
-        {
-            $this->wrkFs->rollback('empty');
-            foreach($distFiles as $file => $fullPath)
-            {
-                $cmd = 'tar -xvf ' . $fullPath . ' -C ' . $this->root;
-
-                $progressIndicator = $this->progressIndicator($output);
-                $progressIndicator->start('extracting ' . $file);
-
-                Process::fromShellCommandline(
-                    $cmd, null, null, null, 1800
-                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
-                {
-                    $progressIndicator->advance();
-                    $verboseOutput->write($buffer);
-                });
-                $progressIndicator->finish($file . ' extracted');
-            }
-            $this->fs->copy(
-                TARBSD_STUBS . '/overlay/etc/resolv.conf',
-                $this->root . '/etc/resolv.conf'
-            );
-            $this->runFreeBSDUpdate($output, $verboseOutput);
-            $this->finalizeInstall();
-            file_put_contents($distFileHashFile, $distFileHash);
-            $this->wrkFs->snapshot('installed');
-        }
-    }
-
     final protected function finalizeInstall() : void
     {
         $this->fs->mkdir($this->root . '/boot/modules');
@@ -419,77 +355,6 @@ DEFAULTS);
             'umount -f %s',
             $nullfs
         ));
-    }
-
-    final protected function runFreeBSDUpdate(OutputInterface $output, OutputInterface $verboseOutput) : void
-    {
-        $v = $this->getInstalledVersion();
-        $this->fs->mkdir($updateDir = $this->wrk . '/cache/freebsd-update');
-
-        $fetch = sprintf(
-            "freebsd-update -b %s -d %s --currently-running %s --not-running-from-cron fetch",
-            $this->root,
-            $updateDir,
-            $v
-        );
-        $install = sprintf(
-            "freebsd-update -b %s -d %s --currently-running %s --not-running-from-cron install",
-            $this->root,
-            $updateDir,
-            $v
-        );
-
-        $progressIndicator = $this->progressIndicator($output);
-        $progressIndicator->start('running freebsd-update');
-        Process::fromShellCommandline(
-            $fetch, null, null, null, 1800
-        )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
-        {
-            $progressIndicator->advance();
-            $verboseOutput->write($buffer);
-        });
-
-        $runInstall = function() use ($install, $progressIndicator, $verboseOutput) : bool
-        {
-            try
-            {
-                Process::fromShellCommandline(
-                    $install, null, null, null, 1800
-                )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
-                {
-                    $progressIndicator->advance();
-                    $verboseOutput->write($buffer);
-                });
-            }
-            catch (\Exception $e)
-            {
-                if (str_contains($e->getMessage(), 'No updates are available'))
-                {
-                    // ok
-                    return false;
-                }
-                else
-                {
-                    throw $e;
-                }
-            }
-            return true;
-        };
-
-        // there could be 0, 1 or 2 installs to be run
-        $installedSomething = $runInstall();
-
-        if ($installedSomething)
-        {
-            $runInstall();
-            $progressIndicator->finish('updated to ' . $this->getInstalledVersion());
-        }
-        else
-        {
-            $progressIndicator->finish('no updates to install');
-        }
-
-        $this->fs->remove($updateDir);
     }
 
     final protected function getInstalledVersion(bool $patch = true) : string

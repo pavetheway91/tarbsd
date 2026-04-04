@@ -35,38 +35,18 @@ class Build extends AbstractCommand
 
     public function __invoke(
         OutputInterface $output,
-        #[Option('Distribution files (base.txz and kernel.txz) location')] ?string $distfiles = null,
         #[Option('FreeBSD release', '', 'r')] ?string $release = null,
         #[Option('Loosen compression settings')] bool $quick = false,
         #[Argument('Output image formats')] array $formats = [],
         #[Option('Skip cache (for testing)')] bool $doNotCache = false
     ) : int {
 
-        if (
-            ($release && $distfiles)
-            || (!$release && !$distfiles)
-        ) {
+
+        if (!$release)
+        {
             throw new \Exception(
-                'Please provide eighter release or distfiles option (but not both)'
+                'Please provide --release option'
             );
-        }
-
-        $distFilesInput = $distfiles;
-        $distFiles = null;
-
-        if ($distFilesInput)
-        {
-            if (null == $distFiles = $this->findDistributionFiles($distFilesInput))
-            {
-                throw new \Exception(sprintf(
-                    'Cannot find kernel.txz and base.txz from %s',
-                    $distFilesInput
-                ));
-            }
-        }
-        else
-        {
-            $release = new FreeBSDRelease($release);
         }
 
         if (0 < count($formats))
@@ -83,7 +63,7 @@ class Build extends AbstractCommand
         $builder = new MfsBuilder(
             $conf = Configuration::get(),
             $cache,
-            $release ?: $distFiles,
+            new FreeBSDRelease($release),
             $this->getApplication()->getDispatcher(),
             $this->getApplication()->getHttpClient()
         );
@@ -100,13 +80,6 @@ class Build extends AbstractCommand
         {
             $this->showLogo($output);
             $this->showVersion($output);
-            if ($distFilesInput)
-            {
-                $output->writeln(
-                    MfsBuilder::ERR . " Tarball installation method has been deprecated"
-                    . "and and\n   will be removed in a future release."
-                );
-            }
             if (!$fs->exists($logDir = $conf->getDir() . '/log'))
             {
                 $fs->mkdir($logDir);
@@ -155,22 +128,6 @@ class Build extends AbstractCommand
         $this->showUpdateMessage($output);
 
         return self::SUCCESS;
-    }
-
-    protected function findDistributionFiles(string $dir) : string|null
-    {
-        $dir = realpath($dir);
-
-        foreach(['/', '/usr/freebsd-dist/'] as $dir2)
-        {
-            if (
-                file_exists($dir . $dir2 . '/base.txz')
-                && file_exists($dir . $dir2 . '/kernel.txz')
-            ) {
-                return $dir . $dir2;
-            }
-        }
-        return null;
     }
 
     protected function filterFormats(array $formats) : array
