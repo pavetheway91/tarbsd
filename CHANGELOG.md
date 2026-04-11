@@ -1,8 +1,9 @@
-## [UPCOMING] ##
+## 2026-04-11 ##
 * Generated images are roughly 7% smaller thanks to file system optimizations.
 * Previously deprecated wrk-init command has been removed.
-* Work file system size checks were moved to a separate background process.
+* Previously deprecated tarball installation method has been removed.
 * More input validation at various places.
+* Minor bug fixes.
 
 ## 2026-03-01 ##
 * Bsdinstall feature, which makes it easier to use tarBSD as an alternative FreeBSD

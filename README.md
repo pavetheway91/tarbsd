@@ -30,7 +30,7 @@ chmod +x tarbsd
 mv tarbsd /usr/local/bin/tarbsd
 
 # dependencies
-pkg install php84-phar php84-zlib php84-filter php84-pcntl php84-mbstring php84-intl
+pkg install php85-phar php85-zlib php85-filter php85-pcntl php85-mbstring php85-intl
 
 # (optional) pigz for better kernel compression
 pkg install pigz
