@@ -21,8 +21,13 @@
         "symfony/var-dumper": "^7.4",
         "symfony/var-exporter": "^7.4",
         "symfony/string": "^7.4",
-        "symfony/polyfill-iconv": "^1.32",
-        "phpseclib/phpseclib": "^3.0"
+        "symfony/polyfill-ctype": "^1.0",
+        "symfony/polyfill-iconv": "^1.0",
+        "symfony/polyfill-mbstring": "^1.0",
+        "symfony/polyfill-intl-grapheme": "^1.0",
+        "symfony/polyfill-intl-normalizer": "^1.0",
+        "phpseclib/phpseclib": "^3.0",
+        "paragonie/constant_time_encoding": "^3.0"
     },
     "replace": {
         "paragonie/random_compat": "*"
