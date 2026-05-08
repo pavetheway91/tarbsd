@@ -208,7 +208,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                                 $fs['mounted-on']
                             ))->mustRun();
                             $output->writeln(sprintf(
-                                '%s umounted %s',
+                                '%s unmounted %s',
                                 self::CHECK,
                                 $fs['mounted-on']
                             ));
@@ -216,7 +216,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                         catch (\Exception $e)
                         {
                             $output->writeln(sprintf(
-                                '%s failed to umount %s',
+                                '%s failed to unmount %s',
                                 self::ERR,
                                 $fs['mounted-on']
                             ));
