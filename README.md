@@ -2,7 +2,7 @@ https://github.com/user-attachments/assets/a1e2b5e0-675c-4bcf-8ad0-2099b53011ab
 
 tarBSD is a minimal (well, depends on chosen features and packages) FreeBSD image that boots to memory. Most of it is stored in a tar archive mounted at /usr. tarBSD is not a distribution unto itself. Instead, this repository gives you a tool to build your own version of it.
 
-Because most of tarBSD is in a tightly compressed ([zstd-19](https://github.com/facebook/zstd)) tar archive, which is mounted rather than extracted at boot, it doesn't need nearly as much ram as traditional mfs images.
+Because most of tarBSD is in a tightly compressed ([zstd-19](https://github.com/facebook/zstd)) tar archive, which is mounted rather than extracted at boot, it doesn't need nearly as much ram as traditional mfs images. Depending on installed packages and chosen features, the image can be even smaller than 40 megabytes.
 
 ## Possible use cases for tarBSD ##
 * router
