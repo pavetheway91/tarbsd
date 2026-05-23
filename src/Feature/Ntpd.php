@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class Ntpd extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'ntpd';
 
     const PRUNELIST = [

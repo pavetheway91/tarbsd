@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class Pf extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'pf';
 
     const KMODS = [

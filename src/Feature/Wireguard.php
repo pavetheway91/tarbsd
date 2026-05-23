@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class Wireguard extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'wireguard';
 
     const KMODS = [

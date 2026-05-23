@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class Jails extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'jails';
 
     const KMODS = [

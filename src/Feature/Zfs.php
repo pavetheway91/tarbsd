@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class Zfs extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'zfs';
 
     const KMODS = [

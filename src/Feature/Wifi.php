@@ -8,8 +8,6 @@ namespace TarBSD\Feature;
  **/
 class Wifi extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'wifi';
 
     const PRUNELIST = [

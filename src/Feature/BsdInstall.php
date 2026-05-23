@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class BsdInstall extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'bsdinstall';
 
     const PRUNELIST = [

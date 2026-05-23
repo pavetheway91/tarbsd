@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 abstract class AbstractFeature
 {
-    const DEFAULT = true;
-
     const KMODS = [];
 
     const PRUNELIST = [];

@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class Bhyve extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'bhyve';
 
     const KMODS = [

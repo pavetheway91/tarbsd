@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class Geli extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'geli';
 
     const KMODS = [

@@ -3,8 +3,6 @@ namespace TarBSD\Feature;
 
 class Ipfw extends AbstractFeature
 {
-    const DEFAULT = false;
-
     const NAME = 'ipfw';
 
     const KMODS = [
