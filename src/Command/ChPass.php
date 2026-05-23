@@ -7,6 +7,8 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
+use TarBSD\Configuration;
+
 #[AsCommand(
     name: 'chpass',
     description: 'Change tarBSD root password'
@@ -46,7 +48,7 @@ class ChPass extends Bootstrap
         $fs = new Filesystem;
         $fs->dumpFile(
             $configFile,
-            $this->genYML($config)
+            Configuration::dump($config)
         );
 
         $pwSection->overwrite(self::CHECK . ' root password changed');

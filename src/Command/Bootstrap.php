@@ -79,7 +79,7 @@ class Bootstrap extends AbstractCommand
         $fs = new Filesystem;
         $fs->dumpFile(
             $configFile,
-            $this->genYML($config)
+            Configuration::dump($config)
         );
 
         $fs->mirror(
@@ -108,25 +108,6 @@ class Bootstrap extends AbstractCommand
         );
 
         return self::SUCCESS;
-    }
-
-    protected function genYML(array $config) : string
-    {
-        $yml = Yaml::dump($config, 4, 4);
-        $yml = preg_replace([
-            "/\n    early:/",
-            "/\n    late:/",
-            "/ly\: null/",
-            "/\n    wifi:/",
-            "/\n    ntpd:/"
-        ], [
-            "\n    # kernel modules to be loaded right at boot\n    early:",
-            "\n    # kernel modules to be available later\n    late:",
-            "ly:",
-            "\n    # wifi kernel modules are not covered by the feature\n    wifi:",
-            "\n    # busybox has ntpd too\n    ntpd:"
-        ], $yml);
-        return $yml;
     }
 
     protected function askPasswd(InputInterface $input, OutputInterface $output) : string

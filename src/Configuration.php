@@ -91,6 +91,26 @@ class Configuration
         );
     }
 
+    public static function dump(array $data) : string
+    {
+        $yml = Yaml::dump($data, 4, 4);
+        $yml = preg_replace([
+            "/\n    early:/",
+            "/\n    late:/",
+            "/ly\: null/",
+            "/late\: null/",
+            "/\n    wifi:/",
+            "/\n    ntpd:/"
+        ], [
+            "\n    # kernel modules to be loaded right at boot\n    early:",
+            "\n    # kernel modules to be available later\n    late:",
+            "ly:", "late:",
+            "\n    # wifi kernel modules are not covered by the feature\n    wifi:",
+            "\n    # busybox has ntpd too\n    ntpd:"
+        ], $yml);
+        return $yml;
+    }
+
     public function getPlatform() : array
     {
         $exploded = explode("-", $this->data['platform']);
