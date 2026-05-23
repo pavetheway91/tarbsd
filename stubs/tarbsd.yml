@@ -16,6 +16,7 @@ features:
     jails: false
     ntpd: false
     rescue: false
+    locales: false
 modules:
     early:
     late:

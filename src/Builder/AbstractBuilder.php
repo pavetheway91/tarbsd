@@ -278,20 +278,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 ));
         }
 
-        foreach([
-            $this->root . '/usr/share/locale',
-            $this->root . '/usr/local/share/locale'
-        ] as $localeDir) {
-            if ($this->fs->exists($localeDir))
-            {
-                $f = (new Finder)
-                    ->directories()
-                    ->in($localeDir)
-                    ->notName(['en_*', 'C.UTF*']);
-                $this->fs->remove($f);
-            }
-        }
-
         // some tools use this to determine OS version
         $paramH = file_get_contents($paramHFile = $this->root . '/usr/include/sys/param.h');
         // poudriere needs this
