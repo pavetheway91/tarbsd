@@ -250,34 +250,18 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     {
         $pruneList = [];
 
-        // some tools use this to determine OS version
-        $paramH = file_get_contents($paramHFile = $this->root . '/usr/include/sys/param.h');
-        // poudriere needs this
-        $mountH = file_get_contents($mountHFile = $this->root . '/usr/include/sys/mount.h');
-
         $readPruneList = function(string $file) use (&$pruneList)
         {
             foreach(explode("\n", file_get_contents($file)) as $line)
             {
                 if (strlen($line) > 0 && $line[0] !== '#')
                 {
-                    $pruneList[] = $line;
+                    $pruneList[] = 'rm -rf ' . $line;
                 }
             }
         };
 
         $readPruneList(TARBSD_STUBS . '/prunelist');
-
-        foreach($this->config->features() as $feature)
-        {
-            if (!$feature->isEnabled())
-            {
-                foreach($feature->getPruneList() as $line)
-                {
-                    $pruneList[] = $line;
-                }
-            }
-        }
 
         switch($this->config->getSSH())
         {
@@ -292,10 +276,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                     'unknown SSH client %s, valid values are dropbear, openssh and null',
                     $this->config->getSSH()
                 ));
-        }
-        foreach($pruneList as $index => $line)
-        {
-            $pruneList[$index] = 'rm -rf ' . $line;
         }
 
         foreach([
@@ -312,9 +292,23 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             }
         }
 
+        // some tools use this to determine OS version
+        $paramH = file_get_contents($paramHFile = $this->root . '/usr/include/sys/param.h');
+        // poudriere needs this
+        $mountH = file_get_contents($mountHFile = $this->root . '/usr/include/sys/mount.h');
+
         Process::fromShellCommandline(implode("\n", $pruneList), $this->root)->mustRun();
         $this->fs->dumpFile($paramHFile, $paramH);
         $this->fs->dumpFile($mountHFile, $mountH);
+
+        foreach($this->config->features() as $feature)
+        {
+            if (!$feature->isEnabled())
+            {
+                $feature->prune($this->root, $this->fs);
+            }
+        }
+
         $output->writeln(self::CHECK . ' pruned dev tools, manpages and disabled features');
     }
 

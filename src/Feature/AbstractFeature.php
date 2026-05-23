@@ -1,6 +1,9 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Feature;
 
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Process\Process;
+
 abstract class AbstractFeature
 {
     const KMODS = [];
@@ -28,13 +31,20 @@ abstract class AbstractFeature
         return static::KMODS;
     }
 
-    public function getPruneList() : array
-    {
-        return static::PRUNELIST;
-    }
-
     public function getPackages() : array
     {
         return static::PKGS;
+    }
+
+    public function prune(string $dir, Filesystem $fs) : void
+    {
+        $pruneList = [];
+
+        foreach(static::PRUNELIST as $line)
+        {
+            $pruneList[] = 'rm -rf ' . $line;
+        }
+
+        Process::fromShellCommandline(implode("\n", $pruneList), $dir)->mustRun();
     }
 }
