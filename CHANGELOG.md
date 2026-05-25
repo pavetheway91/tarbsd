@@ -1,3 +1,6 @@
+## UPCOMING ##
+* locales feature for non-English locales
+
 ## 2026-04-11 ##
 * Generated images are roughly 7% smaller thanks to file system optimizations.
 * Previously deprecated wrk-init command has been removed.
