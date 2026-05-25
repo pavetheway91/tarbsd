@@ -11,7 +11,13 @@ Because most of tarBSD is in a tightly compressed ([zstd-19](https://github.com/
 * all the above in a one box
 * a remote FreeBSD installer with SSH
 
-## Installing the builder tool ##
+## Design goals ##
+* Simple to use, yet configurable to suit wide range of use cases
+* Just one configuration file + an overlay directory
+* pkgbase
+* Tightly compressed image
+
+# Installing the builder tool #
 ### pkg/ports ###
 
 [![Packaging status](https://repology.org/badge/version-for-repo/freebsd/tarbsd-builder.svg)](https://www.freshports.org/sysutils/tarbsd-builder)
@@ -36,7 +42,7 @@ pkg install php85-phar php85-zlib php85-filter php85-pcntl php85-mbstring php85-
 pkg install pigz
 ```
 
-## Usage ##
+# Usage #
 Start by creating a project directory and using tarbsd bootstrap command there.
 
 ```
@@ -47,6 +53,7 @@ tarbsd bootstrap
 It'll ask few questions, create a configuration file as well as an overlay directory, which contents will be recursively copied to the image. You'll likely want to edit tarbsd.yml and tarbsd/etc/rc.conf at least.
 
 ### Building the image ###
+First build will take longer due to base packages download, but they're cached for future use.
 ```
 # RELEASE version
 tarbsd build --release 15.0
@@ -54,8 +61,6 @@ tarbsd build --release 15.0
 # LATEST here could mean STABLE or CURRENT depending on version
 tarbsd build --release 15-LATEST
 ```
-
-First build will take longer, but subsequent ones are quicker. It uses in-memory zfs pool for building, so everyting is snappy and there's no unnecesary writes to your storage medium. ZFS also allows builder to use snapshots to restore the image to a an earlier state before each build.
 
 When in hurry, pass --quick option to the builder. You'll get the image quicker, but it will be bigger and require more memory to boot. For small images, size difference might not be huge, but it gets bigger as /usr gets bigger. Useful for builds that are intended to be just prototypes anyway.
 ```
@@ -72,7 +77,7 @@ Verbose output doesn't quite show every single little detail yet, but if you lik
 tarbsd build --release 15.0 -v
 ```
 
-## tarbsd.yml options ##
+# tarbsd.yml options #
 ### root_pwhash ###
 A hashed root password.
 
@@ -100,10 +105,9 @@ Two lists (early and late) of kernel modules to be included in the image. Early 
 ### packages ###
 List of packages to be installed.
 
-## Other miscellaneous things ##
+# Other miscellaneous things #
 * tarBSD lives in memory. If you need non-volatile storage, you need to mount it. If you mount something in /usr (which is read-only), make a corressponding empty directory to tarbsd/usr, so it can be mounted.
 * Because the image is built using in-memory file system, the system running the builder needs to have adequate amount of usable memory.
-* Many applications might be missing, but libraries are mostly there. Vast majority of packages should just work.
 * Builder will automatically add fstab line for following pseudo filesystems if the kernel module is present either through a feature or manual include:
   * procfs
   * fdescfs
@@ -113,7 +117,7 @@ List of packages to be installed.
 * Base packages and compressed kernels are cached at /var/cache/tarbsd and this cache is shared across all tarbsd projects you might have. Other things such as port packages are cached locally at the project up until next boot.
 * Aarch64 images might not boot on every random development board due to their non-standard boot procedures. Raspberry pi for example, doesn't work yet, but support is planned.
 
-## Contributing ##
+# Contributing #
 There's a compiler in the stubs directory. It spits out the executable, which is a [phar archive](https://www.php.net/manual/en/intro.phar.php). During development, you can just require vendor/autoload.php, create TarBSD\App and run that, but do at least occasional testing with a phar app too.
 
 If you're not familiar with Symfony components, [here's the docs](https://symfony.com/doc/current/index.html). Relevant parts here are console, process, filesystem and finder.
