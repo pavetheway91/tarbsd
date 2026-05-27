@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD;
 
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
 use TarBSD\Util\Misc;
@@ -100,13 +101,15 @@ class Configuration
             "/ly\: null/",
             "/late\: null/",
             "/\n    wifi:/",
-            "/\n    ntpd:/"
+            "/\n    ntpd:/",
+            "/\n    locales:/"
         ], [
             "\n    # kernel modules to be loaded right at boot\n    early:",
             "\n    # kernel modules to be available later\n    late:",
             "ly:", "late:",
             "\n    # wifi kernel modules are not covered by the feature\n    wifi:",
-            "\n    # busybox has ntpd too\n    ntpd:"
+            "\n    # busybox has ntpd too\n    ntpd:",
+            "\n    # non-English locales\n    locales:"
         ], $yml);
         return $yml;
     }
@@ -182,6 +185,32 @@ class Configuration
         ));
     }
 
+    public function __destruct()
+    {
+        $current = static::hash(Yaml::parseFile($file = $this->dir . '/tarbsd.yml'));
+
+        if (static::hash($this->data) !== $current && App::amIRoot())
+        {
+            $fs = new Filesystem;
+
+            $data =  $this->data;
+            $data['features'] = array_map(function($feature)
+            {
+                return $feature->isEnabled();
+            }, $data['features']);
+
+            $fs->dumpFile(
+                $file,
+                Configuration::dump($data)
+            );
+
+            if (defined('TARBSD_DEBUG') && TARBSD_DEBUG)
+            {
+                echo "tarbsd.yml updated\n";
+            }
+        }
+    }
+
     protected function suffixModules(array $modules) : Generator
     {
         foreach($modules as $module)
@@ -212,5 +241,20 @@ class Configuration
             }
         }
         return $map;
+    }
+
+    private static function hash(array $data) : string
+    {
+        $data['features'] = array_map(function($feature)
+        {
+            if (is_object($feature))
+            {
+                return $feature->isEnabled();
+            }
+            return false !== $feature;
+        }, $data['features']);
+        ksort($data);
+
+        return md5(serialize($data));
     }
 }
