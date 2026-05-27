@@ -1,5 +1,7 @@
 ## UPCOMING ##
-* locales feature for non-English locales
+* Locales feature for non-English locales.
+* New features and other options are automatically added to tarbsd.yml if it
+  was created using an older version of the builder.
 
 ## 2026-04-11 ##
 * Generated images are roughly 7% smaller thanks to file system optimizations.
