@@ -163,6 +163,7 @@ class Installer implements Icons
                     }
                 }
                 $pkgs = " \\\n" . implode(" \\\n", $pkgs);
+                $existingPkgs = $this->listPkgs($pkgCache);
                 Process::fromShellCommandline(
                     $pkg . ' install -U -F -y ' . $pkgs, null, null, null, 1800
                 )->mustRun(function ($type, $buffer) use ($progressIndicator, $verboseOutput)
@@ -170,6 +171,10 @@ class Installer implements Icons
                     $progressIndicator->advance();
                     $verboseOutput->write($buffer);
                 });
+                foreach(array_diff($this->listPkgs($pkgCache), $existingPkgs) as $package)
+                {
+                    $this->fs->touch($package);
+                }
 
                 $progressIndicator->setMessage('installing base packages');
                 $installCmd = $pkg . ' install -U -y ' . $pkgs;
@@ -368,5 +373,12 @@ DEFAULTS);
             $out = preg_replace('/(\-p[0-9]{1,2})$/', '', $out);
         }
         return $out;
+    }
+
+    protected function listPkgs(string $cacheDir) : array
+    {
+        $f = (new Finder)->files()->in($cacheDir);
+
+        return array_keys(iterator_to_array($f));
     }
 }
