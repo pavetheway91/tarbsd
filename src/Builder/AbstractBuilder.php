@@ -121,6 +121,16 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $this->ensureSSHkeysExist($output, $verboseOutput);
 
+        // fix file perms if they were generated using a previous version
+        // of the builder
+        foreach(['etc/fstab', 'etc/rc.conf', 'etc/resolv.conf', 'boot/loader.conf'] as $file)
+        {
+            if ($this->fs->exists($file = $this->config->getDir() . '/tarbsd/' . $file))
+            {
+                $this->fs->chmod($file, 0644);
+            }
+        }
+
         $installer = new Installer(
             $this->root, $this->wrk, $this->wrkFs,
             $this->release, $this->fs, $this->config,

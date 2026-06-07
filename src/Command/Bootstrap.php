@@ -100,6 +100,11 @@ class Bootstrap extends AbstractCommand
             str_replace('-', '', $hostid)
         );
 
+        foreach(['etc/fstab', 'etc/rc.conf', 'etc/resolv.conf', 'boot/loader.conf'] as $file)
+        {
+            $fs->chmod($overlay . '/' . $file, 0644);
+        }
+
         $this->showLogo($output->section());
 
         $output->writeln(
