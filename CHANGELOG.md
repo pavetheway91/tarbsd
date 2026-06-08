@@ -1,4 +1,4 @@
-## UPCOMING ##
+## 2026-06-08 ##
 * Locales feature for non-English locales.
 * New features and other options are automatically added to tarbsd.yml if it
   was created using an older version of the builder.
@@ -6,7 +6,8 @@
   has been fixed.
 * Some previous versions of the builder did set incorrect (444) permissions
   for etc/fstab, etc/rc.conf, etc/resolv.conf and boot/loader.conf files in the overlay
-  directory. This version will fix them to 644 during next build.
+  directory. This version will fix them to 644 during next build. Thanks for the person
+  who reported this.
 
 ## 2026-04-11 ##
 * Generated images are roughly 7% smaller thanks to file system optimizations.
