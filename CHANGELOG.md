@@ -1,3 +1,11 @@
+## 2026-06-28 ##
+* New write command for easily writing tarbsd image to a device. For example,
+  to write image to /dev/da0:
+```
+tarbsd write da0
+```
+* This version has been tested with upcoming PHP 8.6
+
 ## 2026-06-08 ##
 * Locales feature for non-English locales.
 * New features and other options are automatically added to tarbsd.yml if it
