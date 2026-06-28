@@ -118,7 +118,7 @@ List of packages to be installed.
 * Aarch64 images might not boot on every random development board due to their non-standard boot procedures. Raspberry pi for example, doesn't work yet, but support is planned.
 
 # Contributing #
-There's a compiler in the stubs directory. It spits out the executable, which is a [phar archive](https://www.php.net/manual/en/intro.phar.php). During development, you can just require vendor/autoload.php, create TarBSD\App and run that, but do at least occasional testing with a phar app too.
+There's a compiler in the stubs directory. It spits out the executable, which is a [phar archive](https://www.php.net/manual/en/book.phar.php). During development, you can just require vendor/autoload.php, create TarBSD\App and run that, but do at least occasional testing with a phar app too.
 
 If you're not familiar with Symfony components, [here's the docs](https://symfony.com/doc/current/index.html). Relevant parts here are console, process, filesystem and finder.
 
