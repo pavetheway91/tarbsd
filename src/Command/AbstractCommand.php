@@ -52,6 +52,10 @@ LOGO;
         '8.5' => [
             "activeSupportEndDate" => "2027-12-31",
             "eolDate"              => "2029-12-31"
+        ],
+        '8.6' => [
+            "activeSupportEndDate" => "2028-12-31",
+            "eolDate"              => "2030-12-31"
         ]
     ];
 
