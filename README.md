@@ -12,10 +12,10 @@ Because most of tarBSD is in a tightly compressed ([zstd-19](https://github.com/
 * a remote FreeBSD installer with SSH
 
 ## Design goals ##
-* Simple to use, yet configurable to suit wide range of use cases
-* Just one configuration file + an overlay directory
+* simple to use, yet configurable to suit wide range of use cases
+* just one configuration file + an overlay directory
 * pkgbase
-* Tightly compressed image
+* tightly compressed
 
 # Installing the builder tool #
 ### pkg/ports ###
@@ -67,7 +67,7 @@ When in hurry, pass --quick option to the builder. You'll get the image quicker,
 tarbsd build --release 15.0 --quick
 ```
 
-Raw .img (for bhyve, kvm and real computers) is always generated. If you have qemu-tools installed, it can also be converted to all sorts of random formats.
+Raw .img (for bhyve, kvm and real computers) is always generated. If you have [qemu](https://www.freshports.org/emulators/qemu/) installed, it can also be converted to all sorts of random formats.
 ```
 tarbsd build --release 15.0 qcow qcow2 vdi vmdk vhdx vpc parallels
 ```
