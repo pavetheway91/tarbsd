@@ -5,6 +5,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Argument;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Question\Question;
 use Symfony\Component\Process\Process;
 
@@ -23,7 +24,8 @@ class Write extends AbstractCommand
     public function __invoke(
         InputInterface $input,
         OutputInterface $output,
-        #[Argument('Device')] string $device
+        #[Argument('Device')] string $device,
+        #[Option('Do not ask', '', 'f')] bool $doNotAsk = false
     ) {
         if (!str_starts_with($device, '/dev/'))
         {
@@ -54,7 +56,7 @@ class Write extends AbstractCommand
             return self::FAILURE;
         }
 
-        if (!$this->ask(sprintf(' Wipe %s (y/n)', $device), $input, $output))
+        if (!$doNotAsk && !$this->ask(sprintf(' Wipe %s (y/n)', $device), $input, $output))
         {
             $output->writeln(self::CHECK . ' aborted');
             return self::SUCCESS;
