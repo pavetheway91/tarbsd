@@ -56,7 +56,7 @@ It'll ask few questions, create a configuration file as well as an overlay direc
 First build will take longer due to base packages download, but they're cached for future use.
 ```
 # RELEASE version
-tarbsd build --release 15.0
+tarbsd build --release 15.1
 
 # LATEST here could mean STABLE or CURRENT depending on version
 tarbsd build --release 15-LATEST
@@ -64,17 +64,17 @@ tarbsd build --release 15-LATEST
 
 When in hurry, pass --quick option to the builder. You'll get the image quicker, but it will be bigger and require more memory to boot. For small images, size difference might not be huge, but it gets bigger as /usr gets bigger. Useful for builds that are intended to be just prototypes anyway.
 ```
-tarbsd build --release 15.0 --quick
+tarbsd build --release 15.1 --quick
 ```
 
 Raw .img (for bhyve, kvm and real computers) is always generated. If you have [qemu](https://www.freshports.org/emulators/qemu/) installed, it can also be converted to all sorts of random formats.
 ```
-tarbsd build --release 15.0 qcow qcow2 vdi vmdk vhdx vpc parallels
+tarbsd build --release 15.1 qcow qcow2 vdi vmdk vhdx vpc parallels
 ```
 
 Verbose output doesn't quite show every single little detail yet, but if you like tar -v and pkg install being streamed to your console, you can have them.
 ```
-tarbsd build --release 15.0 -v
+tarbsd build --release 15.1 -v
 ```
 
 # tarbsd.yml options #
