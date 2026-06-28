@@ -224,6 +224,7 @@ class App extends Application implements EventSubscriberInterface
             new Command\ListCmds,
             new SymfonyHelpCommand,
             new Command\Build,
+            new Command\Write,
             new Command\Bootstrap,
             new Command\ChPass,
             new Command\WrkDestroy,
