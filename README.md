@@ -78,7 +78,7 @@ tarbsd build --release 15.1 -v
 ```
 
 ### Mounting ZFS datasets ###
-tarBSD comes with an rc script, which imports zfs pools upon boot. Use in cunjuction with zfs_enable in your rc.conf and remember to enable zfs in tarbsd.yml.
+tarBSD comes with an rc script, which imports zfs pools upon boot. Use in conjuction with zfs_enable in your rc.conf and remember to enable zfs in tarbsd.yml.
 ```
 # import zpools tank_a and tank_b at boot
 tarbsd_zpools="tank_a tank_b"
