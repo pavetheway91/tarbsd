@@ -77,6 +77,16 @@ Verbose output doesn't quite show every single little detail yet, but if you lik
 tarbsd build --release 15.1 -v
 ```
 
+### Mounting ZFS datasets ###
+tarBSD comes with an rc script, which imports zfs pools upon boot. Use in cunjuction with zfs_enable in your rc.conf and remember to enable zfs in tarbsd.yml.
+```
+# import zpools tank_a and tank_b at boot
+tarbsd_zpools="tank_a tank_b"
+
+# mount zfs datasets at boot
+zfs_enable="YES"
+```
+
 ### Once your image is ready ###
 tarBSD image gets built in a in-memory file system. Once your image is ready, you might want to destroy the file system in order to free memory.
 ```
