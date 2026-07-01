@@ -77,6 +77,12 @@ Verbose output doesn't quite show every single little detail yet, but if you lik
 tarbsd build --release 15.1 -v
 ```
 
+### Once your image is ready ###
+tarBSD image gets built in a in-memory file system. Once your image is ready, you might want to destroy the file system in order to free memory.
+```
+tarbsd wrk-destroy
+```
+
 # tarbsd.yml options #
 ### root_pwhash ###
 A hashed root password.
