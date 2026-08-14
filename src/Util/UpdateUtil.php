@@ -36,11 +36,11 @@ PEM;
 
         $res = $client->request(
             'GET',
-            TARBSD_GITHUB_API . '/repos/' . self::REPO . '/releases?per_page=20',
+            TARBSD_GITHUB_API . '/repos/' . self::REPO . '/releases?per_page=5',
             [
                 'headers' => [
                     'accept' => 'application/vnd.github+json',
-                    'X-GitHub-Api-Version' => '2022-11-28'
+                    'X-GitHub-Api-Version' => '2026-03-10'
                 ],
                 'timeout' => 5
             ]
