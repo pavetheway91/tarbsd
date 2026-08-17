@@ -229,11 +229,14 @@ class App extends Application implements EventSubscriberInterface
             new Command\ChPass,
             new Command\WrkDestroy,
             new Command\SelfUpdate,
+            new Command\PurgeCache,
             new Command\Diagnose,
+            // these are for developement purposes
             new Command\SelfCheckSig,
-            new Command\VersionCheck,
             new Command\Debug,
-            new Command\WrkFsSize
+            // these are for internal use only
+            new Command\WrkFsSize,
+            new Command\VersionCheck
         ];
     }
 }
