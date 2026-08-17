@@ -38,9 +38,9 @@ class Build extends AbstractCommand
         #[Option('FreeBSD release', '', 'r')] ?string $release = null,
         #[Option('Loosen compression settings')] ?bool $quick = null,
         #[Argument('Output image formats')] array $formats = [],
-        #[Option('Skip cache (for testing)')] bool $doNotCache = false
+        #[Option('Skip cache (for testing)')] bool $doNotCache = false,
+        #[Option('preserve pkg db (for debugging)')] bool $preservePkgDb = false
     ) : int {
-
 
         if (!$release)
         {
@@ -100,7 +100,8 @@ class Build extends AbstractCommand
         $img = $builder->build(
             $output,
             $verboseOutput,
-            $quick
+            $quick,
+            $preservePkgDb
         );
 
         if ($logFile)

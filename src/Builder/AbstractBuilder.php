@@ -88,7 +88,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         }
     }
 
-    final public function build(OutputInterface $output, OutputInterface $verboseOutput, ?bool $quick) : SplFileInfo
+    final public function build(OutputInterface $output, OutputInterface $verboseOutput, ?bool $quick, bool $preservePkgDb) : SplFileInfo
     {
         if (null === $quick)
         {
@@ -167,7 +167,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $this->prepare($output, $verboseOutput, $quick, $platform);
 
-        $this->prune($output, $verboseOutput);
+        $this->prune($output, $verboseOutput, $preservePkgDb);
 
         if ($this->config->backup())
         {
@@ -292,7 +292,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         }
     }
 
-    final protected function prune(OutputInterface $output, OutputInterface $verboseOutput) : void
+    final protected function prune(OutputInterface $output, OutputInterface $verboseOutput, bool $preservePkgDb) : void
     {
         $pruneList = [];
 
@@ -340,7 +340,10 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 $feature->prune($this->root, $this->fs);
             }
         }
-
+        if ($preservePkgDb)
+        {
+            $this->fs->remove($this->root . '/var/db/pkg/');
+        }
         $output->writeln(self::CHECK . ' pruned dev tools, manpages and disabled features');
     }
 
