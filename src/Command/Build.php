@@ -36,7 +36,7 @@ class Build extends AbstractCommand
     public function __invoke(
         OutputInterface $output,
         #[Option('FreeBSD release', '', 'r')] ?string $release = null,
-        #[Option('Loosen compression settings')] bool $quick = false,
+        #[Option('Loosen compression settings')] ?bool $quick = null,
         #[Argument('Output image formats')] array $formats = [],
         #[Option('Skip cache (for testing)')] bool $doNotCache = false
     ) : int {

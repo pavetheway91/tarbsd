@@ -86,8 +86,26 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         }
     }
 
-    final public function build(OutputInterface $output, OutputInterface $verboseOutput, bool $quick) : SplFileInfo
+    final public function build(OutputInterface $output, OutputInterface $verboseOutput, ?bool $quick) : SplFileInfo
     {
+        if (null === $quick)
+        {
+            if (Misc::nCPU() < 4)
+            {
+                $quick = true;
+                $output->writeln(self::NOTE . ' system has fewer than 4 processors, defaulting to quick mode');
+            }
+            elseif (Misc::percentLoadAvg() >= 0.5)
+            {
+                $quick = true;
+                $output->writeln(self::NOTE . ' system is busy, defaulting to quick mode');
+            }
+            else
+            {
+                $quick = false;
+            }
+        }
+
         $this->wrkFs->tightCompression(true);
 
         $this->wrkFsSize = Process::fromShellCommandline(sprintf(
