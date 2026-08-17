@@ -116,14 +116,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             $this->runId = bin2hex(random_bytes(8))
         ), $this->config->getDir(), null, null, 7200);
 
-        $this->wrkFsSize->start(function($type, $buffer)
-        {
-            if (Process::ERR === $type)
-            {
-                throw new \Exception($buffer);
-            }
-        });
-
         $this->dispatcher->addSubscriber($this);
 
         $start = time();
@@ -158,7 +150,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             $this->httpClient, $this->wrkFsSize
         );
 
-        $installer->installPkgBase($output, $verboseOutput, $arch);
+        $installer->installPkgBase($output, $verboseOutput, $arch, $this->wrkFsSize);
 
         $installer->installPKGs($output, $verboseOutput, $arch);
 

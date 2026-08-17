@@ -34,8 +34,10 @@ class Installer implements Icons
         $this->filesDir = $config->getDir() . '/tarbsd';
     }
 
-    final public function installPkgBase(OutputInterface $output, OutputInterface $verboseOutput, string $arch) : void
-    {
+    final public function installPkgBase(
+        OutputInterface $output, OutputInterface $verboseOutput, string $arch, Process $wrkFsSize
+    ) : void {
+
         $rootId = $this->wrkFs . '/root';
 
         $abi = $this->baseRelease->getAbi($arch);
@@ -61,6 +63,7 @@ class Installer implements Icons
                 $this->getInstalledVersion()
             ));
             $verboseOutput->writeln($msg);
+            $wrkFsSize->start();
         }
         catch (\Exception $e)
         {
@@ -87,6 +90,8 @@ class Installer implements Icons
                         $res->getStatusCode()
                     ));
             }
+    
+            $wrkFsSize->start();
 
             $this->fs->dumpFile(
                 $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',
