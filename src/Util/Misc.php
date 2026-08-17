@@ -125,7 +125,7 @@ class Misc
         fclose($handle);
     }
 
-    public static function mdCreate(int|string $fileOrSize) : string
+    public static function mdCreate(int|string $fileOrSize, bool $initial = false) : string
     {
         if (is_string($fileOrSize))
         {
@@ -136,10 +136,24 @@ class Misc
         }
         else
         {
-            $md = Process::fromShellCommandline(sprintf(
-                'mdconfig -s %sm -S 4096',
-                $fileOrSize
-            ))->mustRun()->getOutput();
+            try
+            {
+                $swapAvail = self::availSwap() > $fileOrSize;
+
+                $md = Process::fromShellCommandline(sprintf(
+                    'mdconfig -t %s -s %sm -S 4096 -o reserve',
+                    $swapAvail ? 'swap' : 'malloc',
+                    $fileOrSize
+                ))->mustRun()->getOutput();
+            }
+            catch (\Exception $e)
+            {
+                throw new \RuntimeException(sprintf(
+                    'failed to allocate %smemory (%dm) for the work file system!',
+                    $initial ? '' : 'more ',
+                    $fileOrSize
+                ));
+            }
         }
 
         return trim($md, "\n");
@@ -151,6 +165,20 @@ class Misc
             'mdconfig -d -u %s',
             $device
         ))->mustRun();
+    }
+
+    public static function availSwap() : int
+    {
+        $info = Process::fromShellCommandline('swapinfo -m')->mustRun()->getOutput();
+        $amount = 0;
+        foreach(explode("\n", $info) as $line)
+        {
+            if (preg_match('/([0-9]+)\s+([0-9]+)\s+([0-9]+)\s+([0-9]{1,2}\%)/', $line, $m))
+            {
+                return $amount = $amount + intval($m[3]);
+            }
+        }
+        return $amount;
     }
 
     public static function dd(string $from, string $to, ProgressIndicator $progressIndicator) : void

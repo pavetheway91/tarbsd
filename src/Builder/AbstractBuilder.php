@@ -43,6 +43,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     public ?string $md = null;
 
+    private string $runId;
+
     protected readonly Filesystem $fs;
 
     private readonly string $distributionFiles;
@@ -109,8 +111,9 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->wrkFs->tightCompression(true);
 
         $this->wrkFsSize = Process::fromShellCommandline(sprintf(
-            "php %s wrkfssize",
-            realpath($_SERVER['SCRIPT_FILENAME'])
+            "php %s wrkfssize %s",
+            realpath($_SERVER['SCRIPT_FILENAME']),
+            $this->runId = bin2hex(random_bytes(8))
         ), $this->config->getDir(), null, null, 7200);
 
         $this->wrkFsSize->start(function($type, $buffer)
@@ -204,18 +207,33 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     final public function handleSignal(ConsoleSignalEvent $event) : void
     {
+        $msgShown = false;
+        $output = $event->getOutput();
+
         switch($event->getHandlingSignal())
         {
-            case \SIGINT:
             case \SIGTERM:
+                $item = $this->cache->getItem($this->runId);
+                if ($item->isHit())
+                {
+                    $output->writeln(sprintf(
+                        "\n%s %s",
+                        self::ERR,
+                        $item->get()
+                    ));
+                    $msgShown = true;
+                }
+            case \SIGINT:
                 $this->wrkFsSize->stop();
-                $output = $event->getOutput();
 
-                $output->writeln(sprintf(
-                    "\n%s received %s signal, cleaning things up...",
-                    self::ERR,
-                    SignalMap::getSignalName($event->getHandlingSignal())
-                ));
+                if (!$msgShown)
+                {
+                    $output->writeln(sprintf(
+                        "\n%s received %s signal, cleaning things up...",
+                        self::ERR,
+                        SignalMap::getSignalName($event->getHandlingSignal())
+                    ));
+                }
 
                 $df = Process::fromShellCommandline(
                     'df -t tmpfs,nullfs --libxo=json'

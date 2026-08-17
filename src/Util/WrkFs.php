@@ -27,7 +27,7 @@ final class WrkFs implements Stringable
                 $mnt = realpath($dir ) . '/wrk'
             );
 
-            $md = Misc::mdCreate(1536);
+            $md = Misc::mdCreate(768, true);
 
             Process::fromShellCommandline(
                 'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -O compression=lz4 -m '
@@ -106,14 +106,14 @@ final class WrkFs implements Stringable
             $needed = $size - $this->getAvailable();
             if ($needed > 0)
             {
-                $this->grow(intval(($needed + 32)  * 1.5));
+                $this->grow(intval(($needed + 32)  * 1.2));
             }
         }
         else
         {
-            if ($this->getAvailable() < 768)
+            if ($this->getAvailable() < 512)
             {
-                $this->grow(512);
+                $this->grow(384);
             }
         }
     }
