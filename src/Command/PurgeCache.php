@@ -31,8 +31,8 @@ class PurgeCache extends AbstractCommand
 
         switch($purge = $helper->ask($input, $output, $question))
         {
-            case 'everything';
-            case 'compression cache';
+            case 'everything':
+            case 'compression cache':
                 $compressCache->clear();
                 $output->writeln(self::CHECK . ' purged compression cache');
                 if ($purge == 'compression cache')
