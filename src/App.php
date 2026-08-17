@@ -202,17 +202,7 @@ class App extends Application implements EventSubscriberInterface
 
         if (null === $amI)
         {
-            if (extension_loaded('posix'))
-            {
-                $amI = posix_getuid() == 0;
-            }
-            else
-            {
-                $u = Process::fromShellCommandline(
-                    'whoami'
-                )->mustRun()->getOutput();
-                $amI = trim($u, "\n") == 'root';
-            }
+            $amI = posix_getuid() == 0;
         }
 
         return $amI;

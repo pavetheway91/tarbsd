@@ -630,6 +630,7 @@ if (!extension_loaded('phar')) \$issues[] = 'PHP extension phar required';
 if (!extension_loaded('zlib')) \$issues[] = 'PHP extension zlib required';
 if (!extension_loaded('openssl')) \$issues[] = 'PHP extension openssl required';
 if (!extension_loaded('pcntl')) \$issues[] = 'PHP extension pcntl required';
+if (!extension_loaded('posix')) \$issues[] = 'PHP extension posix required';
 if (!extension_loaded('filter')) \$issues[] = 'PHP extension filter required';%s
 if (\$issues)
 {

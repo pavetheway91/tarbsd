@@ -33,14 +33,11 @@ class WrkFsSize extends AbstractCommand
                 }
                 catch(\Exception $e)
                 {
-                    if (extension_loaded('posix'))
-                    {
-                        $cache = $this->getApplication()->getCache();
-                        $item = $cache->getItem($runId);
-                        $item->set($e->getMessage())->expiresAt(new DateTimeImmutable('+5 seconds'));
-                        $cache->save($item);
-                        posix_kill(posix_getppid(), \SIGTERM);
-                    }
+                    $cache = $this->getApplication()->getCache();
+                    $item = $cache->getItem($runId);
+                    $item->set($e->getMessage())->expiresAt(new DateTimeImmutable('+5 seconds'));
+                    $cache->save($item);
+                    posix_kill(posix_getppid(), \SIGTERM);
                     return self::FAILURE;
                 }
             }

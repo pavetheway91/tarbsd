@@ -295,26 +295,7 @@ class Misc
     {
         $n = null;
 
-        if (null === $n && extension_loaded('posix'))
-        {
-            $n = posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
-        }
-
-        if (null === $n)
-        {
-            try
-            {
-                $p = Process::fromShellCommandline('sysctl hw.ncpu')->mustRun()->getOutput();
-                if (preg_match('/^hw.ncpu:\s([0-9]+)$/', $p, $m))
-                {
-                    $n = intval($m[1]);
-                }
-            }
-            catch (\Exception $e)
-            {
-                throw new \RuntimeException('could not determine amount of cpu cores');
-            }
-        }
+        $n = posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
 
         return $n;
     }
