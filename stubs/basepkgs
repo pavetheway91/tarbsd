@@ -1,5 +1,5 @@
 set-minimal
-([a-z]+)-(tools|data)
+([a-z]+)-(tools|data|lib)
 (bsd|lib)([0-9a-z_]+)
 firmware-([0-9a-z_]+)
 acct
