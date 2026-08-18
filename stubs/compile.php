@@ -18,6 +18,8 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 
+use TarBSD\Util\Misc;
+
 use OpenSSLAsymmetricKey;
 use SplFileInfo;
 use Phar;
@@ -465,19 +467,12 @@ TEST;
 
     protected function genTests() : string
     {
-        $json = json_decode(file_get_contents(__DIR__. '/../composer.json'), true);
         $tests = [];
-        foreach(array_merge(['ext-phar' => ''], $json['require']) as $req => $value)
+        $reqs = Misc::phpRequirements();
+        $tests[] = "if (version_compare(PHP_VERSION, '" . $reqs['php'] . "', '<')) \$issues[] = 'PHP >= " . $reqs['php'] . " required, you are running ' . PHP_VERSION;";
+        foreach(array_merge(['phar'], $reqs['extensions']) as $ext)
         {
-            if ($req == 'php' && preg_match('/>=\s(([0-9]).([0-9]).([0-9]+))/', $value, $m))
-            {
-                array_unshift($tests, "if (!(PHP_VERSION_ID >= " . $m[2] . "0" . $m[3] . "00)) \$issues[] = 'PHP >= " . $m[1] . " required, you are running ' . PHP_VERSION;");
-            }
-            if (substr($req, 0, 4) == 'ext-')
-            {
-                $ext = substr($req, 4);
-                $tests[] = "if (!extension_loaded('" . $ext . "')) \$issues[] = 'PHP extension " . $ext . " required';";
-            }
+            $tests[] = "if (!extension_loaded('" . $ext . "')) \$issues[] = 'PHP extension " . $ext . " required';";
         }
         return implode("\n", $tests);
     }

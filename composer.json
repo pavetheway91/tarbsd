@@ -9,6 +9,12 @@
     },
     "require": {
         "php": ">= 8.2.0",
+        "ext-filter": "*",
+        "ext-posix": "*",
+        "ext-sysvmsg": "*",
+        "ext-openssl": "*",
+        "ext-pcntl": "*",
+        "ext-zlib": "*",
         "symfony/console": "^7.4",
         "symfony/process": "^7.4",
         "symfony/filesystem": "^7.4",

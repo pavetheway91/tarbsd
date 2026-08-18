@@ -17,6 +17,28 @@ use SysvMessageQueue;
 
 class Misc
 {
+    public static function phpRequirements() : array
+    {
+        $out = [
+            'extensions' => []
+        ];
+
+        foreach(json_decode(
+            file_get_contents(dirname(dirname(__DIR__)) . '/composer.json'),
+            true
+        )['require'] as $req => $value) {
+            if ($req == 'php' && preg_match('/>=\s(([0-9]).([0-9]).([0-9]+))/', $value, $m))
+            {
+                $out['php'] = $m[1];
+            }
+            if (substr($req, 0, 4) == 'ext-')
+            {
+                $out['extensions'][] = substr($req, 4);
+            }
+        }
+        return $out;
+    }
+
     public static function platformCheck() : void
     {
         /**
@@ -27,6 +49,8 @@ class Misc
          */
         set_time_limit(0);
 
+        $issues = [];
+
         /**
          * Phar archive starts with similiar checks
          * too but the app can be run without using
@@ -34,27 +58,47 @@ class Misc
          */
         if (!str_starts_with(__FILE__, 'phar:/'))
         {
-            $issues = [];
             if (($os = php_uname('s')) !== 'FreeBSD')
             {
                 $issues[] = 'Unsupported operating system ' . $os;
             }
-            if (!(PHP_VERSION_ID >= 80200))
+            $reqs = static::phpRequirements();
+            if (version_compare(PHP_VERSION, $reqs['php'], '<'))
             {
-                $issues[] = 'PHP >= 8.2.0 required, you are running ' . PHP_VERSION;
+                $issues[] = 'PHP >= ' . $reqs['php'] . ' required, you are running ' . PHP_VERSION;
             }
-            foreach(['filter', 'openssl', 'pcntl', 'posix', 'sysvmsg', 'zlib'] as $ext)
+            foreach($reqs['extensions'] as $ext)
             {
                 if (!extension_loaded($ext))
                 {
                     $issues[] = 'PHP extension ' . $ext . ' required';
                 }
             }
-            if ($issues)
+        }
+
+        foreach([
+            'mdconfig', 'pkg', 'swapinfo', 'tar', 'zfs', 'zpool', 'df',
+            'pw', 'mount', 'mount_nullfs', 'makefs', 'gpart', 'umount'
+        ] as $bin) {
+            $found = false;
+            foreach(['/sbin', '/bin', '/usr/sbin', '/usr/bin'] as $path)
             {
-                exit("\n\ttarBSD builder cannot run due to following issues:\n\t\t"
-                . implode("\n\t\t", $issues) . "\n\n");
+                if (is_executable($path . '/' . $bin))
+                {
+                    $found = true;
+                    break;
+                }
             }
+            if (!$found)
+            {
+                $issues[] = 'cannot find ' . $bin;
+            }
+        }
+
+        if ($issues)
+        {
+            exit("\n\ttarBSD builder cannot run due to following issues:\n\t\t"
+            . implode("\n\t\t", $issues) . "\n\n");
         }
     }
 
