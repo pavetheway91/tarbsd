@@ -35,7 +35,6 @@ class Misc
         if (!str_starts_with(__FILE__, 'phar:/'))
         {
             $issues = [];
-
             if (($os = php_uname('s')) !== 'FreeBSD')
             {
                 $issues[] = 'Unsupported operating system ' . $os;
@@ -44,17 +43,12 @@ class Misc
             {
                 $issues[] = 'PHP >= 8.2.0 required, you are running ' . PHP_VERSION;
             }
-            if (!extension_loaded('zlib'))
+            foreach(['filter', 'openssl', 'pcntl', 'posix', 'sysvmsg', 'zlib'] as $ext)
             {
-                $issues[] = 'PHP extension zlib required';
-            }
-            if (!extension_loaded('pcntl'))
-            {
-                $issues[] = 'PHP extension pcntl required';
-            }
-            if (!extension_loaded('filter'))
-            {
-                $issues[] = 'PHP extension filter required';
+                if (!extension_loaded($ext))
+                {
+                    $issues[] = 'PHP extension ' . $ext . ' required';
+                }
             }
             if ($issues)
             {
@@ -308,11 +302,7 @@ class Misc
 
     public static function nCPU() : int
     {
-        $n = null;
-
-        $n = posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
-
-        return $n;
+        return posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
     }
 
     /**
