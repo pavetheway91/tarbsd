@@ -5,6 +5,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Argument;
 
+use TarBSD\Builder\AbstractBuilder;
 use TarBSD\Util\WrkFs;
 use TarBSD\Util\Misc;
 use TarBSD\App;
@@ -27,7 +28,7 @@ class WrkFsSize extends InternalCommand
         {
             $q = msg_get_queue($ftok);
 
-            msg_receive($q, 0, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
+            msg_receive($q, AbstractBuilder::MSG_TYPE_WRKFS, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
             if ($msg == $key)
             {
                 $wrkFs = WrkFs::get(getcwd());
@@ -40,7 +41,7 @@ class WrkFsSize extends InternalCommand
                     }
                     catch(\Exception $e)
                     {
-                        msg_send($q, 1, $e->getMessage(), false);
+                        msg_send($q, AbstractBuilder::MSG_TYPE_WRKFS, $e->getMessage(), false);
                         posix_kill(posix_getppid(), \SIGTERM);
                         return self::FAILURE;
                     }

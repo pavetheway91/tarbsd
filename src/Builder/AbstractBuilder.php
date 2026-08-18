@@ -30,6 +30,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 {
     use Utils;
 
+    const MSG_TYPE_WRKFS = 1;
+
     public readonly WrkFs $wrkFs;
 
     public readonly string $wrk;
@@ -126,7 +128,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->wrkFs->tightCompression(true);
 
         $this->dispatcher->addSubscriber($this);
-        msg_send($this->sysvMessageQueue, 1, $key = bin2hex(random_bytes(8)), false);
+        msg_send($this->sysvMessageQueue, self::MSG_TYPE_WRKFS, $key = bin2hex(random_bytes(8)), false);
         $this->wrkFsSize = Process::fromShellCommandline(sprintf(
             "php %s wrkfssize %s %s",
             realpath($_SERVER['SCRIPT_FILENAME']),
@@ -218,7 +220,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         switch($event->getHandlingSignal())
         {
             case \SIGTERM:
-                while (msg_receive($this->sysvMessageQueue, 0, $type, 1024, $msg, false, MSG_IPC_NOWAIT))
+                while (msg_receive($this->sysvMessageQueue, self::MSG_TYPE_WRKFS, $type, 1024, $msg, false, MSG_IPC_NOWAIT))
                 {
                     $output->writeln(sprintf(
                         "%s%s %s",
