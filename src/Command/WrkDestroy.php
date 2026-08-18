@@ -5,6 +5,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 use TarBSD\Util\WrkFs;
+use TarBSD\Util\Misc;
 use TarBSD\App;
 
 #[AsCommand(
@@ -16,7 +17,19 @@ class WrkDestroy extends AbstractCommand
     public function __invoke(
         OutputInterface $output
     ) {
-        if ($fs = WrkFs::get($cwd = getcwd()))
+        try
+        {
+            Misc::newSysvMessageQueue($cwd = getcwd());
+        }
+        catch (\TypeError $e)
+        {
+            throw new \Exception(sprintf(
+                "tarBSD builder already running in %s",
+                $cwd
+            ));
+        }
+
+        if ($fs = WrkFs::get($cwd))
         {
             $fs->destroy();
             $output->writeln(sprintf(

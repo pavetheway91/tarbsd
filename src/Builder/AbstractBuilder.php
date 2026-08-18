@@ -22,6 +22,7 @@ use TarBSD\Util\Misc;
 use TarBSD\App;
 
 use DateTimeImmutable;
+use SysvMessageQueue;
 use SplFileInfo;
 use Phar;
 
@@ -50,6 +51,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     private readonly string $distributionFiles;
 
     protected Process $wrkFsSize;
+
+    private SysvMessageQueue $sysvMessageQueue;
 
     abstract protected function genFsTab() : Fstab;
 
@@ -90,6 +93,18 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     final public function build(OutputInterface $output, OutputInterface $verboseOutput, ?bool $quick, bool $preservePkgDb) : SplFileInfo
     {
+        try
+        {
+            $this->sysvMessageQueue = Misc::newSysvMessageQueue($this->config->getDir(), $ftok);
+        }
+        catch (\TypeError $e)
+        {
+            throw new \Exception(sprintf(
+                "tarBSD builder already running in %s",
+                $this->config->getDir()
+            ));
+        }
+
         if (null === $quick)
         {
             if (Misc::nCPU() < 4)
@@ -110,13 +125,13 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $this->wrkFs->tightCompression(true);
 
-        $this->wrkFsSize = Process::fromShellCommandline(sprintf(
-            "php %s wrkfssize %s",
-            realpath($_SERVER['SCRIPT_FILENAME']),
-            $this->runId = bin2hex(random_bytes(8))
-        ), $this->config->getDir(), null, null, 7200);
-
         $this->dispatcher->addSubscriber($this);
+        msg_send($this->sysvMessageQueue, 1, $key = bin2hex(random_bytes(8)), false);
+        $this->wrkFsSize = Process::fromShellCommandline(sprintf(
+            "php %s wrkfssize %s %s",
+            realpath($_SERVER['SCRIPT_FILENAME']),
+            $ftok, $key
+        ), $this->config->getDir(), null, null, 7200);
 
         $start = time();
         $this->bootPruned = false;
@@ -184,9 +199,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             time() - $start
         ));
 
-        $this->dispatcher->removeSubscriber($this);
         $this->wrkFsSize->stop();
-
+        $this->dispatcher->removeSubscriber($this);
         return new SplFileInfo($file);
     }
 
@@ -199,26 +213,24 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     final public function handleSignal(ConsoleSignalEvent $event) : void
     {
-        $msgShown = false;
+        $n = 0;
         $output = $event->getOutput();
-
         switch($event->getHandlingSignal())
         {
             case \SIGTERM:
-                $item = $this->cache->getItem($this->runId);
-                if ($item->isHit())
+                while (msg_receive($this->sysvMessageQueue, 0, $type, 1024, $msg, false, MSG_IPC_NOWAIT))
                 {
                     $output->writeln(sprintf(
-                        "\n%s %s",
+                        "%s%s %s",
+                        $n == 0 ? "\n" : "",
                         self::ERR,
-                        $item->get()
+                        $msg
                     ));
-                    $msgShown = true;
+                    $n++;
                 }
-            case \SIGINT:
+            default:
                 $this->wrkFsSize->stop();
-
-                if (!$msgShown)
+                if ($n == 0)
                 {
                     $output->writeln(sprintf(
                         "\n%s received %s signal, cleaning things up...",
@@ -226,7 +238,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                         SignalMap::getSignalName($event->getHandlingSignal())
                     ));
                 }
-
                 $df = Process::fromShellCommandline(
                     'df -t tmpfs,nullfs --libxo=json'
                 );

@@ -6,6 +6,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Argument;
 
 use TarBSD\Util\WrkFs;
+use TarBSD\Util\Misc;
 use TarBSD\App;
 
 use DateTimeImmutable;
@@ -18,29 +19,41 @@ class WrkFsSize extends AbstractCommand
 {
     public function __invoke(
         OutputInterface $output,
-        #[Argument()] string $runId,
+        #[Argument()] int $ftok,
+        #[Argument()] string $key
     ) : int {
 
-        if (App::amIRoot() && preg_match('/^([0-9a-f]{16})$/', $runId))
+        if (App::amIRoot() && msg_queue_exists($ftok))
         {
-            $wrkFs = WrkFs::get(getcwd());
-            while(true)
+            $q = msg_get_queue($ftok);
+
+            msg_receive($q, 0, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
+            if ($msg == $key)
             {
-                try
+                $wrkFs = WrkFs::get(getcwd());
+                while(true)
                 {
-                    $wrkFs->checkSize();
-                    usleep(250000);
-                }
-                catch(\Exception $e)
-                {
-                    $cache = $this->getApplication()->getCache();
-                    $item = $cache->getItem($runId);
-                    $item->set($e->getMessage())->expiresAt(new DateTimeImmutable('+5 seconds'));
-                    $cache->save($item);
-                    posix_kill(posix_getppid(), \SIGTERM);
-                    return self::FAILURE;
+                    try
+                    {
+                        $wrkFs->checkSize();
+                        usleep(250000);
+                    }
+                    catch(\Exception $e)
+                    {
+                        msg_send($q, 1, $e->getMessage(), false);
+                        posix_kill(posix_getppid(), \SIGTERM);
+                        return self::FAILURE;
+                    }
                 }
             }
+            else
+            {
+                msg_send($q, 1, 'failed to start wrkfs worker', false);
+                posix_kill(posix_getppid(), \SIGTERM);
+                return self::FAILURE;
+            }
         }
+
+        return self::SUCCESS;
     }
 }

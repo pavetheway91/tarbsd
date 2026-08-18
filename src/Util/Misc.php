@@ -13,6 +13,8 @@ use phpseclib3\Crypt\RSA;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+use SysvMessageQueue;
+
 class Misc
 {
     public static function platformCheck() : void
@@ -138,6 +140,10 @@ class Misc
         {
             try
             {
+                if (!$initial)
+                {
+                    throw new \Exception;
+                }
                 $swapAvail = self::availSwap() > $fileOrSize;
 
                 $md = Process::fromShellCommandline(sprintf(
@@ -210,6 +216,19 @@ class Misc
         }
         fclose($fromHandle);
         fclose($toHandle);
+    }
+
+    public static function newSysvMessageQueue(string $path, &$ftok = null) : SysvMessageQueue
+    {
+        if (!msg_queue_exists($ftok = ftok($path, 'e')) && $q = msg_get_queue($ftok))
+        {
+            register_shutdown_function(function() use ($q)
+            {
+                msg_remove_queue($q);
+            });
+
+            return $q;
+        }
     }
 
     /**
