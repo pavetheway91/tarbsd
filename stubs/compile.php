@@ -184,6 +184,7 @@ class Compiler extends Command
         bool $production
     ) {
         $this->addFile(__DIR__ . '/../LICENSE');
+        $this->addFile(__DIR__ . '/../composer.json');
 
         $srcFiles = 0;
         $output->write("adding files for src ");
@@ -457,8 +458,28 @@ TEST;
         return sprintf(
             self::STUB,
             $license,
+            $this->genTests(),
             $extratest
         );
+    }
+
+    protected function genTests() : string
+    {
+        $json = json_decode(file_get_contents(__DIR__. '/../composer.json'), true);
+        $tests = [];
+        foreach(array_merge(['ext-phar' => ''], $json['require']) as $req => $value)
+        {
+            if ($req == 'php' && preg_match('/>=\s(([0-9]).([0-9]).([0-9]+))/', $value, $m))
+            {
+                array_unshift($tests, "if (!(PHP_VERSION_ID >= " . $m[2] . "0" . $m[3] . "00)) \$issues[] = 'PHP >= " . $m[1] . " required, you are running ' . PHP_VERSION;");
+            }
+            if (substr($req, 0, 4) == 'ext-')
+            {
+                $ext = substr($req, 4);
+                $tests[] = "if (!extension_loaded('" . $ext . "')) \$issues[] = 'PHP extension " . $ext . " required';";
+            }
+        }
+        return implode("\n", $tests);
     }
 
     protected function save(string $file, ?string $alias = null) : string
@@ -615,14 +636,7 @@ TEST;
 %s
 \$issues = [];
 if ((\$os = php_uname('s')) !== 'FreeBSD') \$issues[] = 'Unsupported operating system ' . \$os;
-if (!(PHP_VERSION_ID >= 80200)) \$issues[] = 'PHP >= 8.2.0 required, you are running ' . PHP_VERSION;
-if (!extension_loaded('phar')) \$issues[] = 'PHP extension phar required';
-if (!extension_loaded('zlib')) \$issues[] = 'PHP extension zlib required';
-if (!extension_loaded('openssl')) \$issues[] = 'PHP extension openssl required';
-if (!extension_loaded('pcntl')) \$issues[] = 'PHP extension pcntl required';
-if (!extension_loaded('posix')) \$issues[] = 'PHP extension posix required';
-if (!extension_loaded('sysvmsg')) \$issues[] = 'PHP extension sysvmsg required';
-if (!extension_loaded('filter')) \$issues[] = 'PHP extension filter required';%s
+%s%s
 if (\$issues)
 {
     echo "\\n\\ttarBSD builder cannot run due to following issues:\\n\\t\\t" . implode("\\n\\t\\t", \$issues) . "\\n\\n";
@@ -743,11 +757,14 @@ return new class() extends ClassLoader
 
         foreach(\$this->getPrefixesPsr4() as \$ns => \$dirs)
         {
-            foreach((new Finder)->files()->in(\$dirs)->name('*.php') as \$file)
+            if (\$dirs = array_filter(\$dirs, 'is_dir'))
             {
-                if (!preg_match('/Resources/', \$file->getRelativePathName()))
+                foreach((new Finder)->files()->in(\$dirs)->name('*.php') as \$file)
                 {
-                    \$include((string) \$file);
+                    if (!preg_match('/Resources/', \$file->getRelativePathName()))
+                    {
+                        \$include((string) \$file);
+                    }
                 }
             }
         }
