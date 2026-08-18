@@ -140,10 +140,6 @@ class Misc
         {
             try
             {
-                if (!$initial)
-                {
-                    throw new \Exception;
-                }
                 $swapAvail = self::availSwap() > $fileOrSize;
 
                 $md = Process::fromShellCommandline(sprintf(
