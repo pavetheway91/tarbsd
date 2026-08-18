@@ -152,6 +152,15 @@ class App extends Application implements EventSubscriberInterface
                 });
             }
         }
+        elseif (
+            str_starts_with(__FILE__, 'phar:/')
+            && (
+                in_array($commandName, ['build', 'bootstrap'])
+                || $command instanceof Command\InternalCommand
+            )
+        ) {
+            $this->classLoader->loadAllClasses();
+        }
     }
 
     public function terminateEvent(ConsoleTerminateEvent $event) : void

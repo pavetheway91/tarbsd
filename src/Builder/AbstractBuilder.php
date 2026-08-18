@@ -15,10 +15,12 @@ use Symfony\Component\Finder\Finder;
 
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\Configuration;
+use TarBSD\Util\Overlay;
 use TarBSD\Util\Icons;
 use TarBSD\Util\Fstab;
 use TarBSD\Util\WrkFs;
 use TarBSD\Util\Misc;
+use TarBSD\Util\Strs;
 use TarBSD\App;
 
 use DateTimeImmutable;
@@ -301,9 +303,9 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     {
         $pruneList = [];
 
-        $readPruneList = function(string $file) use (&$pruneList)
+        $readPruneList = function(string $list) use (&$pruneList)
         {
-            foreach(explode("\n", file_get_contents($file)) as $line)
+            foreach(explode("\n", $list) as $line)
             {
                 if (strlen($line) > 0 && $line[0] !== '#')
                 {
@@ -312,13 +314,13 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             }
         };
 
-        $readPruneList(TARBSD_STUBS . '/prunelist');
+        $readPruneList(Strs::PRUNELIST);
 
         switch($this->config->getSSH())
         {
             case 'dropbear':
             case null:
-                $readPruneList(TARBSD_STUBS . '/prunelist.openssh');
+                $readPruneList(Strs::PRUNELIST);
                 break;
             case 'openssh':
                 break;
@@ -402,14 +404,16 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $fs->appendToFile($this->root . '/COPYRIGHT', sprintf(
             "\n\n\ntarBSD builder and files associated with it are distributed under\n"
             . "following terms:\n\n%s\n",
-            file_get_contents(TARBSD_STUBS . '/../LICENSE')
+            TARBSD_LICENSE
         ));
 
-        $fs->mirror(TARBSD_STUBS . '/rc.d', $this->root . '/etc/rc.d/', null, [
-            'delete' => false
-        ]);
+        foreach(Overlay::RC_FILES as $name => $file)
+        {
+            $fs->dumpFile($outFile = $this->root . '/etc/rc.d/' . $name, $file);
+            $fs->chmod($outFile, 0555);
+        }
 
-        $fs->copy(TARBSD_STUBS . '/motd', $this->root . '/etc/motd.template', true);
+        $fs->dumpFile($this->root . '/etc/motd.template', Strs::MOTD);
 
         $pwHash = $this->config->getRootPwHash();
         $key = $this->config->getRootSshKey();
@@ -523,8 +527,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
     {
         $progressIndicator = $this->progressIndicator($output);
         $progressIndicator->start('busyboxifying');
-        
-        $bysyBoxCMDs = explode("\n", file_get_contents(TARBSD_STUBS . '/busybox'));
+
+        $bysyBoxCMDs = explode("\n", Strs::BUSYBOX);
         $bysyBoxCMDs = array_flip($bysyBoxCMDs);
 
         $fs = $this->fs;
@@ -547,7 +551,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                         . '|ifcon|dhcli|find|install|du|wall|service'
                         . '|env|utx|limits|automount|ldd|tar|bsdtar|pw'
                         . '|ip6add|fetch|drill|wpa_|mtree|ntpd|uname|passwd'
-                        . '|login|su|certctl|openssl|makefs|truncate'
+                        . '|login|su|certctl|openssl|makefs|truncate|swapinfo'
                         . '|(?:[a-z]+(pass|user))'
                     . ')/', $name)
                 ) {

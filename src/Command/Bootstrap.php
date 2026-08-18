@@ -13,6 +13,8 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Component\Yaml\Yaml;
 
 use TarBSD\Configuration;
+use TarBSD\Util\Overlay;
+use TarBSD\Util\Strs;
 use TarBSD\Util\Misc;
 use TarBSD\Builder;
 
@@ -34,7 +36,7 @@ class Bootstrap extends AbstractCommand
             return self::SUCCESS;
         }
 
-        $config = Yaml::parseFile(TARBSD_STUBS . '/tarbsd.yml');
+        $config = Yaml::parse(Strs::TARBSD_YML);
 
         $pwSection = $output->section();
 
@@ -82,10 +84,14 @@ class Bootstrap extends AbstractCommand
             Configuration::dump($config)
         );
 
-        $fs->mirror(
-            TARBSD_STUBS . '/overlay',
-            $overlay = $cwd . '/tarbsd'
-        );
+        $overlay = $cwd . '/tarbsd';
+
+        foreach(Overlay::FILES as $path => $file)
+        {
+            $fs->dumpFile($outFile = $overlay . '/' . $path, $file);
+            $fs->chmod($outFile, 0644);
+        }
+
         $fs->symlink(
             '../usr/share/zoneinfo/' . $tz,
             $overlay . '/etc/localtime'

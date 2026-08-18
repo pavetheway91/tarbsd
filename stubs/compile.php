@@ -202,20 +202,10 @@ class Compiler extends Command
         $constants['TARBSD_PORTS'] = $ports;
         $constants['TARBSD_VERSION'] = $versionTag;
         $constants['TARBSD_PREFIX'] = $prefix;
+        $constants['TARBSD_LICENSE'] = file_get_contents(__DIR__.'/../LICENSE');
         $constantsStr = $this->stringifyConstants($constants);
         $this->addFromString('stubs/constants.php', "<?php\n" . $constantsStr);
 
-        $stubFiles = 0;
-        $output->write("adding files for stubs ");
-        foreach(
-            (new Finder)->files()->in(__DIR__)->notname('*.php')->sortByName()->reverseSorting()
-            as $file
-        ) {
-            $this->addFile($file);
-            $stubFiles++;
-        }
-
-        $output->writeln(sprintf("%d files", $stubFiles));
         $output->writeln($constantsStr);
     }
 
@@ -343,7 +333,7 @@ class Compiler extends Command
 
     protected function stringifyConstants(array $constants) : string
     {
-        $out = ["const TARBSD_STUBS = __DIR__;"];
+        $out = [];
 
         foreach($constants as $k => $v)
         {

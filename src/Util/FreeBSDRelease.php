@@ -5,6 +5,16 @@ class FreeBSDRelease implements \Stringable
 {
     const PKG_DOMAIN = 'pkg.freebsd.org';
 
+    const TMPL = <<<TMPL
+FreeBSD-base: {
+  url: "%s",
+  mirror_type: "srv",
+  signature_type: "fingerprints",
+  fingerprints: "%s",
+  enabled: yes
+}
+TMPL;
+
     public readonly int $major;
 
     public readonly ?int $minor;
@@ -72,7 +82,7 @@ class FreeBSDRelease implements \Stringable
             : ('/usr/share/keys/pkgbase-${VERSION_MAJOR}');
 
         return sprintf(
-            file_get_contents(TARBSD_STUBS . '/FreeBSD-base.conf'),
+            self::TMPL,
             $this->getBaseRepo($arch),
             $keyLocation
         );

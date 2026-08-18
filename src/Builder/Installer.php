@@ -10,9 +10,11 @@ use Symfony\Component\Yaml\Yaml;
 
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\Configuration;
+use TarBSD\Util\Overlay;
 use TarBSD\Util\Icons;
 use TarBSD\Util\WrkFs;
 use TarBSD\Util\Misc;
+use TarBSD\Util\Strs;
 use TarBSD\App;
 
 class Installer implements Icons
@@ -103,7 +105,7 @@ class Installer implements Icons
                 $rootPkgKeys = $this->root . $pkgKeys
             );
 
-            foreach(Yaml::parseFile(TARBSD_STUBS . '/keys.yml') as $release => $keys)
+            foreach(Yaml::parse(Strs::KEYS_YML) as $release => $keys)
             {
                 if (!$this->fs->exists($dir = $rootPkgKeys . '/' . $release . '/trusted'))
                 {
@@ -124,10 +126,8 @@ class Installer implements Icons
                 }
             }
 
-            $this->fs->copy(
-                TARBSD_STUBS . '/overlay/etc/resolv.conf',
-                $this->root . '/etc/resolv.conf'
-            );
+            $this->fs->dumpFile($this->root . '/etc/resolv.conf', Overlay::RESOLV_CONF);
+    
             $this->fs->mkdir($pkgCache = App::CACHE_DIR . '/pkgbase_' . $arch);
             $umountPkgCache = $this->preparePKG($pkgCache, false);
 
@@ -153,7 +153,7 @@ class Installer implements Icons
                 $availableBasePkgs = Process::fromShellCommandline(
                     $pkg . ' search FreeBSD-'
                 )->mustRun()->getOutput();
-                $basePkgRegex = explode("\n", file_get_contents(TARBSD_STUBS . '/basepkgs'));
+                $basePkgRegex = explode("\n", Strs::BASE_PKGS);
                 $basePkgRegex[] = 'kernel-generic';
                 $basePkgRegex = sprintf(
                     '/^(FreeBSD-(%s))-([1-9][0-9])/',
