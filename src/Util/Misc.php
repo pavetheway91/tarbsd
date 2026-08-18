@@ -132,21 +132,21 @@ class Misc
         }
         else
         {
+            $type = self::availSwap() > $fileOrSize ? 'swap' : 'malloc';
             try
             {
-                $swapAvail = self::availSwap() > $fileOrSize;
-
                 $md = Process::fromShellCommandline(sprintf(
                     'mdconfig -t %s -s %sm -S 4096 -o reserve',
-                    $swapAvail ? 'swap' : 'malloc',
+                    $type,
                     $fileOrSize
                 ))->mustRun()->getOutput();
             }
             catch (\Exception $e)
             {
                 throw new \RuntimeException(sprintf(
-                    'failed to allocate %smemory (%dm) for the work file system!',
+                    'failed to allocate %smemory (%s, %dm) for the work file system!',
                     $initial ? '' : 'more ',
+                    $type,
                     $fileOrSize
                 ));
             }
@@ -302,7 +302,31 @@ class Misc
 
     public static function nCPU() : int
     {
-        return posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
+        $n = null;
+
+        // this was added in php 8.3
+        if (function_exists('posix_sysconf'))
+        {
+            $n = posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
+        }
+
+        if (null === $n)
+        {
+            try
+            {
+                $p = Process::fromShellCommandline('sysctl hw.ncpu')->mustRun()->getOutput();
+                if (preg_match('/^hw.ncpu:\s([0-9]+)$/', $p, $m))
+                {
+                    $n = intval($m[1]);
+                }
+            }
+            catch (\Exception $e)
+            {
+                throw new \RuntimeException('could not determine amount of cpu cores');
+            }
+        }
+
+        return $n;
     }
 
     /**
