@@ -263,7 +263,7 @@ class App extends Application implements EventSubscriberInterface
             new Command\ChPass,
             new Command\WrkDestroy,
             new Command\SelfUpdate,
-            new Command\PurgeCache,
+            new Command\CachePurge,
             new Command\Diagnose,
             // these are for developement purposes
             new Command\SelfCheckSig,

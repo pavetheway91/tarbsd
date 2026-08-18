@@ -11,10 +11,10 @@ use Symfony\Component\Filesystem\Filesystem;
 use TarBSD\App;
 
 #[AsCommand(
-    name: 'purge-cache',
+    name: 'cache-purge',
     description: 'Purge caches from /var/cache/tarbsd'
 )]
-class PurgeCache extends AbstractCommand
+class CachePurge extends AbstractCommand
 {
     public function __invoke(InputInterface $input, OutputInterface $output) : int
     {
