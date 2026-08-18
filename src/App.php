@@ -87,10 +87,15 @@ class App extends Application implements EventSubscriberInterface
             );
         }
 
-        $command = $event->getCommand()->getName();
+        $command = $event->getCommand();
+        $commandName = $event->getCommand()->getName();
 
-        if (static::amIRoot() && TARBSD_SELF_UPDATE && !in_array($command, ['self-update', 'version-check']))
-        {
+        if (
+            static::amIRoot()
+            && TARBSD_SELF_UPDATE
+            && $commandName !== 'self-update'
+            && false == ($command instanceof Command\InternalCommand)
+        ) {
             $cache = $this->getCache();
             $item = $cache->getItem(
                 hash_hmac('sha256', 'version_check', self::hashPhar())
@@ -107,13 +112,13 @@ class App extends Application implements EventSubscriberInterface
         }
 
         if (
-            !in_array($command, ['list', 'help', 'diagnose', 'version-check', 'debug'])
+            !in_array($commandName, ['list', 'help', 'diagnose', 'version-check', 'debug'])
             && !static::amIRoot()
         ) {
             $output->writeln(sprintf(
                 "%s tarBSD builder needs root privileges for %s command",
                 Command\AbstractCommand::ERR,
-                $command
+                $commandName
             ));
             $event->disableCommand();
         }

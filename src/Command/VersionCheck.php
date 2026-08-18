@@ -10,7 +10,7 @@ use DateTimeImmutable;
     name: 'version-check',
     hidden: true
 )]
-class VersionCheck extends AbstractCommand
+class VersionCheck extends InternalCommand
 {
     public function __invoke(OutputInterface $output) : int
     {

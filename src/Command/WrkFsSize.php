@@ -15,7 +15,7 @@ use DateTimeImmutable;
     name: 'wrkfssize',
     hidden: true
 )]
-class WrkFsSize extends AbstractCommand
+class WrkFsSize extends InternalCommand
 {
     public function __invoke(
         OutputInterface $output,
