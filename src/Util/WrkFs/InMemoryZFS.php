@@ -13,20 +13,14 @@ class InMemoryZFS extends WrkFs
 
     const TYPE = 'zfs';
 
-    private array $md;
-
-    private function __construct(
-        public readonly string $id,
-        string $md,
-        public readonly string $mnt
-    ) {
-        $this->md = explode(',', $md);
+    private function __construct(public readonly string $id,public readonly string $mnt)
+    {
     }
 
     public function destroy() : void
     {
         $mds = [];
-        foreach($this->md as $dev)
+        foreach(array_keys($this->getVdevs()) as $dev)
         {
             $mds[] = sprintf(
                 '&& mdconfig -d -u %s',
@@ -60,11 +54,9 @@ class InMemoryZFS extends WrkFs
 
     private function grow(int $size) : void
     {
-        $this->md[] = $md = Misc::mdCreate($size);
-
         Process::fromShellCommandline(sprintf(
-            'zpool add %s %s && zfs set tarbsd:md=%s %s',
-            $this->id, $md, implode(',', $this->md), $this->id
+            'zpool add %s %s',
+            $this->id, Misc::mdCreate($size)
         ))->mustRun();
     }
 
@@ -72,25 +64,24 @@ class InMemoryZFS extends WrkFs
     {
         $fsId = static::getId($dir);
 
-        $fs = Process::fromShellCommandline(
-            'zfs list -Hp -d 0 -o name,tarbsd:md,mountpoint'
-        )->mustRun()->getOutput();
+        $data = json_decode(Process::fromShellCommandline(
+            'zfs list -Hp -d 0 -o name,mountpoint --json'
+        )->mustRun()->getOutput(), true, 512, JSON_THROW_ON_ERROR);
 
-        foreach(explode("\n", $fs) as $line)
+        foreach($data['datasets'] as $dataset)
         {
-            if ($line)
+            if ($dataset['name'] === $fsId)
             {
-                [$id, $md, $mnt] = explode("\t", $line);
-                if ($id === $fsId)
+                if ($dataset['properties']['mountpoint']['value'] !== $dir . '/wrk')
                 {
-                    if ($mnt !== $dir . '/wrk')
-                    {
-                        throw new \Exception(
-                            'zfs mountpoint mismatch for ' . $id . ', expected ' . $dir . '/wrk, got ' . $mnt
-                        );
-                    }
-                    return new static($id, $md, $mnt);
+                    throw new \Exception(sprintf(
+                        'zfs mountpoint mismatch for %s, expected %s/wrk, got %s',
+                        $fsId,
+                        $dir,
+                        $dataset['properties']['mountpoint']['value']
+                    ));
                 }
+                return new static($fsId, $dataset['properties']['mountpoint']['value']);
             }
         }
 
@@ -112,7 +103,7 @@ class InMemoryZFS extends WrkFs
         $md = Misc::mdCreate(768, true);
 
         Process::fromShellCommandline(
-            'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -O compression=lz4 -m '
+            'zpool create -o ashift=12 -O compression=lz4 -m '
             . $mnt . ' ' . $fsId . ' /dev/' . $md . "\n"
             . 'zfs create -o compression=zstd ' .  $fsId . "/root\n"
             . 'zfs create -o compression=lz4 ' .  $fsId . "/cache\n"
