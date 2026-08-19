@@ -103,7 +103,8 @@ class App extends Application implements EventSubscriberInterface
             if (!$item->isHit())
             {
                 Process::fromShellCommandline(sprintf(
-                    "nohup php %s version-check &",
+                    "nohup %s %s version-check &",
+                    PHP_BINARY,
                     $self = Phar::running(false)
                 ))->run();
                 $item->set(true)->expiresAt(new DateTimeImmutable('+3 hours'));

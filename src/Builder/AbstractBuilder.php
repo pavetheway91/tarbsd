@@ -136,7 +136,8 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         msg_send($this->sysvMessageQueue, self::MSG_TYPE_WRKFS, $key = bin2hex(random_bytes(8)), false);
         $this->wrkFsSizeWorker = Process::fromShellCommandline(sprintf(
-            "php %s wrkfssize %s %s",
+            "%s %s wrkfssize %s %s",
+            PHP_BINARY,
             realpath($_SERVER['SCRIPT_FILENAME']),
             $ftok, $key
         ), $this->config->getDir(), null, null, 7200);
