@@ -78,8 +78,8 @@ class Misc
         }
 
         foreach([
-            'mdconfig', 'pkg', 'swapinfo', 'tar', 'zfs', 'zpool', 'df',
-            'pw', 'mount', 'mount_nullfs', 'makefs', 'gpart', 'umount'
+            'mdconfig', 'pkg', 'swapinfo', 'tar', 'df', 'pw',
+            'mount', 'mount_nullfs', 'makefs', 'gpart', 'umount'
         ] as $bin) {
             $found = false;
             foreach(['/sbin', '/bin', '/usr/sbin', '/usr/bin'] as $path)

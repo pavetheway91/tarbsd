@@ -5,40 +5,69 @@ use Symfony\Component\Yaml\Yaml;
 
 class GlobalConfiguration
 {
+    const TMPL = <<<TMPL
+# how many log files should be kept?
+log_rotate: %d
+
+# work file system
+#   - zfs-memory is quicker on subsequent builds thanks to snapshots
+#   - tmpfs is quicker on first build and easier on cpu
+#   - default value 'null' defaults to zfs-memory if zfs is available
+fs_type: %s
+
+TMPL;
+
     const FILE = TARBSD_PREFIX . '/etc/tarbsd.conf';
 
-    private readonly string $hash;
+    private string $hash;
 
-    public ?int $logRotate;
+    public int $logRotate;
+
+    public ?string $fsType;
 
     public function __construct()
     {
-        $data = file_exists(self::FILE) ? Yaml::parseFile(self::FILE) : [];
-        ksort($data);
-        $this->hash = md5(json_encode($data));
+        $data = '[]';
+        if (file_exists(self::FILE))
+        {
+            $data = file_get_contents(self::FILE);
+        }
+        $this->hash = md5($data);
+        $data = Yaml::parse($data);
 
         $this->logRotate = $data['log_rotate'] ?? 10;
+        $this->fsType = $data['fs_type'] ?? null;
+
+        if (is_string($this->fsType) && !in_array($this->fsType, $arr = ['zfs-memory', 'tmpfs']))
+        {
+            throw new \Exception(sprintf(
+                'invalid fs_type option %s, valid options %s',
+                $this->fsType,
+                implode(", ", $arr)
+            ));
+        }
     }
 
-    public function toArray() : array
+    public function __debugInfo() : array
     {
-        $arr = [
-            'log_rotate' => $this->logRotate,
+        return [
+            'file'          => self::FILE,
+            'log_rotate'    => $this->logRotate,
+            'fs_type'       => $this->fsType
         ];
-        ksort($arr);
-        return $arr;
     }
 
     public function __destruct()
     {
-        if (
-            $this->hash !== md5(json_encode($arr = $this->toArray()))
-            && App::amIRoot()
-        ) {
-            $yml = Yaml::dump($arr, 4, 4);
+        $str = sprintf(
+            self::TMPL,
+            $this->logRotate,
+            $this->fsType
+        );
 
-            // fail silently if it's read-only
-            @file_put_contents(self::FILE, $yml);
+        if (md5($str) !== $this->hash)
+        {
+            @file_put_contents(self::FILE, $str);
         }
     }
 }

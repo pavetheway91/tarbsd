@@ -75,7 +75,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     final public function __construct(
         protected readonly Configuration $config,
-        GlobalConfiguration $globalConfig,
+        protected readonly GlobalConfiguration $globalConfig,
         private readonly CacheInterface $cache,
         private readonly FreeBSDRelease $release,
         private readonly EventDispatcher $dispatcher,
@@ -84,8 +84,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->wrk = $config->getDir() . '/wrk';
         $this->root = $this->wrk . '/root';
         $this->filesDir = $config->getDir() . '/tarbsd';
-
-        $this->wrkFs = WrkFs::get($globalConfig, $this->config->getDir(), true);
 
         $this->fs = new Filesystem;
 
@@ -129,6 +127,15 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 $quick = false;
             }
         }
+
+        $this->wrkFs = WrkFs::get($this->globalConfig, $this->config->getDir(), true, $wasCreated);
+
+        $output->writeln(sprintf(
+            self::CHECK . ' %s: (%s) %s',
+            $this->config->getDir() . '/wrk',
+            $this->wrkFs::TYPE,
+            $wasCreated ? 'created' : 'exists'
+        ));
 
         $this->wrkFs->start();
 
