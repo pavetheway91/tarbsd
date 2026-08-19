@@ -1,161 +1,59 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Util;
 
-use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Process\Process;
-use Stringable;
+use TarBSD\GlobalConfiguration;
 
-final class WrkFs implements Stringable
+abstract class WrkFs
 {
-    private array $md;
-
-    public function __construct(
-        public readonly string $id,
-        string $md,
-        public readonly string $mnt
-    ) {
-        $this->md = explode(',', $md);
+    public static function get(GlobalConfiguration $config, string $dir, bool $init) : ?static
+    {
+        return WrkFs\InMemoryZFS::doGet($config, $dir, $init);
     }
 
-    public static function init(string $dir) : bool
+    public function start() : void
     {
-        if (!static::get($dir))
-        {
-            $fsId = static::getId($dir);
-
-            (new Filesystem)->mkdir(
-                $mnt = realpath($dir ) . '/wrk'
-            );
-
-            $md = Misc::mdCreate(768, true);
-
-            Process::fromShellCommandline(
-                'zpool create -o ashift=12 -O tarbsd:md=' . $md . ' -O compression=lz4 -m '
-                . $mnt . ' ' . $fsId . ' /dev/' . $md . "\n"
-                . 'zfs create -o compression=zstd -o recordsize=4m ' .  $fsId . "/root\n"
-                . 'zfs create -o compression=lz4 -o recordsize=4m ' .  $fsId . "/cache\n"
-                . 'zfs snapshot -r ' . $fsId . "/root@empty \n"
-            )->mustRun();
-            return true;
-        }
-
-        return false;
-    }
-
-    public static function get(string $dir) : ?object
-    {
-        $fsId = static::getId($dir);
-
-        $fs = Process::fromShellCommandline(
-            'zfs list -Hp -d 0 -o name,tarbsd:md,mountpoint'
-        )->mustRun()->getOutput();
-
-        foreach(explode("\n", $fs) as $line)
-        {
-            if ($line)
-            {
-                [$id, $md, $mnt] = explode("\t", $line);
-
-                if ($id === $fsId)
-                {
-                    return new static($id, $md, $mnt);
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public static function getId(string $dir) : string
-    {
-        return 'tarbsd_' . substr(md5(
-            realpath($dir ) . '/wrk'
-        ), 0, 8);
-    }
-
-    public function destroy() : void
-    {
-        $mds = [];
-        foreach($this->md as $dev)
-        {
-            $mds[] = sprintf(
-                '&& mdconfig -d -u %s',
-                $dev
-            );
-        }
-        Process::fromShellCommandline(sprintf(
-            "zpool destroy -f %s %s",
-            $this->id, implode(' ', $mds)
-        ))->mustRun();
-    }
-
-    public function tightCompression(bool $setting)
-    {
-        Process::fromShellCommandline(sprintf(
-            "zfs set compression=%s recordsize=%s %s/root",
-            $setting ? 'zstd' : 'lz4',
-            $setting ? '4m' : '128k',
-            $this->id
-        ))->mustRun();
-    }
-
-    public function checkSize(?int $size = null) : void
-    {
-        if ($size)
-        {
-            $needed = $size - $this->getAvailable();
-            if ($needed > 0)
-            {
-                $this->grow(intval(($needed + 32)  * 1.2));
-            }
-        }
-        else
-        {
-            if ($this->getAvailable() < 512)
-            {
-                $this->grow(384);
-            }
-        }
-    }
-
-    public function getAvailable() : int
-    {
-        $avail = trim(
-            Process::fromShellCommandline($cmd = sprintf(
-                'zfs list -Hp -o available -d 0 -p %s',
-                $this->id
-            ))->mustRun()->getOutput(),
-            "\n"
-        );
-        return (int) ceil($avail / 1048576);
+        $this->tightCompression(true);
     }
 
     public function rollback(string $snapshot) : void
     {
-        Process::fromShellCommandline(
-            'zfs rollback -r ' . $this->id . '/root@' . $snapshot
-        )->mustRun();
     }
 
     public function snapshot(string $snapshot) : void
     {
-        Process::fromShellCommandline(
-            'zfs snapshot -r ' . $this->id . '/root@' . $snapshot
-        )->mustRun();
     }
 
-    public function __toString() : string
+    public function destroySnapshot(string $snapshot) : void
     {
-        return $this->id;
     }
 
-    private function grow(int $size) : void
+    public function hasSnapshot(string $snapshot) : bool
     {
-        $this->md[] = $md = Misc::mdCreate($size);
-
-        Process::fromShellCommandline(sprintf(
-            'zpool add %s %s && zfs set tarbsd:md=%s %s',
-            $this->id, $md, implode(',', $this->md), $this->id
-        ))->mustRun();
+        return false;
     }
+
+    public function tightCompression(bool $setting) : void
+    {
+    }
+
+    public function getAvailableMemory() : int
+    {
+        $n = 0;
+        $found = null;
+
+        foreach(Misc::df(static::TYPE, $this->mnt, false) as $fs)
+        {
+            $found = $fs;
+            $n++;
+        }
+
+        if ($n == 1)
+        {
+            return $found['avail'];
+        }
+    }
+
+    abstract public function checkSize(?int $size = null) : void;
+
+    abstract public function destroy() : void;
 }

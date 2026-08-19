@@ -31,7 +31,10 @@ class WrkFsSize extends InternalCommand
             msg_receive($q, AbstractBuilder::MSG_TYPE_WRKFS, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
             if ($msg == $key)
             {
-                $wrkFs = WrkFs::get(getcwd());
+                $globalConfig = $this->getApplication()->getGlobalConfig();
+
+                $wrkFs = WrkFs::get($globalConfig, getcwd(), false);
+
                 while(true)
                 {
                     try

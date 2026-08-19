@@ -62,13 +62,13 @@ class Build extends AbstractCommand
 
         $builder = new MfsBuilder(
             $conf = Configuration::get(),
+            $globalConfig = $this->getApplication()->getGlobalConfig(),
             $cache,
             new FreeBSDRelease($release),
             $this->getApplication()->getDispatcher(),
             $this->getApplication()->getHttpClient()
         );
 
-        $globalConfig = $this->getApplication()->getGlobalConfig();
         $logFile = null;
 
         if ($output->isVerbose())

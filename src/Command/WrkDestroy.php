@@ -29,7 +29,9 @@ class WrkDestroy extends AbstractCommand
             ));
         }
 
-        if ($fs = WrkFs::get($cwd))
+        $globalConfig = $this->getApplication()->getGlobalConfig();
+
+        if ($fs = WrkFs::get($globalConfig, $cwd, false))
         {
             $fs->destroy();
             $output->writeln(sprintf(

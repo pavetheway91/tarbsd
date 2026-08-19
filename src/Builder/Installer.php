@@ -40,8 +40,6 @@ class Installer implements Icons
         OutputInterface $output, OutputInterface $verboseOutput, string $arch, Process $wrkFsSize
     ) : void {
 
-        $rootId = $this->wrkFs . '/root';
-
         $abi = $this->baseRelease->getAbi($arch);
 
         $distFileHash = hash('xxh128', json_encode([
@@ -54,12 +52,11 @@ class Installer implements Icons
             !file_exists($distFileHashFile = $this->wrk . '/distFileHash')
             || file_get_contents($distFileHashFile) !== $distFileHash
         ) {
-            Process::fromShellCommandline('zfs destroy -r ' . $rootId . '@installed')->run();
+            $this->wrkFs->destroySnapshot('installed');
         }
 
-        try
+        if ($this->wrkFs->hasSnapshot('installed'))
         {
-            Process::fromShellCommandline('zfs get all ' . $rootId . '@installed')->mustRun();
             $output->writeln(self::CHECK . $msg = sprintf(
                 ' base system (%s) unchanged, using snapshot',
                 $this->getInstalledVersion()
@@ -67,7 +64,7 @@ class Installer implements Icons
             $verboseOutput->writeln($msg);
             $wrkFsSize->start();
         }
-        catch (\Exception $e)
+        else
         {
             $this->wrkFs->rollback('empty');
 
@@ -127,7 +124,7 @@ class Installer implements Icons
             }
 
             $this->fs->dumpFile($this->root . '/etc/resolv.conf', Overlay::RESOLV_CONF);
-    
+
             $this->fs->mkdir($pkgCache = App::CACHE_DIR . '/pkgbase_' . $arch);
             $umountPkgCache = $this->preparePKG($pkgCache, false);
 
@@ -237,8 +234,6 @@ DEFAULTS);
 
     final public function installPKGs(OutputInterface $output, OutputInterface $verboseOutput, string $arch) : void
     {
-        $rootId = $this->wrkFs . '/root';
-
         $packages = $this->getRequiredPackages();
 
         sort($packages);
@@ -255,17 +250,16 @@ DEFAULTS);
             !file_exists($packagesHashFile = $this->wrk . '/packagesHash')
             || file_get_contents($packagesHashFile) !== $packagesHash
         ) {
-            Process::fromShellCommandline('zfs destroy -r ' . $rootId . '@pkgsInstalled')->run();
+            $this->wrkFs->destroySnapshot('pkgsInstalled');
         }
 
-        try
+        if ($this->wrkFs->hasSnapshot('pkgsInstalled'))
         {
-            Process::fromShellCommandline('zfs get all ' . $rootId . '@pkgsInstalled')->mustRun();
             $output->writeln(self::CHECK . $msg = ' package list unchanged, using snapshot');
             $verboseOutput->writeln($msg);
             $this->wrkFs->rollback('pkgsInstalled');
         }
-        catch (\Exception $e)
+        else
         {
             $this->wrkFs->rollback('installed');
             $this->fs->mkdir($this->wrk . '/cache');

@@ -14,6 +14,7 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 use SysvMessageQueue;
+use Generator;
 
 class Misc
 {
@@ -262,6 +263,38 @@ class Misc
             });
 
             return $q;
+        }
+    }
+
+    public static function df(array|string|null $types, string $prefix, bool $includeChildren) : Generator
+    {
+        $types = (array) $types;
+
+        if ($types)
+        {
+            $types = '-t ' . implode(',', $types);
+        }
+
+        $df = Process::fromShellCommandline(sprintf(
+            'df -b %s --libxo=json',
+            $types ?: '', 
+        ))->mustRun()->getOutput();
+
+        $df = json_decode($df, true);
+
+        foreach(array_reverse($df['storage-system-information']['filesystem']) as $fs)
+        {
+            if (
+                ($includeChildren && str_starts_with($fs['mounted-on'], $prefix))
+                || $fs['mounted-on'] == $prefix
+            ) {
+                $kb = $fs['available-blocks'] * 512;
+                yield [
+                    'mnt' => $fs['mounted-on'],
+                    'avail' => (int) ceil($kb / 1048576),
+                    'o' => $fs
+                ];
+            }
         }
     }
 

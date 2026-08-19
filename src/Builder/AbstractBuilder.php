@@ -14,6 +14,7 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 
 use TarBSD\Util\FreeBSDRelease;
+use TarBSD\GlobalConfiguration;
 use TarBSD\Configuration;
 use TarBSD\Util\Overlay;
 use TarBSD\Util\Icons;
@@ -74,6 +75,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     final public function __construct(
         protected readonly Configuration $config,
+        GlobalConfiguration $globalConfig,
         private readonly CacheInterface $cache,
         private readonly FreeBSDRelease $release,
         private readonly EventDispatcher $dispatcher,
@@ -82,8 +84,9 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->wrk = $config->getDir() . '/wrk';
         $this->root = $this->wrk . '/root';
         $this->filesDir = $config->getDir() . '/tarbsd';
-        WrkFs::init($this->config->getDir());
-        $this->wrkFs = WrkFs::get($this->config->getDir());
+
+        $this->wrkFs = WrkFs::get($globalConfig, $this->config->getDir(), true);
+
         $this->fs = new Filesystem;
 
         if (!$this->fs->exists($this->filesDir))
@@ -127,7 +130,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             }
         }
 
-        $this->wrkFs->tightCompression(true);
+        $this->wrkFs->start();
 
         $this->dispatcher->addSubscriber($this);
         msg_send($this->sysvMessageQueue, self::MSG_TYPE_WRKFS, $key = bin2hex(random_bytes(8)), false);
@@ -242,28 +245,24 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                         SignalMap::getSignalName($event->getHandlingSignal())
                     ));
                 }
-                $df = Process::fromShellCommandline(
-                    'df -t tmpfs,nullfs --libxo=json'
-                );
-                $df = json_decode($df->mustRun()->getOutput(), true);
 
                 $mounts = false;
 
-                foreach($df['storage-system-information']['filesystem'] as $fs)
+                foreach(Misc::df(['tmpfs,nullfs'], $this->wrk, true) as $fs)
                 {
-                    if (str_starts_with($fs['mounted-on'], $this->wrk))
+                    if ($fs['mnt'] !== $this->wrk)
                     {
                         $mounts = true;
                         try
                         {
                             Process::fromShellCommandline(sprintf(
                                 'umount -f %s',
-                                $fs['mounted-on']
+                                $fs['mnt']
                             ))->mustRun();
                             $output->writeln(sprintf(
                                 '%s unmounted %s',
                                 self::CHECK,
-                                $fs['mounted-on']
+                                $fs['mnt']
                             ));
                         }
                         catch (\Exception $e)
@@ -271,7 +270,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                             $output->writeln(sprintf(
                                 '%s failed to unmount %s',
                                 self::ERR,
-                                $fs['mounted-on']
+                                $fs['mnt']
                             ));
                         }
                     }
