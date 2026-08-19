@@ -30,14 +30,13 @@ class Installer implements Icons
         private readonly ?FreeBSDRelease $baseRelease,
         private readonly Filesystem $fs,
         private readonly Configuration $config,
-        private readonly HttpClientInterface $httpClient,
-        private readonly Process $wrkFsSize
+        private readonly HttpClientInterface $httpClient
     ) {
         $this->filesDir = $config->getDir() . '/tarbsd';
     }
 
     final public function installPkgBase(
-        OutputInterface $output, OutputInterface $verboseOutput, string $arch, Process $wrkFsSize
+        OutputInterface $output, OutputInterface $verboseOutput, string $arch, Process $wrkFsSizeWorker
     ) : void {
 
         $abi = $this->baseRelease->getAbi($arch);
@@ -62,7 +61,7 @@ class Installer implements Icons
                 $this->getInstalledVersion()
             ));
             $verboseOutput->writeln($msg);
-            $wrkFsSize->start();
+            $wrkFsSizeWorker->start();
         }
         else
         {
@@ -90,7 +89,7 @@ class Installer implements Icons
                     ));
             }
     
-            $wrkFsSize->start();
+            $wrkFsSizeWorker->start();
 
             $this->fs->dumpFile(
                 $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',

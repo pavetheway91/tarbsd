@@ -262,7 +262,6 @@ CONF;
         }
         catch (\Exception $e)
         {
-            $this->wrkFsSize->stop();
             $umountUsr->mustRun();
             throw $e;
         }

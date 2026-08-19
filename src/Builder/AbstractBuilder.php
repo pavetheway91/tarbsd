@@ -55,7 +55,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     private readonly string $distributionFiles;
 
-    protected Process $wrkFsSize;
+    protected Process $wrkFsSizeWorker;
 
     private SysvMessageQueue $sysvMessageQueue;
 
@@ -133,12 +133,17 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $this->wrkFs->start();
 
         $this->dispatcher->addSubscriber($this);
+
         msg_send($this->sysvMessageQueue, self::MSG_TYPE_WRKFS, $key = bin2hex(random_bytes(8)), false);
-        $this->wrkFsSize = Process::fromShellCommandline(sprintf(
+        $this->wrkFsSizeWorker = Process::fromShellCommandline(sprintf(
             "php %s wrkfssize %s %s",
             realpath($_SERVER['SCRIPT_FILENAME']),
             $ftok, $key
         ), $this->config->getDir(), null, null, 7200);
+        register_shutdown_function(function()
+        {
+            $this->wrkFsSizeWorker->stop();
+        });
 
         $start = time();
         $this->bootPruned = false;
@@ -169,10 +174,10 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
         $installer = new Installer(
             $this->root, $this->wrk, $this->wrkFs,
             $this->release, $this->fs, $this->config,
-            $this->httpClient, $this->wrkFsSize
+            $this->httpClient
         );
 
-        $installer->installPkgBase($output, $verboseOutput, $arch, $this->wrkFsSize);
+        $installer->installPkgBase($output, $verboseOutput, $arch, $this->wrkFsSizeWorker);
 
         $installer->installPKGs($output, $verboseOutput, $arch);
 
@@ -206,7 +211,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             time() - $start
         ));
 
-        $this->wrkFsSize->stop();
         $this->dispatcher->removeSubscriber($this);
         return new SplFileInfo($file);
     }
@@ -236,7 +240,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                     $n++;
                 }
             default:
-                $this->wrkFsSize->stop();
                 if ($n == 0)
                 {
                     $output->writeln(sprintf(
