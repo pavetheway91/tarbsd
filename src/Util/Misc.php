@@ -275,12 +275,10 @@ class Misc
             $types = '-t ' . implode(',', $types);
         }
 
-        $df = Process::fromShellCommandline(sprintf(
+        $df = json_decode(Process::fromShellCommandline(sprintf(
             'df -b %s --libxo=json',
             $types ?: '', 
-        ))->mustRun()->getOutput();
-
-        $df = json_decode($df, true);
+        ))->mustRun()->getOutput(), true, 512, JSON_THROW_ON_ERROR);
 
         foreach(array_reverse($df['storage-system-information']['filesystem']) as $fs)
         {
