@@ -108,6 +108,17 @@ TMPL;
         );
     }
 
+    public function getLatestRepo(?string $arch = null) : string
+    {
+        $abi = $arch ? $this->getAbi($arch) : '${ABI}';
+
+        return sprintf(
+            'https://%s/%s/latest',
+            self::PKG_DOMAIN,
+            $abi
+        );
+    }
+
     public function __toString() : string
     {
         return is_int($this->minor) ? sprintf(

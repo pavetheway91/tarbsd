@@ -66,29 +66,7 @@ class Installer implements Icons
         else
         {
             $this->wrkFs->rollback('empty');
-
-            $res = $this->httpClient->request('GET', $url = $this->baseRelease->getBaseRepo($arch), [
-                'max_redirects' => 0,
-            ]);
-            switch($res->getStatusCode())
-            {
-                case 200:
-                case 301:
-                case 302:
-                    break;
-                case 404:
-                    throw new \Exception(sprintf(
-                        'Seems like %s doesn\'t exist',
-                        $this->baseRelease
-                    ));
-                default:
-                    throw new \Exception(sprintf(
-                        'Seems like there\'s something wrong in %s, status code: %s',
-                        $this->baseRelease::PKG_DOMAIN,
-                        $res->getStatusCode()
-                    ));
-            }
-    
+            $this->testRepo($this->baseRelease->getBaseRepo($arch) . '/meta');
             $wrkFsSizeWorker->start();
 
             $this->fs->dumpFile(
@@ -260,6 +238,8 @@ DEFAULTS);
         }
         else
         {
+            $this->testRepo($this->baseRelease->getLatestRepo($arch) . '/meta');
+
             $this->wrkFs->rollback('installed');
             $this->fs->mkdir($this->wrk . '/cache');
             if (count($packages) > 0)
@@ -378,5 +358,73 @@ DEFAULTS);
         $f = (new Finder)->files()->in($cacheDir);
 
         return array_keys(iterator_to_array($f));
+    }
+
+    protected function testRepo(string $url, int $n = 0) : void
+    {
+        static $okDomains = [];
+
+        $domain = parse_url($url, PHP_URL_HOST);
+
+        if ($n > 1 || in_array($domain, $okDomains))
+        {
+            return;
+        }
+
+        $n++;
+
+        try
+        {
+            $res = $this->httpClient->request('HEAD', $url, [
+                'max_redirects' => 0,
+            ]);
+            $statusCode = $res->getStatusCode();
+        }
+        catch(\Exception $e)
+        {
+            if (preg_match('/dns/', $e->getMessage()))
+            {
+                throw new \Exception(sprintf(
+                    "DNS error, cannot connect to %s",
+                    $domain
+                ));
+            }
+            throw new \Exception(sprintf(
+                "Network error, cannot connect to %s",
+                $domain
+            ));
+        }
+
+        switch($statusCode)
+        {
+            case 200:
+                $okDomains[] = $domain;
+                break;
+            case 301:
+            case 302:
+                /***
+                 * Base packages are hosted at a different repo (cloudfront.aws.pkgbase.freebsd.org)
+                 * for RELEASE|ALPHA|BETA versions of FreeBSD, pkg.freebsd.org redirects there.
+                 ***/
+                $okDomains[] = $domain;
+                $info = $res->getInfo();
+                $redirectUrl = $info['redirect_url'];
+                if ($domain !== parse_url($redirectUrl, PHP_URL_HOST))
+                {
+                    $this->testRepo($redirectUrl, $n);
+                }
+                break;
+            case 404:
+                throw new \Exception(sprintf(
+                    'Seems like %s doesn\'t exist',
+                    $this->baseRelease
+                ));
+            default:
+                throw new \Exception(sprintf(
+                    'There\'s something wrong with %s, status code: %s',
+                    $domain,
+                    $statusCode
+                ));
+        }
     }
 }
