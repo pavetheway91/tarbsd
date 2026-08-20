@@ -180,7 +180,6 @@ class Installer implements Icons
             }
             catch (\Exception $e)
             {
-                $this->wrkFsSize->stop();
                 $umountPkgCache->mustRun();
                 throw $e;
             }
@@ -296,7 +295,6 @@ DEFAULTS);
                 }
                 catch (\Exception $e)
                 {
-                    $this->wrkFsSize->stop();
                     $umountPkg->mustRun();
                     throw $e;
                 }
