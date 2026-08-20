@@ -175,6 +175,7 @@ class Installer implements Icons
 
                 $this->finalizeInstall();
                 file_put_contents($distFileHashFile, $distFileHash);
+                $this->applyPruneList(Strs::PRUNELIST);
                 $this->wrkFs->snapshot('installed');
             }
             catch (\Exception $e)
@@ -306,6 +307,7 @@ DEFAULTS);
                 $output->writeln(self::CHECK . $msg = ' no packages to install');
             }
             file_put_contents($packagesHashFile, $packagesHash);
+            $this->applyPruneList(Strs::PRUNELIST);
             $this->wrkFs->snapshot('pkgsInstalled');
         }
     }

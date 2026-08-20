@@ -189,4 +189,26 @@ trait Utils
 
         return $modules;
     }
+
+    final protected function applyPruneList(string $list) : void
+    {
+        $prune = [];
+
+        foreach(explode("\n", $list) as $line)
+        {
+            if (strlen($line) > 0 && $line[0] !== '#')
+            {
+                $prune[] = 'rm -rf ' . $line;
+            }
+        }
+
+        // some tools use this to determine OS version
+        $paramHBackup = file_get_contents($paramHFile = $this->root . '/usr/include/sys/param.h');
+        // poudriere needs this
+        $mountHBackup = file_get_contents($mountHFile = $this->root . '/usr/include/sys/mount.h');
+
+        Process::fromShellCommandline(implode("\n", $prune), $this->root)->mustRun();
+        $this->fs->dumpFile($paramHFile, $paramHBackup);
+        $this->fs->dumpFile($mountHFile, $mountHBackup);
+    }
 }

@@ -311,26 +311,11 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     final protected function prune(OutputInterface $output, OutputInterface $verboseOutput, bool $preservePkgDb) : void
     {
-        $pruneList = [];
-
-        $readPruneList = function(string $list) use (&$pruneList)
-        {
-            foreach(explode("\n", $list) as $line)
-            {
-                if (strlen($line) > 0 && $line[0] !== '#')
-                {
-                    $pruneList[] = 'rm -rf ' . $line;
-                }
-            }
-        };
-
-        $readPruneList(Strs::PRUNELIST);
-
         switch($this->config->getSSH())
         {
             case 'dropbear':
             case null:
-                $readPruneList(Strs::PRUNELIST);
+                $this->applyPruneList(Strs::PRUNELIST_OPENSSH);
                 break;
             case 'openssh':
                 break;
@@ -340,15 +325,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                     $this->config->getSSH()
                 ));
         }
-
-        // some tools use this to determine OS version
-        $paramH = file_get_contents($paramHFile = $this->root . '/usr/include/sys/param.h');
-        // poudriere needs this
-        $mountH = file_get_contents($mountHFile = $this->root . '/usr/include/sys/mount.h');
-
-        Process::fromShellCommandline(implode("\n", $pruneList), $this->root)->mustRun();
-        $this->fs->dumpFile($paramHFile, $paramH);
-        $this->fs->dumpFile($mountHFile, $mountH);
 
         foreach($this->config->features() as $feature)
         {
