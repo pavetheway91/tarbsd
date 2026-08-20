@@ -82,7 +82,7 @@ class Misc
             'mount', 'mount_nullfs', 'makefs', 'gpart', 'umount'
         ] as $bin) {
             $found = false;
-            foreach(['/sbin', '/bin', '/usr/sbin', '/usr/bin'] as $path)
+            foreach(['/sbin', '/bin', '/usr/sbin', '/usr/bin', '/usr/local/sbin'] as $path)
             {
                 if (is_executable($path . '/' . $bin))
                 {
