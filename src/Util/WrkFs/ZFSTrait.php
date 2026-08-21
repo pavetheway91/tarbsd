@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Util\WrkFs;
 
+use TarBSD\Util\Misc;
 use Symfony\Component\Process\Process;
 
 trait ZFSTrait
@@ -59,11 +60,29 @@ trait ZFSTrait
 
     public function getVdevs() : array
     {
-        $data = json_decode(Process::fromShellCommandline(
-            'zpool status --json -p ' . $this->id
-        )->mustRun()->getOutput(), true, 512, JSON_THROW_ON_ERROR);
-        // who the heck designed this schema?
-        return $data['pools'][$this->id]['vdevs'][$this->id]['vdevs'];
+        $data = Process::fromShellCommandline(
+            'zpool status -p ' . $this->id
+        )->mustRun()->getOutput();
+
+        $found = false;
+        $out = [];
+
+        foreach(explode("\n", $data) as $line)
+        {
+            if (!$found && preg_match('/\s+' . $this->id . '\s+ONLINE/', $line))
+            {
+                $found = true;
+            }
+            if ($found && preg_match('/\s+(md([0-9]+))\s+ONLINE/', $line, $m))
+            {
+                $out[] = $m[1];
+            }
+        }
+
+        if ($found)
+        {
+            return $out;
+        }
     }
 
     private static function getId(string $dir) : string

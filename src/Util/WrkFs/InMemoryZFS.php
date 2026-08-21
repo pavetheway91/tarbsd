@@ -20,7 +20,7 @@ class InMemoryZFS extends WrkFs
     public function destroy() : void
     {
         $mds = [];
-        foreach(array_keys($this->getVdevs()) as $dev)
+        foreach($this->getVdevs() as $dev)
         {
             $mds[] = sprintf(
                 '&& mdconfig -d -u %s',
@@ -64,24 +64,28 @@ class InMemoryZFS extends WrkFs
     {
         $fsId = static::getId($dir);
 
-        $data = json_decode(Process::fromShellCommandline(
-            'zfs list -Hp -d 0 -o name,mountpoint --json'
-        )->mustRun()->getOutput(), true, 512, JSON_THROW_ON_ERROR);
+        $data = Process::fromShellCommandline(
+            'zfs list -Hp -d 0 -o name,mountpoint'
+        )->mustRun()->getOutput();
 
-        foreach($data['datasets'] as $dataset)
+        if ($data)
         {
-            if ($dataset['name'] === $fsId)
+            foreach(explode("\n", $data) as $line)
             {
-                if ($dataset['properties']['mountpoint']['value'] !== $dir . '/wrk')
+                [$name, $mnt] = explode("\t", $line);
+                if ($name === $fsId)
                 {
-                    throw new \Exception(sprintf(
-                        'zfs mountpoint mismatch for %s, expected %s/wrk, got %s',
-                        $fsId,
-                        $dir,
-                        $dataset['properties']['mountpoint']['value']
-                    ));
+                    if ($mnt !== $dir . '/wrk')
+                    {
+                        throw new \Exception(sprintf(
+                            'zfs mountpoint mismatch for %s, expected %s/wrk, got %s',
+                            $fsId,
+                            $dir,
+                            $mnt
+                        ));
+                    }
+                    return new static($fsId, $mnt);
                 }
-                return new static($fsId, $dataset['properties']['mountpoint']['value']);
             }
         }
 
