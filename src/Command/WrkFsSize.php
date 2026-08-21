@@ -30,9 +30,22 @@ class WrkFsSize extends InternalCommand
             $q = msg_get_queue($ftok);
 
             msg_receive($q, AbstractBuilder::MSG_TYPE_WRKFS, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
+    
             if ($msg == $key)
             {
-                $wrkFs = WrkFs::get(new GlobalConfiguration, getcwd(), false);
+                try
+                {
+                    $wrkFs = WrkFs::get(new GlobalConfiguration, getcwd(), false);
+                }
+                catch(\Exception $e)
+                {}
+
+                if (!$wrkFs)
+                {
+                    msg_send($q, 1, 'failed to start wrkfs worker', false);
+                    posix_kill(posix_getppid(), \SIGTERM);
+                    return self::FAILURE;
+                }
 
                 while(true)
                 {
