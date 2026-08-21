@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace TarBSD\Command;
+namespace TarBSD\Command\Internal;
 
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -10,7 +10,7 @@ use DateTimeImmutable;
     name: 'version-check',
     hidden: true
 )]
-class VersionCheck extends InternalCommand
+class VersionCheckWorker extends InternalCommand
 {
     public function __invoke(OutputInterface $output) : int
     {

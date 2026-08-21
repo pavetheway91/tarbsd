@@ -1,5 +1,5 @@
 <?php declare(strict_types=1);
-namespace TarBSD\Command;
+namespace TarBSD\Command\Internal;
 
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -17,7 +17,7 @@ use DateTimeImmutable;
     name: 'wrkfssize',
     hidden: true
 )]
-class WrkFsSize extends InternalCommand
+class WrkFsWorker extends InternalCommand
 {
     public function __invoke(
         OutputInterface $output,

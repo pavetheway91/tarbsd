@@ -91,7 +91,7 @@ class App extends Application implements EventSubscriberInterface
             static::amIRoot()
             && TARBSD_SELF_UPDATE
             && $commandName !== 'self-update'
-            && false == ($command instanceof Command\InternalCommand)
+            && false == ($command instanceof Command\Internal\InternalCommand)
         ) {
             $cache = $this->getCache();
             $item = $cache->getItem(
@@ -154,7 +154,7 @@ class App extends Application implements EventSubscriberInterface
             str_starts_with(__FILE__, 'phar:/')
             && (
                 in_array($commandName, ['build', 'bootstrap'])
-                || $command instanceof Command\InternalCommand
+                || $command instanceof Command\Internal\InternalCommand
             )
         ) {
             $this->classLoader->loadAllClasses();
@@ -255,8 +255,8 @@ class App extends Application implements EventSubscriberInterface
             new Command\SelfCheckSig,
             new Command\Debug,
             // these are for internal use only
-            new Command\WrkFsSize,
-            new Command\VersionCheck
+            new Command\Internal\WrkFsWorker,
+            new Command\Internal\VersionCheckWorker
         ];
     }
 }
