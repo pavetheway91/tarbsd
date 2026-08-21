@@ -4,6 +4,7 @@ namespace TarBSD\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 
+use TarBSD\GlobalConfiguration;
 use TarBSD\Util\WrkFs;
 use TarBSD\Util\Misc;
 use TarBSD\App;
@@ -29,9 +30,7 @@ class WrkDestroy extends AbstractCommand
             ));
         }
 
-        $globalConfig = $this->getApplication()->getGlobalConfig();
-
-        if ($fs = WrkFs::get($globalConfig, $cwd, false))
+        if ($fs = WrkFs::get(new GlobalConfiguration, $cwd, false))
         {
             $fs->destroy();
             $output->writeln(sprintf(

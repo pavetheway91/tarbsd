@@ -31,8 +31,6 @@ class App extends Application implements EventSubscriberInterface
 
     private readonly HttpClientInterface $httpClient;
 
-    private readonly GlobalConfiguration $globalConfig;
-
     public function __construct(public readonly ?ClassLoader $classLoader = null)
     {
         Util\Misc::platformCheck();
@@ -44,7 +42,6 @@ class App extends Application implements EventSubscriberInterface
         );
 
         $this->dispatcher->addSubscriber($this);
-        $this->globalConfig = new GlobalConfiguration;
     }
 
     public static function getReleaseDate() : ?DateTimeImmutable
@@ -228,11 +225,6 @@ class App extends Application implements EventSubscriberInterface
         return $this->dispatcher;
     }
 
-    public function getGlobalConfig() : GlobalConfiguration
-    {
-        return $this->globalConfig;
-    }
-
     public static function getSubscribedEvents() : array
     {
         return [
@@ -243,14 +235,7 @@ class App extends Application implements EventSubscriberInterface
 
     public static function amIRoot() : bool
     {
-        static $amI;
-
-        if (null === $amI)
-        {
-            $amI = posix_getuid() == 0;
-        }
-
-        return $amI;
+        return posix_getuid() == 0;
     }
 
     protected function getDefaultCommands() : array

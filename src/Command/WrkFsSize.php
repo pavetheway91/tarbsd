@@ -6,6 +6,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Argument;
 
 use TarBSD\Builder\AbstractBuilder;
+use TarBSD\GlobalConfiguration;
 use TarBSD\Util\WrkFs;
 use TarBSD\Util\Misc;
 use TarBSD\App;
@@ -31,9 +32,7 @@ class WrkFsSize extends InternalCommand
             msg_receive($q, AbstractBuilder::MSG_TYPE_WRKFS, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
             if ($msg == $key)
             {
-                $globalConfig = $this->getApplication()->getGlobalConfig();
-
-                $wrkFs = WrkFs::get($globalConfig, getcwd(), false);
+                $wrkFs = WrkFs::get(new GlobalConfiguration, getcwd(), false);
 
                 while(true)
                 {
