@@ -57,7 +57,7 @@ DROPBEAR_INFO;
         'etc/fstab'         => Overlay::FSTAB,
         'etc/rc.conf'       => Overlay::RC_CONF,
         'etc/resolv.conf'   => Overlay::RESOLV_CONF,
-        'stubs/overlay/usr/local/etc/dropbear' => Overlay::DROPBEAR_INFO
+        'usr/local/etc/dropbear/info' => Overlay::DROPBEAR_INFO
     ];
 
     const NTPD = <<<NTPD
