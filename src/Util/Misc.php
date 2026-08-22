@@ -122,7 +122,7 @@ class Misc
                 );
             }
         }
-        catch (\Exception $e)
+        catch (\Throwable $e)
         {
             try
             {
@@ -136,7 +136,7 @@ class Misc
                     );
                 }
             }
-            catch (\Exception $e)
+            catch (\Throwable $e)
             {
                 throw new \Exception($bootstrap ?
                     'This doesn\'t seem like a SSH key'
