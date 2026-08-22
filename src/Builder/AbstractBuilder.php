@@ -460,48 +460,74 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         foreach($f as $file)
         {
-            $zlibItem = $this->cache->getItem(
-                hash_hmac_file('sha1', (string) $file, 'zlib')
-            );
-            $pigzItem = $this->cache->getItem(
-                hash_hmac_file('sha1', (string) $file, 'pigz')
-            );
+            $fileName = $file->getFilename();
+            $file = (string) $file;
+
+            $zlibItem = $this->cache->getItem(hash_hmac_file('sha1', $file, 'zlib'));
+            $pigzItem = $this->cache->getItem(hash_hmac_file('sha1', $file, 'pigz'));
+            $libdefateItem = $this->cache->getItem(hash_hmac_file('sha1', $file, 'libdeflate'));
 
             if ($pigzItem->isHit())
             {
-                $output->write(self::CHECK . ' ' . $file->getFilename() . '.gz (compressed using pigz) cached', true);
+                $output->write(self::CHECK . ' ' . $fileName . '.gz (compressed using pigz) cached', true);
                 file_put_contents($file . '.gz', $pigzItem->get());
-                unlink((string) $file);
+                unlink($file);
+            }
+            elseif ($libdefateItem->isHit())
+            {
+                $output->write(self::CHECK . ' ' . $fileName . '.gz (compressed using libdefate) cached', true);
+                file_put_contents($file . '.gz', $libdefateItem->get());
+                unlink($file);
             }
             else
             {
-                if (Misc::hasPigz() && !$quick)
+                if (extension_loaded('libdeflate'))
+                {
+                    $progressIndicator = $this->progressIndicator($output);
+                    $progressIndicator->start(sprintf(
+                        "compressing %s using libdeflate",
+                        $fileName,
+                    ));
+                    if ($compressed = libdeflate_gzip_compress(file_get_contents($file), 12))
+                    {
+                        unlink($file);
+                        $progressIndicator->finish($fileName . ' compressed using libdeflate');
+                        file_put_contents($file . '.gz', $compressed);
+                        $libdefateItem->set($compressed)->expiresAt($expiration);
+                        $this->cache->save($libdefateItem);
+                    }
+                    else
+                    {
+                        throw new \Exception('libdeflate compression failed');
+                    }
+                }
+                elseif (Misc::hasPigz() && !$quick)
                 {
                     $progressIndicator = $this->progressIndicator($output);
                     $progressIndicator->start(sprintf(
                         "compressing %s using pigz-11, might take a while",
-                        $file->getFilename(),
+                        $fileName,
                     ));
-                    Misc::pigzCompress((string) $file, 11, $progressIndicator);
-                    $progressIndicator->finish($file->getFilename() . ' compressed');
+                    Misc::pigzCompress($file, 11, $progressIndicator);
+                    $progressIndicator->finish($fileName . ' compressed using pigz');
                     $pigzItem->set(file_get_contents($file . '.gz'))->expiresAt($expiration);
                     $this->cache->save($pigzItem);
                 }
                 elseif ($zlibItem->isHit())
                 {
-                    $output->write(self::CHECK . ' ' . $file->getFilename() . '.gz cached', true);
+                    $output->write(self::CHECK . ' ' . $fileName . '.gz (compressed using zlib) cached', true);
                     file_put_contents($file . '.gz', $zlibItem->get());
-                    unlink((string) $file);
+                    unlink($file);
                 }
                 else
                 {
                     $progressIndicator = $this->progressIndicator($output);
                     $progressIndicator->start(sprintf(
                         "compressing %s",
-                        $file->getFilename(),
+                        $fileName,
                     ));
-                    Misc::zlibCompress((string) $file, 9, $progressIndicator);
-                    $progressIndicator->finish($file->getFilename() . ' compressed');
+                    Misc::zlibCompress($file, 9, $progressIndicator);
+                    $progressIndicator->finish($fileName . ' compressed using zlib');
                     $zlibItem->set(file_get_contents($file . '.gz'))->expiresAt($expiration);
                     $this->cache->save($zlibItem);
                 }
