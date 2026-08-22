@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD;
 
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Yaml\Yaml;
 
 class GlobalConfiguration
@@ -65,9 +66,15 @@ TMPL;
             $this->fsType
         );
 
-        if (md5($str) !== $this->hash)
+        if (App::amIroot() && md5($str) !== $this->hash)
         {
-            @file_put_contents(self::FILE, $str);
+            try
+            {
+                (new Filesystem)->dumpFile(self::FILE, $str);
+            }
+            catch (\Throwable $e)
+            {
+            }
         }
     }
 }
