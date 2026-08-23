@@ -11,6 +11,7 @@ use TarBSD\App;
 
 #[AsCommand(
     name: 'wrk-destroy',
+    aliases: ['wd', 'destroy-wrk'],
     description: 'Destroy the wrk filesystem'
 )]
 class WrkDestroy extends AbstractCommand

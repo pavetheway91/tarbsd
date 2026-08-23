@@ -19,9 +19,10 @@ class ListCmds extends AbstractCommand
 
         $cmds = [];
         $maxCmdLen = 0;
+
         foreach($this->getApplication()->all() as $name => $command)
         {
-            if (!$command->isHidden())
+            if (!$command->isHidden() && $command->getName() == $name)
             {
                 $cmds[$name] = $command->getDescription();
                 if ($len = strlen($name) > $maxCmdLen)

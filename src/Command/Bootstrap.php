@@ -20,6 +20,7 @@ use TarBSD\Builder;
 
 #[AsCommand(
     name: 'bootstrap',
+    aliases: ['bs'],
     description: 'Bootstrap a new tarBSD project'
 )]
 class Bootstrap extends AbstractCommand

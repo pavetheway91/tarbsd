@@ -20,6 +20,7 @@ use Phar;
 
 #[AsCommand(
     name: 'self-update',
+    aliases: ['update-self'],
     description: 'Update tarBSD builder to the latest version',
 )]
 class SelfUpdate extends AbstractCommand

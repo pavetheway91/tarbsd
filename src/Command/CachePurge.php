@@ -12,6 +12,7 @@ use TarBSD\App;
 
 #[AsCommand(
     name: 'cache-purge',
+    aliases: ['purge-cache'],
     description: 'Purge caches from /var/cache/tarbsd'
 )]
 class CachePurge extends AbstractCommand

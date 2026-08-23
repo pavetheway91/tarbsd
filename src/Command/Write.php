@@ -15,7 +15,11 @@ use TarBSD\App;
 
 #[AsCommand(
     name: 'write',
+    aliases: ['wr'],
     description: 'Write tarBSD image to a device',
+    usages: [
+        '/dev/da0'
+    ]
 )]
 class Write extends AbstractCommand
 {
@@ -25,7 +29,7 @@ class Write extends AbstractCommand
         InputInterface $input,
         OutputInterface $output,
         #[Argument('Device')] string $device,
-        #[Option('Do not ask', '', 'f')] bool $doNotAsk = false
+        #[Option('Do not ask', '', 'y')] bool $doNotAsk = false
     ) {
         if (!str_starts_with($device, '/dev/'))
         {

@@ -25,7 +25,12 @@ use DateTimeImmutable;
 
 #[AsCommand(
     name: 'build',
-    description: 'Build tarBSD image'
+    aliases: ['b'],
+    description: 'Build tarBSD image',
+    usages: [
+        '-r 15.1 --quick qcow2 vmdk',
+        '-r 16-latest'
+    ]
 )]
 class Build extends AbstractCommand
 {
