@@ -121,36 +121,6 @@ class App extends Application implements EventSubscriberInterface
             ));
             $event->disableCommand();
         }
-
-        if (TARBSD_SELF_UPDATE)
-        {
-            $ftok = ftok(Phar::running(false), 'u');
-
-            if ($commandName === 'self-update')
-            {
-                if (msg_queue_exists($ftok))
-                {
-                    $output->writeln(sprintf(
-                        '%s cannot run self-update while tarBSD builder is running',
-                        Command\AbstractCommand::ERR
-                    ));
-                    $event->disableCommand();
-                }
-            }
-            else
-            {
-                msg_send($q = msg_get_queue($ftok), 1, 0, false);
-                register_shutdown_function(function() use ($q)
-                {
-                    msg_receive($q, 1, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
-                    $stat = msg_stat_queue($q);
-                    if ($stat['msg_qnum'] == 0)
-                    {
-                        msg_remove_queue($q);
-                    }
-                });
-            }
-        }
     }
 
     public function terminateEvent(ConsoleTerminateEvent $event) : void
