@@ -63,7 +63,7 @@ TMPL;
         $str = sprintf(
             self::TMPL,
             $this->logRotate,
-            $this->fsType
+            $this->fsType ?: 'null'
         );
 
         if (App::amIroot() && md5($str) !== $this->hash)
