@@ -16,8 +16,6 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 
-use Composer\Autoload\ClassLoader;
-
 use DateTimeImmutable;
 use Phar;
 
@@ -31,9 +29,12 @@ class App extends Application implements EventSubscriberInterface
 
     private readonly HttpClientInterface $httpClient;
 
-    public function __construct(public readonly ?ClassLoader $classLoader = null)
+    public function __construct()
     {
-        Util\Misc::platformCheck();
+        if (!defined('TARBSD_TEST'))
+        {
+            Util\Misc::platformCheck();
+        }
 
         parent::__construct('', TARBSD_VERSION ?: 'dev');
 
@@ -149,15 +150,6 @@ class App extends Application implements EventSubscriberInterface
                     }
                 });
             }
-        }
-        elseif (
-            str_starts_with(__FILE__, 'phar:/')
-            && (
-                in_array($commandName, ['build', 'bootstrap'])
-                || $command instanceof Command\Internal\InternalCommand
-            )
-        ) {
-            $this->classLoader->loadAllClasses();
         }
     }
 

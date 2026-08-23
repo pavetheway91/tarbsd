@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Command;
 
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
@@ -178,15 +179,7 @@ class SelfUpdate extends AbstractCommand
 
         $fs->chmod($tmpFile, $perms);
         $output->writeln(self::CHECK . ' file permissions');
-
-        /**
-         * To make sure that there aren't any
-         * ugly read errors, we'll load
-         * every class, interface and trait
-         * in the current phar archive before
-         * it gets overriden.
-         */
-        $this->getApplication()->classLoader->loadAllClasses();
+        class_exists(FilesystemAdapter::class);
 
         $fs->rename($tmpFile, Phar::running(false), true);
 

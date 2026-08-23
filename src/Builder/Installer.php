@@ -44,7 +44,7 @@ class Installer implements Icons
         $distFileHash = hash('xxh128', json_encode([
             $this->baseRelease->getBaseRepo($arch),
             gmdate('Y-m-d'),
-            TARBSD_BUILD_ID
+            App::hashPhar()
         ]));
 
         if (
