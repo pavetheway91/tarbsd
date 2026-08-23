@@ -72,19 +72,22 @@ class InMemoryZFS extends WrkFs
         {
             foreach(explode("\n", $data) as $line)
             {
-                [$name, $mnt] = explode("\t", $line);
-                if ($name === $fsId)
+                if ($line)
                 {
-                    if ($mnt !== $dir . '/wrk')
+                    [$name, $mnt] = explode("\t", $line);
+                    if ($name === $fsId)
                     {
-                        throw new \Exception(sprintf(
-                            'zfs mountpoint mismatch for %s, expected %s/wrk, got %s',
-                            $fsId,
-                            $dir,
-                            $mnt
-                        ));
+                        if ($mnt !== $dir . '/wrk')
+                        {
+                            throw new \Exception(sprintf(
+                                'zfs mountpoint mismatch for %s, expected %s/wrk, got %s',
+                                $fsId,
+                                $dir,
+                                $mnt
+                            ));
+                        }
+                        return new static($fsId, $mnt);
                     }
-                    return new static($fsId, $mnt);
                 }
             }
         }
