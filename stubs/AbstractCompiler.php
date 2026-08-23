@@ -303,6 +303,7 @@ abstract class AbstractCompiler extends Command
         {
             $this->addFile($separate[] = $dir . '/Resources/data/wcswidth_table_wide.php');
             $this->addFile($separate[] = $dir . '/Resources/data/wcswidth_table_zero.php');
+            $this->addFile($separate[] = $dir . '/Resources/functions.php');
         }
         elseif($package == 'symfony/cache')
         {
