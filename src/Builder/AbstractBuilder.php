@@ -333,7 +333,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 $feature->prune($this->root, $this->fs);
             }
         }
-        if ($preservePkgDb)
+        if (!$preservePkgDb)
         {
             $this->fs->remove($this->root . '/var/db/pkg/');
         }
