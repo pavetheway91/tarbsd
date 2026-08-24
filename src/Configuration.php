@@ -9,6 +9,21 @@ use Generator;
 
 class Configuration
 {
+    const FEATURES = [
+        Feature\Jails::NAME         => Feature\Jails::class,
+        Feature\Ipfw::NAME          => Feature\Ipfw::class,
+        Feature\Wireguard::NAME     => Feature\Wireguard::class,
+        Feature\Rescue::NAME        => Feature\Rescue::class,
+        Feature\Zfs::NAME           => Feature\Zfs::class,
+        Feature\Wifi::NAME          => Feature\Wifi::class,
+        Feature\Locales::NAME       => Feature\Locales::class,
+        Feature\Bhyve::NAME         => Feature\Bhyve::class,
+        Feature\BsdInstall::NAME    => Feature\BsdInstall::class,
+        Feature\Ntpd::NAME          => Feature\Ntpd::class,
+        Feature\Geli::NAME          => Feature\Geli::class,
+        Feature\Pf::NAME            => Feature\Pf::class
+    ];
+
     private readonly array $data;
 
     public function __construct(
@@ -26,7 +41,7 @@ class Configuration
             'modules'       => $input['modules'] ?? ['early' => [], 'late' => []],
             'packages'      => $input['packages'] ?? [],
         ];
-        foreach(($featureMap = $this->featureMap()) as $name => $class)
+        foreach(self::FEATURES as $name => $class)
         {
             if (isset($data['features'][$name]))
             {
@@ -39,7 +54,7 @@ class Configuration
                 $data['features'][$name] = new $class(false);
             }
         }
-        if (count($data['features']) > count($featureMap))
+        if (count($data['features']) > count(self::FEATURES))
         {
             throw new \Exception('unknown feature');
         }
@@ -221,26 +236,6 @@ class Configuration
             }
             yield $module;
         }
-    }
-
-    protected function featureMap() : array
-    {
-        static $map;
-        if (null === $map)
-        {
-            foreach((new Finder)->files()->in(__DIR__. '/Feature') as $f)
-            {
-                $ns = __NAMESPACE__ . '\\Feature\\';
-
-                if (is_subclass_of(
-                    $name = $ns . $f->getBasename('.php'),
-                    Feature\AbstractFeature::class)
-                ) {
-                    $map[$name::NAME] = $name;
-                }
-            }
-        }
-        return $map;
     }
 
     private static function hash(array $data) : string
