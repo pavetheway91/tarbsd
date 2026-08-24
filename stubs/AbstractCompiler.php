@@ -116,8 +116,7 @@ abstract class AbstractCompiler extends Command
         $this->phar->addFromString('bootstrap.php', $this->genBootstrap());
         $this->addFile(__DIR__ . '/../vendor/composer/LICENSE');
         $this->addFile(__DIR__ . '/../vendor/composer/ClassLoader.php');
-        $this->addFile(__DIR__ . '/../vendor/composer/InstalledVersions.php');
-        $this->addFile(__DIR__ . '/../vendor/composer/installed.php');
+        $this->addFile(__DIR__ . '/../vendor/composer/installed.json');
         $this->addFile(__DIR__ . '/../vendor/composer/platform_check.php');
     }
 
@@ -135,15 +134,10 @@ abstract class AbstractCompiler extends Command
         $output->write("adding files for src ");
         if ($this->bundlePackages)
         {
-            foreach(
-                (new Finder)->files()->files()->in($this->root . '/src/Feature')
-                as $file
-            ) {
-                $this->addFile($file);
-            }
-            $this->addFile($this->root . '/src/Util/Misc.php');
-            $classes = ClassOrderer::orderClasses($this->root . '/src', 'TarBSD');
-            $this->phar->addFromString('src/bundle.php', $this->mergeFiles($classes, true));
+            $this->phar->addFromString('src/bundle.php', $this->mergeFiles(
+                ClassOrderer::orderClasses($this->root . '/src', 'TarBSD'),
+                true
+            ));
         }
         else
         {
@@ -382,7 +376,7 @@ abstract class AbstractCompiler extends Command
                 . ')|JWK|Putty|PuTTY|XML|DES'
                 . '|brainpool|sect|(nist(b|k|t))|((sec|nist)p(224|192|160|128|112|256k1))'
                 . '|Montgomery|prime|Koblitz|Curve25519|Curve448|Ed448|PSS|MSBLOB|Raw'
-                . '|libsodium|X509|GMP|BCMath)/';
+                . '|X509|GMP|BCMath|SSH2|IEEE|ANSI)/';
                 break;
         }
         if (isset($skipRegex) && preg_match($skipRegex, $file))
@@ -420,7 +414,7 @@ abstract class AbstractCompiler extends Command
             );
         }
         $out[] = "define('TARBSD_LICENSE', file_get_contents(__DIR__.'/../LICENSE'));";
-        return implode("\n",$out);
+        return implode("\n", $out) . "\n";
     }
 
     protected function addFile(string|SplFileInfo $file) : void
@@ -460,6 +454,13 @@ abstract class AbstractCompiler extends Command
         ) {
             return php_strip_whitespace($file) . "\n";
         }
+        if (pathinfo($file, PATHINFO_EXTENSION) === 'json')
+        {
+            return json_encode(
+                json_decode(file_get_contents($file), true, 512, JSON_THROW_ON_ERROR),
+                JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            );
+        }
         return file_get_contents($file);
     }
 
@@ -488,7 +489,7 @@ abstract class AbstractCompiler extends Command
                     '/namespace\s([a-zA-Z0-9\\\\]+)\;/',
                     'namespace ' . $ref->getNamespaceName() . ' {',
                     $contents
-                ) . "\n}";
+                ) . "}";
                 $out .= $contents;
             }
         }
