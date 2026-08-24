@@ -9,3 +9,6 @@
 /examples/*/log
 /.cache
 /*.sh
+/.phpunit.cache
+/phpunit.xml*
+/tests
