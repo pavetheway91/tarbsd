@@ -7,17 +7,27 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 use phpseclib3\Math\BigInteger;
-use phpseclib3\Crypt\EC;
 use phpseclib3\Crypt\RSA;
+use phpseclib3\Crypt\EC;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 use SysvMessageQueue;
 use Generator;
+use Phar;
 
 class Misc
 {
+    public static function rootDir() : string
+    {
+        if (!str_starts_with(__FILE__, 'phar://'))
+        {
+           return dirname(dirname(__DIR__));
+        }
+        return Phar::running(true);
+    }
+
     public static function phpRequirements() : array
     {
         $out = [
@@ -25,7 +35,7 @@ class Misc
         ];
 
         foreach(json_decode(
-            file_get_contents(dirname(dirname(__DIR__)) . '/composer.json'),
+            file_get_contents(static::rootDir() . '/composer.json'),
             true
         )['require'] as $req => $value) {
             if ($req == 'php' && preg_match('/>=\s(([0-9]).([0-9]).([0-9]+))/', $value, $m))
@@ -113,7 +123,20 @@ class Misc
         try
         {
             $key = EC\Formats\Keys\OpenSSH::load($value);
-            if (isset($key['dA']))
+        }
+        catch (\Throwable $e)
+        {
+            try
+            {
+                $key = RSA\Formats\Keys\OpenSSH::load($value);
+            }
+            catch (\Throwable $e)
+            {
+            }
+        }
+        if (isset($key))
+        {
+            if (isset($key['dA']) || (isset($key['isPublicKey']) && !$key['isPublicKey']))
             {
                 throw new \Exception($bootstrap ?
                     'Public key required'
@@ -121,30 +144,13 @@ class Misc
                     'Public key required in tarbsd.yml'
                 );
             }
+            return;
         }
-        catch (\Throwable $e)
-        {
-            try
-            {
-                $key = RSA\Formats\Keys\OpenSSH::load($value);
-                if ($key['isPublicKey'] !== true)
-                {
-                    throw new \Exception($bootstrap ?
-                        'Public key required'
-                        :
-                        'Public key required in tarbsd.yml'
-                    );
-                }
-            }
-            catch (\Throwable $e)
-            {
-                throw new \Exception($bootstrap ?
-                    'This doesn\'t seem like a SSH key'
-                    :
-                    'Invalid SSH key in tarbsd.yml'
-                );
-            }
-        }
+        throw new \Exception($bootstrap ?
+            'Invalid SSH key'
+            :
+            'Invalid SSH key in tarbsd.yml'
+        );
     }
 
     public static function truncate(string $file, int $size) : void
@@ -377,28 +383,29 @@ class Misc
 
     public static function nCPU() : int
     {
-        $n = null;
-
-        // this was added in php 8.3
-        if (function_exists('posix_sysconf'))
-        {
-            $n = posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
-        }
+        static $n = null;
 
         if (null === $n)
         {
-            try
+            // this was added in php 8.3
+            if (function_exists('posix_sysconf'))
             {
-                $p = Process::fromShellCommandline('sysctl hw.ncpu')->mustRun()->getOutput();
-                if (preg_match('/^hw.ncpu:\s([0-9]+)$/', $p, $m))
+                $n = posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
+            }
+            else
+            {
+                try
                 {
-                    $n = intval($m[1]);
+                    $p = Process::fromShellCommandline('sysctl hw.ncpu')->mustRun()->getOutput();
+                    if (preg_match('/^hw.ncpu:\s([0-9]+)$/', $p, $m))
+                    {
+                        $n = intval($m[1]);
+                    }
                 }
+                catch (\Exception $e)
+                {}
             }
-            catch (\Exception $e)
-            {
-                throw new \RuntimeException('could not determine amount of cpu cores');
-            }
+            $n = $n ?: 1; // assume 1 if we can't figure
         }
 
         return $n;
