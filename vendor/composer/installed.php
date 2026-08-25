@@ -3,7 +3,7 @@
         'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '9e7c021cfc4e2d7e64642d282c685f38ab6ba0e8',
+        'reference' => 'de5d16745392258861c0aad35ffec0e03576d31c',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         '__root__' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '9e7c021cfc4e2d7e64642d282c685f38ab6ba0e8',
+            'reference' => 'de5d16745392258861c0aad35ffec0e03576d31c',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -28,12 +28,6 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'paragonie/random_compat' => array(
-            'dev_requirement' => false,
-            'replaced' => array(
-                0 => '*',
-            ),
-        ),
         'php-http/async-client-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
@@ -47,9 +41,9 @@
             ),
         ),
         'phpseclib/phpseclib' => array(
-            'pretty_version' => '3.0.56',
-            'version' => '3.0.56.0',
-            'reference' => '7adbbe38cde25e2df2116dbf2673c407e24fa305',
+            'pretty_version' => '4.0.0',
+            'version' => '4.0.0.0',
+            'reference' => '86669f07ca2ed75357329c910064a72c8ad1f507',
             'type' => 'library',
             'install_path' => __DIR__ . '/../phpseclib/phpseclib',
             'aliases' => array(),
@@ -282,6 +276,12 @@
             'install_path' => __DIR__ . '/../symfony/polyfill-mbstring',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'symfony/polyfill-php82' => array(
+            'dev_requirement' => false,
+            'replaced' => array(
+                0 => '*',
+            ),
         ),
         'symfony/polyfill-php83' => array(
             'pretty_version' => 'v1.41.0',

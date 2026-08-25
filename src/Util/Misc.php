@@ -6,9 +6,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
-use phpseclib3\Math\BigInteger;
-use phpseclib3\Crypt\RSA;
-use phpseclib3\Crypt\EC;
+use phpseclib4\Math\BigInteger;
+use phpseclib4\Crypt\RSA;
+use phpseclib4\Crypt\EC;
 
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;

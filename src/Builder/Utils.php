@@ -9,9 +9,9 @@ use Symfony\Component\Finder\Finder;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
-use phpseclib3\Crypt\Common\Formats\Keys\OpenSSH;
-use phpseclib3\Crypt\RSA;
-use phpseclib3\Crypt\EC;
+use phpseclib4\Crypt\Common\Formats\Keys\OpenSSH;
+use phpseclib4\Crypt\RSA;
+use phpseclib4\Crypt\EC;
 
 trait Utils
 {

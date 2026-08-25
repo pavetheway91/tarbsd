@@ -38,7 +38,7 @@ abstract class AbstractCompiler extends Command
         'Symfony\Component\Yaml'            => 'symfony/yaml',
         'Symfony\Component\Cache'           => 'symfony/cache',
         'ParagonIE\ConstantTime'            => 'paragonie/constant_time_encoding',
-        'phpseclib3'                        => 'phpseclib/phpseclib'
+        'phpseclib4'                        => 'phpseclib/phpseclib'
     ];
 
     const REGEX_LICENSE = '{(license|copying|copyright)(\.[a-z]{2,3}|)$}Di';
@@ -232,7 +232,8 @@ abstract class AbstractCompiler extends Command
                     }
                     $this->phar->addFromString('vendor/' . $name . '/bundle.php', $this->mergeFiles($bundle, in_array($name, [
                         'paragonie/constant_time_encoding',
-                        'psr/event-dispatcher'
+                        'psr/event-dispatcher',
+                        'phpseclib/phpseclib'
                     ])));
                     $output->writeln(sprintf(
                         "%d merged, %d invidual, %d skipped",
@@ -277,6 +278,7 @@ abstract class AbstractCompiler extends Command
         if ($package == 'phpseclib/phpseclib')
         {
             $this->addFile($separate[] = $dir . '/Crypt/Common/AsymmetricKey.php');
+            $this->addFile($separate[] = $dir . '/Crypt/EC/PublicKey.php');
             foreach((new Finder)->files()->in([$dir.'/Crypt/*/Formats', $dir.'/Crypt/EC/Curves']) as $file)
             {
                 if ($this->acceptFile('phpseclib/phpseclib', (string) $file))
@@ -376,7 +378,10 @@ abstract class AbstractCompiler extends Command
                 . ')|JWK|Putty|PuTTY|XML|DES'
                 . '|brainpool|sect|(nist(b|k|t))|((sec|nist)p(224|192|160|128|112|256k1))'
                 . '|Montgomery|prime|Koblitz|Curve25519|Curve448|Ed448|PSS|MSBLOB|Raw'
-                . '|X509|GMP|BCMath|SSH2|IEEE|ANSI)/';
+                . '|X509|GMP|BCMath|SSH2|IEEE|ANSI|CMS|CRL|CSR|X509|PFX|SPKAC|File\/Common'
+                . '|(File\/ASN1\/Maps\/(?!(RSA|EC|Public|Private|AlgorithmIdentifier|Attr'
+                . '|SpecifiedE|Field|Curve|One|Other|Hash|Encrypted)))'
+                . ')/';
                 break;
         }
         if (isset($skipRegex) && preg_match($skipRegex, $file))
@@ -449,8 +454,8 @@ abstract class AbstractCompiler extends Command
             substr(realpath($file), strlen($this->root) + 1, 6) === 'vendor'
             &&
             pathinfo($file, PATHINFO_EXTENSION) === 'php'
-            &&
-            !preg_match(self::REGEX_ATTRIBUTE, file_get_contents($file))
+            //&&
+            //!preg_match(self::REGEX_ATTRIBUTE, file_get_contents($file))
         ) {
             return php_strip_whitespace($file) . "\n";
         }
