@@ -87,6 +87,7 @@ class Configuration
             throw new \Exception('Invalid root password hash');
         }
         $this->data = $data;
+        $this->updateConfigSchema($input);
     }
 
     public static function get(?string $dir = null) : static
@@ -200,9 +201,9 @@ class Configuration
         ));
     }
 
-    public function __destruct()
+    public function updateConfigSchema(array $current) : void
     {
-        $current = static::hash(Yaml::parseFile($file = $this->dir . '/tarbsd.yml'));
+        $current = static::hash($current);
 
         if (static::hash($this->data) !== $current && App::amIRoot())
         {
@@ -215,14 +216,9 @@ class Configuration
             }, $data['features']);
 
             $fs->dumpFile(
-                $file,
+                $this->dir . '/tarbsd.yml',
                 Configuration::dump($data)
             );
-
-            if (defined('TARBSD_DEBUG') && TARBSD_DEBUG)
-            {
-                echo "tarbsd.yml updated\n";
-            }
         }
     }
 
