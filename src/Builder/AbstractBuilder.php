@@ -47,6 +47,8 @@ abstract class AbstractBuilder implements Icons
 
     protected readonly string $filesDir;
 
+    protected readonly int $parentPid;
+
     protected bool $bootPruned;
 
     protected ?array $modules;
@@ -115,12 +117,15 @@ abstract class AbstractBuilder implements Icons
             $wasCreated ? 'created' : 'exists'
         ));
 
+        $parentPid = getmypid();
+
         switch(pcntl_fork())
         {
             case -1:
                 msg_remove_queue($this->sysvMessageQueue);
                 throw new \Exception('fork failed');
             case 0:
+                $this->parentPid = $parentPid;
                 $this->wrkFsWorker();
                 break;
             default:
@@ -242,7 +247,7 @@ abstract class AbstractBuilder implements Icons
             catch(\Throwable $e)
             {
                 msg_send($this->sysvMessageQueue, self::MSG_TYPE_ERR, $e->getMessage(), false);
-                posix_kill(posix_getppid(), \SIGTERM);
+                Misc::killProc($this->parentPid, \SIGTERM);
                 die;
             }
         }
@@ -258,7 +263,7 @@ abstract class AbstractBuilder implements Icons
                     "child process terminated with %s signal",
                     SignalMap::getSignalName($event->getHandlingSignal())
                 ), false);
-                posix_kill(posix_getppid(), \SIGTERM);
+                Misc::killProc($this->parentPid, \SIGTERM);
                 break;
         }
     }

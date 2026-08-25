@@ -23,7 +23,7 @@ class Diagnose extends AbstractCommand
     const SKIP_EXTS = [
         'core', 'date', 'hash', 'json', 'lexbor', 'libxml', 'mysqlnd', 'pcre',
         'random', 'reflection', 'spl', 'standard', 'uri', 'zend opcache',
-        'phar', 'ctype', 'mbstring', 'iconv', 'intl', 'libdeflate'
+        'phar', 'ctype', 'mbstring', 'iconv', 'intl', 'libdeflate', 'posix'
     ];
 
     public function __invoke(
@@ -51,6 +51,7 @@ class Diagnose extends AbstractCommand
         $output->writeln(static::pad('iconv:') . $this->getExtensionStatus('iconv'));
         $output->writeln(static::pad('mbstring:') . $this->getExtensionStatus('mbstring'));
         $output->writeln(static::pad('intl:') . $this->getExtensionStatus('intl'));
+        $output->writeln(static::pad('posix:') . $this->getExtensionStatus('posix'));
         $output->writeln(static::pad('additional extensions:') . $this->additionalExts());
 
         return self::SUCCESS;

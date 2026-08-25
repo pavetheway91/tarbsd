@@ -197,7 +197,24 @@ class App extends Application implements EventSubscriberInterface
 
     public static function amIRoot() : bool
     {
-        return posix_getuid() == 0;
+        static $amI;
+
+        if (null === $amI)
+        {
+            if (extension_loaded('posix'))
+            {
+                $amI = posix_getuid() == 0;
+            }
+            else
+            {
+                $u = Process::fromShellCommandline(
+                    'whoami'
+                )->mustRun()->getOutput();
+                $amI = trim($u, "\n") == 'root';
+            }
+        }
+
+        return $amI;
     }
 
     protected function getDefaultCommands() : array
