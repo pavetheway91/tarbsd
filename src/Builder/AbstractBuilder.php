@@ -2,7 +2,6 @@
 namespace TarBSD\Builder;
 
 use Symfony\Component\Cache\Adapter\AdapterInterface as CacheInterface;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Console\SignalRegistry\SignalMap;
 use Symfony\Component\Console\Event\ConsoleSignalEvent;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -27,13 +26,18 @@ use TarBSD\App;
 use DateTimeImmutable;
 use SysvMessageQueue;
 use SplFileInfo;
-use Phar;
 
-abstract class AbstractBuilder implements EventSubscriberInterface, Icons
+abstract class AbstractBuilder implements Icons
 {
     use Utils;
 
-    const MSG_TYPE_WRKFS = 1;
+    const QUEUE_ID = 'b';
+
+    const MSG_TYPE_ERR = 1;
+
+    const MSG_TYPE_INSTALL_COMPLETE = 2;
+
+    private readonly SysvMessageQueue $sysvMessageQueue;
 
     public readonly WrkFs $wrkFs;
 
@@ -49,15 +53,7 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     public ?string $md = null;
 
-    private string $runId;
-
     protected readonly Filesystem $fs;
-
-    private readonly string $distributionFiles;
-
-    protected Process $wrkFsSizeWorker;
-
-    private SysvMessageQueue $sysvMessageQueue;
 
     abstract protected function genFsTab() : Fstab;
 
@@ -98,9 +94,11 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
     final public function build(OutputInterface $output, OutputInterface $verboseOutput, ?bool $quick, bool $preservePkgDb) : SplFileInfo
     {
+        $this->wrkFs = WrkFs::get($this->globalConfig, $this->config->getDir(), true, $wasCreated);
+
         try
         {
-            $this->sysvMessageQueue = Misc::newSysvMessageQueue($this->config->getDir(), $ftok);
+            $this->sysvMessageQueue = Misc::newSysvMessageQueue($this->config->getDir(), self::QUEUE_ID);
         }
         catch (\TypeError $e)
         {
@@ -109,6 +107,38 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 $this->config->getDir()
             ));
         }
+
+        $output->writeln(sprintf(
+            self::CHECK . ' %s: (%s) %s',
+            $this->config->getDir() . '/wrk',
+            $this->wrkFs::TYPE,
+            $wasCreated ? 'created' : 'exists'
+        ));
+
+        switch(pcntl_fork())
+        {
+            case -1:
+                msg_remove_queue($this->sysvMessageQueue);
+                throw new \Exception('fork failed');
+            case 0:
+                $this->wrkFsWorker();
+                break;
+            default:
+                register_shutdown_function(function()
+                {
+                    msg_remove_queue($this->sysvMessageQueue);
+                });
+                return $this->doBuild($output, $verboseOutput, $quick, $preservePkgDb);
+        }
+    }
+
+    protected function doBuild(OutputInterface $output, OutputInterface $verboseOutput, ?bool $quick, bool $preservePkgDb) : SplFileInfo
+    {
+        $start = time();
+        $this->dispatcher->addListener(ConsoleEvents::SIGNAL, [$this, 'handleSignalMain']);
+        $this->wrkFs->start();
+        $this->bootPruned = false;
+        $this->modules = null;
 
         if (null === $quick)
         {
@@ -127,35 +157,6 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
                 $quick = false;
             }
         }
-
-        $this->wrkFs = WrkFs::get($this->globalConfig, $this->config->getDir(), true, $wasCreated);
-
-        $output->writeln(sprintf(
-            self::CHECK . ' %s: (%s) %s',
-            $this->config->getDir() . '/wrk',
-            $this->wrkFs::TYPE,
-            $wasCreated ? 'created' : 'exists'
-        ));
-
-        $this->wrkFs->start();
-
-        $this->dispatcher->addSubscriber($this);
-
-        msg_send($this->sysvMessageQueue, self::MSG_TYPE_WRKFS, $key = bin2hex(random_bytes(8)), false);
-        $this->wrkFsSizeWorker = Process::fromShellCommandline(sprintf(
-            "%s %s wrkfssize %s %s",
-            PHP_BINARY,
-            realpath($_SERVER['SCRIPT_FILENAME']),
-            $ftok, $key
-        ), $this->config->getDir(), null, null, 7200);
-        register_shutdown_function(function()
-        {
-            $this->wrkFsSizeWorker->stop();
-        });
-
-        $start = time();
-        $this->bootPruned = false;
-        $this->modules = null;
 
         $f = (new Finder)->files()->in($this->wrk)->name(['*.img', 'tarbsd.*']);
         $this->fs->remove($f);
@@ -185,9 +186,11 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
             $this->httpClient
         );
 
-        $installer->installPkgBase($output, $verboseOutput, $arch, $this->wrkFsSizeWorker);
+        $installer->installPkgBase($output, $verboseOutput, $arch);
 
         $installer->installPKGs($output, $verboseOutput, $arch);
+
+        msg_send($this->sysvMessageQueue, self::MSG_TYPE_INSTALL_COMPLETE, 1, false);
 
         Misc::tarStream($this->filesDir, $this->root, $verboseOutput);
         $output->writeln(self::CHECK . ' copied overlay directory to the image');
@@ -210,52 +213,74 @@ abstract class AbstractBuilder implements EventSubscriberInterface, Icons
 
         $this->buildImage($output, $verboseOutput, $quick, $platform);
 
-        $cwd = getcwd();
-
         $output->writeln(sprintf(
             self::CHECK . " %s <info>size %sm</>, generated in %d seconds",
-            substr($file = $this->wrk . '/tarbsd.img', strlen($cwd) + 1),
+            substr($file = $this->wrk . '/tarbsd.img', strlen(dirname($this->wrk)) + 1),
             Misc::getFileSizeM($file),
             time() - $start
         ));
 
-        $this->dispatcher->removeSubscriber($this);
+        $this->dispatcher->removeListener(ConsoleEvents::SIGNAL, [$this, 'handleSignalMain']);
         return new SplFileInfo($file);
     }
 
-    final public static function getSubscribedEvents() : array
+    protected function wrkFsWorker() : void
     {
-        return [
-            ConsoleEvents::SIGNAL   => 'handleSignal',
-        ];
+        $this->dispatcher->addListener(ConsoleEvents::SIGNAL, [$this, 'handleSignalChild']);
+        while(true)
+        {
+            try
+            {
+                msg_receive($this->sysvMessageQueue, self::MSG_TYPE_INSTALL_COMPLETE, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
+                if ($msg)
+                {
+                    die;
+                }
+                $this->wrkFs->checkSize();
+                usleep(250000);
+            }
+            catch(\Throwable $e)
+            {
+                msg_send($this->sysvMessageQueue, self::MSG_TYPE_ERR, $e->getMessage(), false);
+                posix_kill(posix_getppid(), \SIGTERM);
+                die;
+            }
+        }
     }
 
-    final public function handleSignal(ConsoleSignalEvent $event) : void
+    final public function handleSignalChild(ConsoleSignalEvent $event) : void
     {
-        $n = 0;
+        switch($event->getHandlingSignal())
+        {
+            case \SIGTERM:
+            case \SIGINT:
+                msg_send($this->sysvMessageQueue, self::MSG_TYPE_ERR, sprintf(
+                    "child process terminated with %s signal",
+                    SignalMap::getSignalName($event->getHandlingSignal())
+                ), false);
+                posix_kill(posix_getppid(), \SIGTERM);
+                break;
+        }
+    }
+
+    final public function handleSignalMain(ConsoleSignalEvent $event) : void
+    {
+        $msg = null;
         $output = $event->getOutput();
         switch($event->getHandlingSignal())
         {
             case \SIGTERM:
-                while (msg_receive($this->sysvMessageQueue, self::MSG_TYPE_WRKFS, $type, 1024, $msg, false, MSG_IPC_NOWAIT))
-                {
-                    $output->writeln(sprintf(
-                        "%s%s %s",
-                        $n == 0 ? "\n" : "",
-                        self::ERR,
-                        $msg
-                    ));
-                    $n++;
-                }
-            default:
-                if ($n == 0)
-                {
-                    $output->writeln(sprintf(
-                        "\n%s received %s signal, cleaning things up...",
-                        self::ERR,
-                        SignalMap::getSignalName($event->getHandlingSignal())
-                    ));
-                }
+                msg_receive($this->sysvMessageQueue, self::MSG_TYPE_ERR, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
+            case \SIGINT:
+                $msg = $msg ?: sprintf(
+                    "received %s signal",
+                    SignalMap::getSignalName($event->getHandlingSignal())
+                );
+                $output->writeln(sprintf(
+                    "\n%s %s, cleaning things up...",
+                    self::ERR,
+                    $msg
+                ));
 
                 $mounts = false;
 

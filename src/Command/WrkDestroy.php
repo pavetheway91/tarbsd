@@ -4,6 +4,7 @@ namespace TarBSD\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 
+use TarBSD\Builder\AbstractBuilder;
 use TarBSD\GlobalConfiguration;
 use TarBSD\Util\WrkFs;
 use TarBSD\Util\Misc;
@@ -21,7 +22,7 @@ class WrkDestroy extends AbstractCommand
     ) {
         try
         {
-            Misc::newSysvMessageQueue($cwd = getcwd());
+            $q = Misc::newSysvMessageQueue($cwd = getcwd(), AbstractBuilder::QUEUE_ID);
         }
         catch (\TypeError $e)
         {
@@ -33,14 +34,25 @@ class WrkDestroy extends AbstractCommand
 
         if ($fs = WrkFs::get(new GlobalConfiguration, $cwd, false))
         {
-            $fs->destroy();
-            $output->writeln(sprintf(
-                "%s %s destroyed",
-                self::CHECK,
-                $fs->mnt
-            ));
-            return self::SUCCESS;
+            try
+            {
+                $fs->destroy();
+                msg_remove_queue($q);
+                $output->writeln(sprintf(
+                    "%s %s destroyed",
+                    self::CHECK,
+                    $fs->mnt
+                ));
+                return self::SUCCESS;
+            }
+            catch(\Exception $e)
+            {
+                msg_remove_queue($q);
+                throw $e;
+            }
         }
+
+        msg_remove_queue($q);
 
         $output->writeln(sprintf(
             "%s  could not find wrk filesystem from %s",

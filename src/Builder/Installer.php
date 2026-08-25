@@ -36,7 +36,7 @@ class Installer implements Icons
     }
 
     final public function installPkgBase(
-        OutputInterface $output, OutputInterface $verboseOutput, string $arch, Process $wrkFsSizeWorker
+        OutputInterface $output, OutputInterface $verboseOutput, string $arch
     ) : void {
 
         $abi = $this->baseRelease->getAbi($arch);
@@ -61,13 +61,11 @@ class Installer implements Icons
                 $this->getInstalledVersion()
             ));
             $verboseOutput->writeln($msg);
-            $wrkFsSizeWorker->start();
         }
         else
         {
             $this->wrkFs->rollback('empty');
             $this->testRepo($this->baseRelease->getBaseRepo($arch) . '/meta');
-            $wrkFsSizeWorker->start();
 
             $this->fs->dumpFile(
                 $pkgConf = $this->root . '/usr/local/etc/pkg/repos/FreeBSD-base.conf',

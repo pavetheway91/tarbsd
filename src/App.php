@@ -216,8 +216,7 @@ class App extends Application implements EventSubscriberInterface
             // these are for developement purposes
             new Command\SelfCheckSig,
             new Command\Debug,
-            // these are for internal use only
-            new Command\Internal\WrkFsWorker,
+            // for internal use
             new Command\Internal\VersionCheckWorker
         ];
     }

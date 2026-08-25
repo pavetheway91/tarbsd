@@ -259,15 +259,10 @@ class Misc
         fclose($toHandle);
     }
 
-    public static function newSysvMessageQueue(string $path, &$ftok = null) : SysvMessageQueue
+    public static function newSysvMessageQueue(string $path, string $id, &$ftok = null) : SysvMessageQueue
     {
-        if (!msg_queue_exists($ftok = ftok($path, 'e')) && $q = msg_get_queue($ftok))
+        if (!msg_queue_exists($ftok = ftok($path, $id)) && $q = msg_get_queue($ftok))
         {
-            register_shutdown_function(function() use ($q)
-            {
-                msg_remove_queue($q);
-            });
-
             return $q;
         }
     }
