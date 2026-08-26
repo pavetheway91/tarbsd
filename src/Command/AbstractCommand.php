@@ -3,7 +3,6 @@ namespace TarBSD\Command;
 
 use Symfony\Component\Console\Command\Command as SfCommand;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Cache\CacheItem;
 
 use TarBSD\Util\Icons;
 use TarBSD\Builder;
@@ -126,18 +125,11 @@ LOGO;
         }
     }
 
-    protected function getVersionCheckItem() : CacheItem
-    {
-        return $this->getApplication()->getCache()->getItem(
-            hash_hmac('sha256', 'update_available', App::hashPhar())
-        );
-    }
-
-    protected function showUpdateMessage(OutputInterface $output)
+    protected function showUpdateMessage(OutputInterface $output) : void
     {
         if (TARBSD_SELF_UPDATE)
         {
-            $item = $this->getVersionCheckItem();
+            $item = $this->getApplication()->getVersionCheckItem();
             if ($item->isHit() && $item->get() === true)
             {
                 $output->writeln(sprintf(

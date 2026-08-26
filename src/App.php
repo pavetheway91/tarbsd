@@ -14,6 +14,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Finder\Finder;
 
 use DateTimeImmutable;
@@ -92,7 +93,6 @@ class App extends Application implements EventSubscriberInterface
             static::amIRoot()
             && TARBSD_SELF_UPDATE
             && $commandName !== 'self-update'
-            && false == ($command instanceof Command\Internal\InternalCommand)
         ) {
             $cache = $this->getCache();
             $item = $cache->getItem(
@@ -100,18 +100,14 @@ class App extends Application implements EventSubscriberInterface
             );
             if (!$item->isHit())
             {
-                Process::fromShellCommandline(sprintf(
-                    "nohup %s %s version-check &",
-                    PHP_BINARY,
-                    $self = Phar::running(false)
-                ))->run();
+                $this->checkForUpdate();
                 $item->set(true)->expiresAt(new DateTimeImmutable('+3 hours'));
                 $cache->save($item);
             }
         }
 
         if (
-            !in_array($commandName, ['list', 'help', 'diagnose', 'version-check', 'debug'])
+            !in_array($commandName, ['list', 'help', 'diagnose', 'debug'])
             && !static::amIRoot()
         ) {
             $output->writeln(sprintf(
@@ -171,6 +167,13 @@ class App extends Application implements EventSubscriberInterface
             $this->cache = new FilesystemCache('', 0, self::CACHE_DIR);
         }
         return $this->cache;
+    }
+
+    public function getVersionCheckItem() : CacheItem
+    {
+        return $this->getCache()->getItem(
+            hash_hmac('sha256', 'update_available', self::hashPhar())
+        );
     }
 
     public function getHttpClient() : HttpClientInterface
@@ -233,8 +236,35 @@ class App extends Application implements EventSubscriberInterface
             // these are for developement purposes
             new Command\SelfCheckSig,
             new Command\Debug,
-            // for internal use
-            new Command\Internal\VersionCheckWorker
         ];
+    }
+
+    private function checkForUpdate() : void
+    {
+        if (TARBSD_SELF_UPDATE)
+        {
+            switch(pcntl_fork())
+            {
+                case -1:
+                    throw new \Exception('fork failed');
+                case 0:
+                    try
+                    {
+                        $item = $this->getVersionCheckItem();
+                        if (!$item->isHit() || $item->get() !== true)
+                        {
+                            if (is_array(Util\UpdateUtil::getLatest($this->getHttpClient(), false)))
+                            {
+                                $item->set(true)->expiresAt(new DateTimeImmutable('+1 year'));
+                                $this->getCache()->save($item);
+                            }
+                        }
+                    }
+                    catch (\Throwable $e) {}
+                    die;
+                default:
+                    return;
+            }
+        }
     }
 }
