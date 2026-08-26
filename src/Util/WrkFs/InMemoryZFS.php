@@ -33,21 +33,22 @@ class InMemoryZFS extends WrkFs
         ))->mustRun();
     }
 
-    public function checkSize(?int $size = null) : void
+    public function checkSize(int $size, ?int $minDevSize = null) : void
     {
-        if ($size)
+        static $factor = 1.2;
+
+        $minDevSize = $minDevSize ?: 64;
+        $needed = $size - $this->getAvailableMemory();
+
+        if ($needed > 0)
         {
-            $needed = $size - $this->getAvailableMemory();
-            if ($needed > 0)
+            if ($needed < ($minDevSize / $factor))
             {
-                $this->grow(intval(($needed + 32)  * 1.2));
+                $this->grow($minDevSize);
             }
-        }
-        else
-        {
-            if ($this->getAvailableMemory() < 512)
+            else
             {
-                $this->grow(384);
+                $this->grow(intval($needed  * $factor));
             }
         }
     }

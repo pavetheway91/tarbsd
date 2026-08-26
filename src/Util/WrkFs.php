@@ -105,7 +105,7 @@ abstract class WrkFs
         }
     }
 
-    abstract public function checkSize(?int $size = null) : void;
+    abstract public function checkSize(int $size, ?int $minDevSize = null) : void;
 
     abstract public function destroy() : void;
 }

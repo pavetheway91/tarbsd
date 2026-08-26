@@ -49,6 +49,8 @@ abstract class AbstractBuilder implements Icons
 
     protected readonly int $parentPid;
 
+    protected readonly int $childPid;
+
     protected bool $bootPruned;
 
     protected ?array $modules;
@@ -119,7 +121,7 @@ abstract class AbstractBuilder implements Icons
 
         $parentPid = getmypid();
 
-        switch(pcntl_fork())
+        switch($pid = pcntl_fork())
         {
             case -1:
                 msg_remove_queue($this->sysvMessageQueue);
@@ -129,9 +131,11 @@ abstract class AbstractBuilder implements Icons
                 $this->wrkFsWorker();
                 break;
             default:
+                $this->childPid = $pid;
                 register_shutdown_function(function()
                 {
                     msg_remove_queue($this->sysvMessageQueue);
+                    Misc::killProc($this->childPid, \SIGKILL);
                 });
                 return $this->doBuild($output, $verboseOutput, $quick, $preservePkgDb);
         }
@@ -232,6 +236,10 @@ abstract class AbstractBuilder implements Icons
     protected function wrkFsWorker() : void
     {
         $this->dispatcher->addListener(ConsoleEvents::SIGNAL, [$this, 'handleSignalChild']);
+
+        $size = 512;
+        $afterInstallSize = 128;
+
         while(true)
         {
             try
@@ -239,9 +247,9 @@ abstract class AbstractBuilder implements Icons
                 msg_receive($this->sysvMessageQueue, self::MSG_TYPE_INSTALL_COMPLETE, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
                 if ($msg)
                 {
-                    die;
+                    $size = $afterInstallSize;
                 }
-                $this->wrkFs->checkSize();
+                $this->wrkFs->checkSize($size, $size / 2);
                 usleep(250000);
             }
             catch(\Throwable $e)

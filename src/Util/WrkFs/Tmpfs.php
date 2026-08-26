@@ -28,11 +28,9 @@ class Tmpfs extends WrkFs
         Process::fromShellCommandline('mount -t tmpfs tmpfs ' . $root)->mustRun();
     }
 
-    public function checkSize(?int $size = null) : void
+    public function checkSize(int $size, ?int $minDevSize = null) : void
     {
-        $size = $size ?: 512;
         $avail = $this->getAvailableMemory();
-
         if ($avail < $size)
         {
             throw new \Exception(sprintf(
