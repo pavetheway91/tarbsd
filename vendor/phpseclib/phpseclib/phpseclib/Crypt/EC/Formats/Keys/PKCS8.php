@@ -199,14 +199,8 @@ abstract class PKCS8 extends Progenitor
         }
 
         if (isset($key['privateKey']) && !isset($components['QA'])) {
-            if ($components['curve'] instanceof Curve25519 && function_exists('sodium_crypto_box_publickey_from_secretkey')) {
-                //$r = pack('H*', '0900000000000000000000000000000000000000000000000000000000000000');
-                //$QA = sodium_crypto_scalarmult($components['dA']->toBytes(), $r);
-                $QA = sodium_crypto_box_publickey_from_secretkey(str_pad($components['dA']->toBytes(), 32, chr(0), STR_PAD_LEFT));
-                $components['QA'] = [$components['curve']->convertInteger(new BigInteger(strrev($QA), 256))];
-            } else {
-                $components['QA'] = [$components['curve']->multiplyPoint($components['curve']->getBasePoint(), $components['dA'])[0]];
-            }
+            /** @psalm-suppress InvalidArgument */
+            $components['QA'] = self::deriveMontgomeryPublicKey($components);
         }
 
         return $components;

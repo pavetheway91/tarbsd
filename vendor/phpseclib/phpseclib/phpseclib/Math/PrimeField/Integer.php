@@ -73,6 +73,13 @@ class Integer extends Base
     protected static array $two;
 
     /**
+     * Constant Time Mask
+     *
+     * @var array<int, list{BigInteger, BigInteger}>
+     */
+    protected static $mask;
+
+    /**
      * Default constructor
      */
     public function __construct(int $instanceID, ?BigInteger $num = null)
@@ -92,6 +99,11 @@ class Integer extends Base
     public static function setModulo(int $instanceID, BigInteger $modulo): void
     {
         static::$modulo[$instanceID] = $modulo;
+        $one = new BigInteger(1);
+        static::$mask[$instanceID] = [
+            new BigInteger(0),
+            $one->bitwise_leftShift($modulo->getLength())->subtract($one)
+        ];
     }
 
     /**
@@ -115,7 +127,8 @@ class Integer extends Base
             static::$reduce[$instanceID],
             static::$zero[$instanceID],
             static::$one[$instanceID],
-            static::$two[$instanceID]
+            static::$two[$instanceID],
+            static::$mask[$instanceID]
         );
     }
 
@@ -160,19 +173,33 @@ class Integer extends Base
     }
 
     /**
+     * Conditionally add the modulus, without branching on the value.
+     *
+     * $diff must be in (-modulo, modulo). Returns $diff + modulo when $diff is
+     * negative, $diff otherwise.
+     */
+    private function conditionalAddModulo(BigInteger $diff): self
+    {
+        $mask = static::$mask[$this->instanceID][(int) $diff->isNegative()];
+
+        $temp = new static($this->instanceID);
+        $temp->value = $diff->add(
+            static::$modulo[$this->instanceID]->bitwise_and($mask)
+        );
+        return $temp;
+    }
+
+    /**
      * Adds two PrimeFieldIntegers.
      */
     public function add(self $x): self
     {
         static::checkInstance($this, $x);
 
-        $temp = new static($this->instanceID);
-        $temp->value = $this->value->add($x->value);
-        if ($temp->value->compare(static::$modulo[$this->instanceID]) >= 0) {
-            $temp->value = $temp->value->subtract(static::$modulo[$this->instanceID]);
-        }
-
-        return $temp;
+        // $this->value + $x->value is in [0, 2m), so subtracting once lands in [-m, m)
+        return $this->conditionalAddModulo(
+            $this->value->add($x->value)->subtract(static::$modulo[$this->instanceID])
+        );
     }
 
     /**
@@ -182,13 +209,8 @@ class Integer extends Base
     {
         static::checkInstance($this, $x);
 
-        $temp = new static($this->instanceID);
-        $temp->value = $this->value->subtract($x->value);
-        if ($temp->value->isNegative()) {
-            $temp->value = $temp->value->add(static::$modulo[$this->instanceID]);
-        }
-
-        return $temp;
+        // already in (-m, m)
+        return $this->conditionalAddModulo($this->value->subtract($x->value));
     }
 
     /**

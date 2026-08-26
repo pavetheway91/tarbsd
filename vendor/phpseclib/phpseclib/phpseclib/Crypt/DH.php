@@ -306,10 +306,21 @@ abstract class DH extends AsymmetricKey
                         $public = EC::convertPointToPublicKey($curveName, $public, false);
                     }
                     $point = $private->multiply($public);
-                    $secret = $isMontgomeryCurve ?
-                        $point :
-                        // according to https://www.secg.org/sec1-v2.pdf#page=33 only X is returned
-                        substr($point, 1, (strlen($point) - 1) >> 1);
+                    if ($isMontgomeryCurve) {
+                        /*
+                        "Both MAY check, without leaking extra information about the value of K,
+                         whether K is the all-zero value and abort if so"
+                        -- https://datatracker.ietf.org/doc/html/rfc7748#section-6.1 (and #section-6.2)
+                        */
+                        $size = $curveName == 'Curve25519' ? 32 : 56;
+                        // throw exception if hash_equals is false, otherwise, return $point
+                        if (hash_equals(str_repeat("\0", $size), $point)) {
+                            throw new \UnexpectedValueException('All-zero shared secret detected (points order is too small)');
+                        }
+                        return $point;
+                    }
+                    // according to https://www.secg.org/sec1-v2.pdf#page=33 only X is returned
+                    $secret = substr($point, 1, (strlen($point) - 1) >> 1);
                     /*
                     if (($secret[0] & "\x80") === "\x80") {
                         $secret = "\0$secret";

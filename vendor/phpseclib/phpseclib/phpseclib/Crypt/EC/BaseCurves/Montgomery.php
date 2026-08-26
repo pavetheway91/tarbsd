@@ -131,6 +131,7 @@ class Montgomery extends Base
      * Retrieve the base point as an array
      *
      * @return PrimeInteger[]
+     * @psalm-suppress PossiblyUnusedMethod
      */
     public function getBasePoint(): array
     {
@@ -207,6 +208,9 @@ class Montgomery extends Base
         $p2 = $this->convertToInternal($p);
         $x = $p[0];
 
+        $r = $this->randomInteger();
+        $p2 = [$p2[0]->multiply($r), $p2[1]->multiply($r)];
+
         $b = $d->toBits();
         $b = str_pad($b, 256, '0', STR_PAD_LEFT);
         for ($i = 0; $i < strlen($b); $i++) {
@@ -258,6 +262,9 @@ class Montgomery extends Base
             return $p;
         }
         [$x, $z] = $p;
+        if ($z->equals($this->zero)) {
+            return [clone $this->zero];
+        }
         return [$x->divide($z)];
     }
 }

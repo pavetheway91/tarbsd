@@ -33,6 +33,16 @@ abstract class Base
     protected BigInteger $order;
 
     /**
+     * Returns a random integer
+     *
+     * @psalm-suppress UndefinedThisPropertyFetch
+     */
+    public function randomInteger(): Integer
+    {
+        return $this->factory->randomInteger();
+    }
+
+    /**
      * Converts a BigInteger to a \phpseclib4\Math\FiniteField\Integer integer
      *
      * @psalm-suppress UndefinedThisPropertyFetch
