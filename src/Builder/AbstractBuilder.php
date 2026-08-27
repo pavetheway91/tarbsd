@@ -12,6 +12,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 
+use TarBSD\Process\MessageQueue;
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\GlobalConfiguration;
 use TarBSD\Configuration;
@@ -24,7 +25,6 @@ use TarBSD\Util\Strs;
 use TarBSD\App;
 
 use DateTimeImmutable;
-use SysvMessageQueue;
 use SplFileInfo;
 
 abstract class AbstractBuilder implements Icons
@@ -37,7 +37,7 @@ abstract class AbstractBuilder implements Icons
 
     const MSG_TYPE_INSTALL_COMPLETE = 2;
 
-    private readonly SysvMessageQueue $sysvMessageQueue;
+    private readonly MessageQueue $q;
 
     public readonly WrkFs $wrkFs;
 
@@ -102,7 +102,7 @@ abstract class AbstractBuilder implements Icons
 
         try
         {
-            $this->sysvMessageQueue = Misc::newSysvMessageQueue($this->config->getDir(), self::QUEUE_ID);
+            $this->q = MessageQueue::new($this->config->getDir(), self::QUEUE_ID);
         }
         catch (\TypeError $e)
         {
@@ -124,7 +124,7 @@ abstract class AbstractBuilder implements Icons
         switch($pid = pcntl_fork())
         {
             case -1:
-                msg_remove_queue($this->sysvMessageQueue);
+                $this->q->remove();
                 throw new \Exception('fork failed');
             case 0:
                 $this->parentPid = $parentPid;
@@ -134,7 +134,7 @@ abstract class AbstractBuilder implements Icons
                 $this->childPid = $pid;
                 register_shutdown_function(function()
                 {
-                    msg_remove_queue($this->sysvMessageQueue);
+                    $this->q->remove();
                     Misc::killProc($this->childPid, \SIGKILL);
                 });
                 return $this->doBuild($output, $verboseOutput, $quick, $preservePkgDb);
@@ -199,7 +199,7 @@ abstract class AbstractBuilder implements Icons
 
         $installer->installPKGs($output, $verboseOutput, $arch);
 
-        msg_send($this->sysvMessageQueue, self::MSG_TYPE_INSTALL_COMPLETE, 1, false);
+        $this->q->send(self::MSG_TYPE_INSTALL_COMPLETE, 1);
 
         Misc::tarStream($this->filesDir, $this->root, $verboseOutput);
         $output->writeln(self::CHECK . ' copied overlay directory to the image');
@@ -244,17 +244,18 @@ abstract class AbstractBuilder implements Icons
         {
             try
             {
-                msg_receive($this->sysvMessageQueue, self::MSG_TYPE_INSTALL_COMPLETE, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
+                $this->q->receive(self::MSG_TYPE_INSTALL_COMPLETE, $type, $msg, MessageQueue::NOWAIT);
                 if ($msg)
                 {
                     $size = $afterInstallSize;
                 }
                 $this->wrkFs->checkSize($size, $size / 2);
                 usleep(250000);
+
             }
             catch(\Throwable $e)
             {
-                msg_send($this->sysvMessageQueue, self::MSG_TYPE_ERR, $e->getMessage(), false);
+                $this->q->send(self::MSG_TYPE_ERR, $e->getMessage());
                 Misc::killProc($this->parentPid, \SIGTERM);
                 die;
             }
@@ -267,10 +268,10 @@ abstract class AbstractBuilder implements Icons
         {
             case \SIGTERM:
             case \SIGINT:
-                msg_send($this->sysvMessageQueue, self::MSG_TYPE_ERR, sprintf(
+                $this->q->send(self::MSG_TYPE_ERR, sprintf(
                     "child process terminated with %s signal",
                     SignalMap::getSignalName($event->getHandlingSignal())
-                ), false);
+                ));
                 Misc::killProc($this->parentPid, \SIGTERM);
                 break;
         }
@@ -283,8 +284,8 @@ abstract class AbstractBuilder implements Icons
         switch($event->getHandlingSignal())
         {
             case \SIGTERM:
-                msg_receive($this->sysvMessageQueue, self::MSG_TYPE_ERR, $type, 1024, $msg, false, MSG_IPC_NOWAIT);
             case \SIGINT:
+                $this->q->receive(self::MSG_TYPE_ERR, $type, $msg, MessageQueue::NOWAIT);
                 $msg = $msg ?: sprintf(
                     "received %s signal",
                     SignalMap::getSignalName($event->getHandlingSignal())

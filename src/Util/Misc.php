@@ -13,7 +13,6 @@ use phpseclib4\Crypt\EC;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
-use SysvMessageQueue;
 use Generator;
 use Phar;
 
@@ -257,14 +256,6 @@ class Misc
         }
         fclose($fromHandle);
         fclose($toHandle);
-    }
-
-    public static function newSysvMessageQueue(string $path, string $id, &$ftok = null) : SysvMessageQueue
-    {
-        if (!msg_queue_exists($ftok = ftok($path, $id)) && $q = msg_get_queue($ftok))
-        {
-            return $q;
-        }
     }
 
     public static function df(array|string|null $types, string $prefix, bool $includeChildren) : Generator
