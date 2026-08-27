@@ -397,37 +397,6 @@ class Misc
         return $n;
     }
 
-    public static function killProc(int $pid, int $signal) : void
-    {
-        $success = false;
-
-        if (extension_loaded('posix'))
-        {
-            $success = @posix_kill($pid, $signal);
-        }
-        else
-        {
-            try
-            {
-                Process::fromShellCommandline(sprintf(
-                    'kill -%d %d',
-                    $signal, $pid
-                ))->mustRun();
-                $success = true;
-            }
-            catch(\Exception $e)
-            {}
-        }
-
-        if (!$success)
-        {
-            throw new \RuntimeException(sprintf(
-                'failed to kill pid %d',
-                $pid
-            ));
-        }
-    }
-
     /**
      * Copies contents of one directory to another using tar.
      */

@@ -2,9 +2,9 @@
 namespace TarBSD\Builder;
 
 use Symfony\Component\Cache\Adapter\AdapterInterface as CacheInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Console\SignalRegistry\SignalMap;
 use Symfony\Component\Console\Event\ConsoleSignalEvent;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Console\ConsoleEvents;
@@ -15,6 +15,7 @@ use Symfony\Component\Finder\Finder;
 use TarBSD\Process\MessageQueue;
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\GlobalConfiguration;
+use TarBSD\Process\Forkable;
 use TarBSD\Configuration;
 use TarBSD\Util\Overlay;
 use TarBSD\Util\Icons;
@@ -29,15 +30,13 @@ use SplFileInfo;
 
 abstract class AbstractBuilder implements Icons
 {
+    use Forkable;
+
     use Utils;
 
-    const QUEUE_ID = 'b';
+    final public const QUEUE_ID = 'b';
 
-    const MSG_TYPE_ERR = 1;
-
-    const MSG_TYPE_INSTALL_COMPLETE = 2;
-
-    private readonly MessageQueue $q;
+    private const MSG_TYPE_INSTALL_COMPLETE = 2;
 
     public readonly WrkFs $wrkFs;
 
@@ -46,10 +45,6 @@ abstract class AbstractBuilder implements Icons
     protected readonly string $root;
 
     protected readonly string $filesDir;
-
-    protected readonly int $parentPid;
-
-    protected readonly int $childPid;
 
     protected bool $bootPruned;
 
@@ -78,12 +73,13 @@ abstract class AbstractBuilder implements Icons
         protected readonly GlobalConfiguration $globalConfig,
         private readonly CacheInterface $cache,
         private readonly FreeBSDRelease $release,
-        private readonly EventDispatcher $dispatcher,
+        EventDispatcherInterface $dispatcher,
         private readonly HttpClientInterface $httpClient
     ) {
         $this->wrk = $config->getDir() . '/wrk';
         $this->root = $this->wrk . '/root';
         $this->filesDir = $config->getDir() . '/tarbsd';
+        $this->dispatcher = $dispatcher;
 
         $this->fs = new Filesystem;
 
@@ -119,32 +115,20 @@ abstract class AbstractBuilder implements Icons
             $wasCreated ? 'created' : 'exists'
         ));
 
-        $parentPid = getmypid();
-
-        switch($pid = pcntl_fork())
+        register_shutdown_function(function()
         {
-            case -1:
-                $this->q->remove();
-                throw new \Exception('fork failed');
-            case 0:
-                $this->parentPid = $parentPid;
-                $this->wrkFsWorker();
-                break;
-            default:
-                $this->childPid = $pid;
-                register_shutdown_function(function()
-                {
-                    $this->q->remove();
-                    Misc::killProc($this->childPid, \SIGKILL);
-                });
-                return $this->doBuild($output, $verboseOutput, $quick, $preservePkgDb);
-        }
+            $this->q->remove();
+        });
+
+        $this->fork('wrkFsWorker', true, true);
+
+        return $this->doBuild($output, $verboseOutput, $quick, $preservePkgDb);
     }
 
     protected function doBuild(OutputInterface $output, OutputInterface $verboseOutput, ?bool $quick, bool $preservePkgDb) : SplFileInfo
     {
         $start = time();
-        $this->dispatcher->addListener(ConsoleEvents::SIGNAL, [$this, 'handleSignalMain']);
+        $this->dispatcher->addListener(ConsoleEvents::SIGNAL, [$this, 'handleSignal']);
         $this->wrkFs->start();
         $this->bootPruned = false;
         $this->modules = null;
@@ -229,14 +213,12 @@ abstract class AbstractBuilder implements Icons
             time() - $start
         ));
 
-        $this->dispatcher->removeListener(ConsoleEvents::SIGNAL, [$this, 'handleSignalMain']);
+        $this->dispatcher->removeListener(ConsoleEvents::SIGNAL, [$this, 'handleSignal']);
         return new SplFileInfo($file);
     }
 
-    protected function wrkFsWorker() : void
+    private function wrkFsWorker() : void
     {
-        $this->dispatcher->addListener(ConsoleEvents::SIGNAL, [$this, 'handleSignalChild']);
-
         $size = 512;
         $afterInstallSize = 128;
 
@@ -251,33 +233,17 @@ abstract class AbstractBuilder implements Icons
                 }
                 $this->wrkFs->checkSize($size, $size / 2);
                 usleep(250000);
-
             }
             catch(\Throwable $e)
             {
-                $this->q->send(self::MSG_TYPE_ERR, $e->getMessage());
-                Misc::killProc($this->parentPid, \SIGTERM);
+                $this->q->send(self::MSG_TYPE_SIGNAL, $e->getMessage());
+                static::sendSignal($this->parentPid, \SIGTERM);
                 die;
             }
         }
     }
 
-    final public function handleSignalChild(ConsoleSignalEvent $event) : void
-    {
-        switch($event->getHandlingSignal())
-        {
-            case \SIGTERM:
-            case \SIGINT:
-                $this->q->send(self::MSG_TYPE_ERR, sprintf(
-                    "child process terminated with %s signal",
-                    SignalMap::getSignalName($event->getHandlingSignal())
-                ));
-                Misc::killProc($this->parentPid, \SIGTERM);
-                break;
-        }
-    }
-
-    final public function handleSignalMain(ConsoleSignalEvent $event) : void
+    final public function handleSignal(ConsoleSignalEvent $event) : void
     {
         $msg = null;
         $output = $event->getOutput();
@@ -285,7 +251,7 @@ abstract class AbstractBuilder implements Icons
         {
             case \SIGTERM:
             case \SIGINT:
-                $this->q->receive(self::MSG_TYPE_ERR, $type, $msg, MessageQueue::NOWAIT);
+                $this->q->receive(self::MSG_TYPE_SIGNAL, $type, $msg, MessageQueue::NOWAIT);
                 $msg = $msg ?: sprintf(
                     "received %s signal",
                     SignalMap::getSignalName($event->getHandlingSignal())

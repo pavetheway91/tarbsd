@@ -22,16 +22,18 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Finder\Finder;
 
+use TarBSD\Process\Forkable;
+
 use DateTimeImmutable;
 use Phar;
 
 class App extends Application implements EventSubscriberInterface
 {
+    use Forkable;
+
     const CACHE_DIR = '/var/cache/tarbsd';
 
     private readonly FilesystemCache $cache;
-
-    private readonly EventDispatcher $dispatcher;
 
     private readonly HttpClientInterface $httpClient;
 
@@ -105,7 +107,7 @@ class App extends Application implements EventSubscriberInterface
             );
             if (!$item->isHit())
             {
-                $this->checkForUpdate();
+                $this->fork('updateWorker', false, false);
                 $item->set(true)->expiresAt(new DateTimeImmutable('+3 hours'));
                 $cache->save($item);
             }
@@ -271,32 +273,21 @@ class App extends Application implements EventSubscriberInterface
         }
     }
 
-    private function checkForUpdate() : void
+    private function updateWorker() : void
     {
-        if (TARBSD_SELF_UPDATE)
+        try
         {
-            switch(pcntl_fork())
+            $item = $this->getVersionCheckItem();
+            if (!$item->isHit() || $item->get() !== true)
             {
-                case -1:
-                    throw new \Exception('fork failed');
-                case 0:
-                    try
-                    {
-                        $item = $this->getVersionCheckItem();
-                        if (!$item->isHit() || $item->get() !== true)
-                        {
-                            if (is_array(Util\UpdateUtil::getLatest($this->getHttpClient(), false)))
-                            {
-                                $item->set(true)->expiresAt(new DateTimeImmutable('+1 year'));
-                                $this->getCache()->save($item);
-                            }
-                        }
-                    }
-                    catch (\Throwable $e) {}
-                    die;
-                default:
-                    return;
+                if (is_array(Util\UpdateUtil::getLatest($this->getHttpClient(), false)))
+                {
+                    $item->set(true)->expiresAt(new DateTimeImmutable('+1 year'));
+                    $this->getCache()->save($item);
+                }
             }
         }
+        catch (\Throwable $e)
+        {}
     }
 }
