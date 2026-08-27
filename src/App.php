@@ -9,7 +9,12 @@ use Symfony\Component\Console\Event\ConsoleTerminateEvent;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Input\InputDefinition;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\HttpClient\NativeHttpClient;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Application;
@@ -237,6 +242,33 @@ class App extends Application implements EventSubscriberInterface
             new Command\SelfCheckSig,
             new Command\Debug,
         ];
+    }
+
+    protected function getDefaultInputDefinition() : InputDefinition
+    {
+        return new InputDefinition([
+            new InputArgument('command', InputArgument::REQUIRED, 'The command to execute'),
+            new InputOption('--ansi', '', InputOption::VALUE_NEGATABLE, 'Force (or disable --no-ansi) ANSI output', null),
+        ]);
+    }
+
+    protected function configureIO(InputInterface $input, OutputInterface $output) : void
+    {
+        if ($input->hasParameterOption(['--ansi'], true))
+        {
+            $output->setDecorated(true);
+        }
+        elseif ($input->hasParameterOption(['--no-ansi'], true))
+        {
+            $output->setDecorated(false);
+        }
+        if (
+            $input->hasParameterOption('-v', true)
+            || $input->hasParameterOption('--verbose', true)
+            || $input->getParameterOption('--verbose', false, true)
+        ) {
+            $output->setVerbosity(OutputInterface::VERBOSITY_VERBOSE);
+        }
     }
 
     private function checkForUpdate() : void

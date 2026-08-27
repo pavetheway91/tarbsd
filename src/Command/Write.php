@@ -29,7 +29,7 @@ class Write extends AbstractCommand
         InputInterface $input,
         OutputInterface $output,
         #[Argument('Device')] string $device,
-        #[Option('Do not ask', '', 'y')] bool $doNotAsk = false
+        #[Option('Do not ask for confirmation', '', 'y')] bool $doNotAsk = false
     ) {
         if (!str_starts_with($device, '/dev/'))
         {

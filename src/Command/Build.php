@@ -28,8 +28,8 @@ use DateTimeImmutable;
     aliases: ['b'],
     description: 'Build tarBSD image',
     usages: [
-        '-r 15.1 --quick qcow2 vmdk',
-        '-r 16-latest'
+        '-r 15.1 -q qcow2 vmdk',
+        '-r 16-latest -v'
     ]
 )]
 class Build extends AbstractCommand
@@ -40,17 +40,18 @@ class Build extends AbstractCommand
 
     public function __invoke(
         OutputInterface $output,
-        #[Option('FreeBSD release', '', 'r')] ?string $release = null,
-        #[Option('Loosen compression settings')] ?bool $quick = null,
-        #[Argument('Output image formats')] array $formats = [],
-        #[Option('Skip cache (for testing)')] bool $doNotCache = false,
-        #[Option('preserve pkg db (for debugging)')] bool $preservePkgDb = false
+        #[Option('FreeBSD release, <comment>required</>', '', 'r')] ?string $release = null,
+        #[Option('Loosen compression settings', '', 'q')] ?bool $quick = null,
+        #[Option('Skip kernel cache (for debugging)', '', 'dnc')] bool $doNotCache = false,
+        #[Option('Preserve pkg db (for debugging)', '', 'pkgdb')] bool $preservePkgDb = false,
+        #[Option('Verbose output', '', 'v')] bool $verbose = false,
+        #[Argument("Output image formats such as qcow2 or vmdk.\nRequires qemu or qemu-tools to be installed.")] array $formats = []
     ) : int {
 
         if (!$release)
         {
             throw new \Exception(
-                'Please provide --release option'
+                'Please provide --release (-r) option'
             );
         }
 
