@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD;
 
+use Symfony\Component\Cache\Adapter\AdapterInterface as CacheAdapterInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter as FilesystemCache;
 use Symfony\Component\Console\Command\HelpCommand as SymfonyHelpCommand;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -33,7 +34,7 @@ class App extends Application implements EventSubscriberInterface
 
     const CACHE_DIR = '/var/cache/tarbsd';
 
-    private readonly FilesystemCache $cache;
+    private readonly CacheAdapterInterface $cache;
 
     private readonly HttpClientInterface $httpClient;
 
@@ -93,7 +94,6 @@ class App extends Application implements EventSubscriberInterface
             );
         }
 
-        $command = $event->getCommand();
         $commandName = $event->getCommand()->getName();
 
         if (
@@ -101,15 +101,13 @@ class App extends Application implements EventSubscriberInterface
             && TARBSD_SELF_UPDATE
             && $commandName !== 'self-update'
         ) {
-            $cache = $this->getCache();
-            $item = $cache->getItem(
-                hash_hmac('sha256', 'version_check', self::hashPhar())
-            );
-            if (!$item->isHit())
+            $item = $this->getVersionCheckItem();
+            if (!$item->isHit() || $item->get() !== true)
             {
-                $this->fork('updateWorker', false, false);
-                $item->set(true)->expiresAt(new DateTimeImmutable('+3 hours'));
-                $cache->save($item);
+                $this->fork(
+                    'updateWorker', false, false,
+                    $this->getCache(), $item, $this->getHttpClient()
+                );
             }
         }
 
@@ -167,7 +165,7 @@ class App extends Application implements EventSubscriberInterface
         }
     }
 
-    public function getCache() : FilesystemCache
+    public function getCache() : CacheAdapterInterface
     {
         if (!isset($this->cache))
         {
@@ -273,19 +271,19 @@ class App extends Application implements EventSubscriberInterface
         }
     }
 
-    private function updateWorker() : void
+    protected function updateWorker(CacheAdapterInterface $cache, CacheItem $item, HttpClientInterface $client) : void
     {
         try
         {
-            $item = $this->getVersionCheckItem();
-            if (!$item->isHit() || $item->get() !== true)
+            if (is_array(Util\UpdateUtil::getLatest($client, false)))
             {
-                if (is_array(Util\UpdateUtil::getLatest($this->getHttpClient(), false)))
-                {
-                    $item->set(true)->expiresAt(new DateTimeImmutable('+1 year'));
-                    $this->getCache()->save($item);
-                }
+                $item->set(true)->expiresAt(new DateTimeImmutable('+1 year'));
             }
+            else
+            {
+                $item->set(false)->expiresAt(new DateTimeImmutable('+3 hours'));
+            }
+            $cache->save($item);
         }
         catch (\Throwable $e)
         {}
