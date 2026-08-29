@@ -7,6 +7,7 @@ use Symfony\Component\Console\SignalRegistry\SignalMap;
 use Symfony\Component\Console\Event\ConsoleSignalEvent;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\Console\Output\StreamOutput;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
@@ -15,6 +16,7 @@ use Symfony\Component\Finder\Finder;
 use TarBSD\Process\MessageQueue;
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\GlobalConfiguration;
+use TarBSD\Process\Orphanage;
 use TarBSD\Process\Forkable;
 use TarBSD\Configuration;
 use TarBSD\Util\Overlay;
@@ -120,7 +122,9 @@ abstract class AbstractBuilder implements Icons
             $this->q->remove();
         });
 
-        $this->fork('wrkFsWorker', true, true);
+        $this->fork('wrkFsWorker', true, true, new Orphanage(
+            ($output instanceof StreamOutput) ? $output : $verboseOutput
+        ));
 
         return $this->doBuild($output, $verboseOutput, $quick, $preservePkgDb);
     }
@@ -217,11 +221,11 @@ abstract class AbstractBuilder implements Icons
         return new SplFileInfo($file);
     }
 
-    private function wrkFsWorker() : void
+    private function wrkFsWorker(Orphanage $orphanage) : void
     {
         $size = 512;
         $afterInstallSize = 128;
-
+        $n = 1;
         while(true)
         {
             try
@@ -233,6 +237,12 @@ abstract class AbstractBuilder implements Icons
                 }
                 $this->wrkFs->checkSize($size, $size / 2);
                 usleep(250000);
+                if ($n % 7 === 0 && $orphanage->amIorphan())
+                {
+                    $this->q->remove();
+                    die;
+                }
+                $n++;
             }
             catch(\Throwable $e)
             {
