@@ -13,7 +13,9 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 
-use TarBSD\Process\MessageQueue;
+use TarBSD\Process\IPC\NullMessageQueue;
+use TarBSD\Process\IPC\MessageQueue;
+use TarBSD\Process\IPC\Semaphore;
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\GlobalConfiguration;
 use TarBSD\Process\Orphanage;
@@ -36,7 +38,7 @@ abstract class AbstractBuilder implements Icons
 
     use Utils;
 
-    final public const QUEUE_ID = 'b';
+    final public const SEMAPHORE_ID = 'b';
 
     private const MSG_TYPE_INSTALL_COMPLETE = 2;
 
@@ -55,6 +57,8 @@ abstract class AbstractBuilder implements Icons
     public ?string $md = null;
 
     protected readonly Filesystem $fs;
+
+    private readonly Semaphore $semaphore;
 
     abstract protected function genFsTab() : Fstab;
 
@@ -100,7 +104,7 @@ abstract class AbstractBuilder implements Icons
 
         try
         {
-            $this->q = MessageQueue::new($this->config->getDir(), self::QUEUE_ID);
+            $this->semaphore = Semaphore::get($this->config->getDir(), self::SEMAPHORE_ID);
         }
         catch (\TypeError $e)
         {
@@ -108,6 +112,15 @@ abstract class AbstractBuilder implements Icons
                 "tarBSD builder already running in %s",
                 $this->config->getDir()
             ));
+        }
+
+        if ($this->semaphore instanceof MessageQueue)
+        {
+            $this->q = $this->semaphore;
+        }
+        else
+        {
+            $this->q = new NullMessageQueue;
         }
 
         $output->writeln(sprintf(
@@ -119,7 +132,7 @@ abstract class AbstractBuilder implements Icons
 
         register_shutdown_function(function()
         {
-            $this->q->remove();
+            $this->semaphore->release();
         });
 
         $this->fork('wrkFsWorker', true, true, new Orphanage(
@@ -187,7 +200,7 @@ abstract class AbstractBuilder implements Icons
 
         $installer->installPKGs($output, $verboseOutput, $arch);
 
-        $this->q->send(self::MSG_TYPE_INSTALL_COMPLETE, 1);
+        $this->q->send(self::MSG_TYPE_INSTALL_COMPLETE, '1');
 
         Misc::tarStream($this->filesDir, $this->root, $verboseOutput);
         $output->writeln(self::CHECK . ' copied overlay directory to the image');
@@ -230,7 +243,7 @@ abstract class AbstractBuilder implements Icons
         {
             try
             {
-                $this->q->receive(self::MSG_TYPE_INSTALL_COMPLETE, $type, $msg, MessageQueue::NOWAIT);
+                $this->q->receive(self::MSG_TYPE_INSTALL_COMPLETE, $type, $msg);
                 if ($msg)
                 {
                     $size = $afterInstallSize;
@@ -239,7 +252,7 @@ abstract class AbstractBuilder implements Icons
                 usleep(250000);
                 if ($n % 7 === 0 && $orphanage->amIorphan())
                 {
-                    $this->q->remove();
+                    $this->semaphore->release();
                     die;
                 }
                 $n++;
@@ -261,7 +274,7 @@ abstract class AbstractBuilder implements Icons
         {
             case \SIGTERM:
             case \SIGINT:
-                $this->q->receive(self::MSG_TYPE_SIGNAL, $type, $msg, MessageQueue::NOWAIT);
+                $this->q->receive(self::MSG_TYPE_SIGNAL, $type, $msg);
                 $msg = $msg ?: sprintf(
                     "received %s signal",
                     SignalMap::getSignalName($event->getHandlingSignal())

@@ -17,7 +17,7 @@ trait Forkable
 
     private readonly string $workerFunc;
 
-    protected readonly MessageQueue $q;
+    protected readonly IPC\MessageQueue $q;
 
     protected readonly EventDispatcherInterface $dispatcher;
 

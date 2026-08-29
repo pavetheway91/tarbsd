@@ -5,7 +5,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 use TarBSD\Builder\AbstractBuilder;
-use TarBSD\Process\MessageQueue;
+use TarBSD\Process\IPC\Semaphore;
 use TarBSD\GlobalConfiguration;
 use TarBSD\Util\WrkFs;
 use TarBSD\App;
@@ -22,7 +22,7 @@ class WrkDestroy extends AbstractCommand
     ) {
         try
         {
-            $q = MessageQueue::new($cwd = getcwd(), AbstractBuilder::QUEUE_ID);
+            $s = Semaphore::get($cwd = getcwd(), AbstractBuilder::SEMAPHORE_ID);
         }
         catch (\TypeError $e)
         {
@@ -37,7 +37,7 @@ class WrkDestroy extends AbstractCommand
             try
             {
                 $fs->destroy();
-                $q->remove();
+                $s->release();
                 $output->writeln(sprintf(
                     "%s %s destroyed",
                     self::CHECK,
@@ -47,12 +47,12 @@ class WrkDestroy extends AbstractCommand
             }
             catch(\Exception $e)
             {
-                $q->remove();
+                $s->release();
                 throw $e;
             }
         }
 
-        $q->remove();
+        $s->release();
 
         $output->writeln(sprintf(
             "%s  could not find wrk filesystem from %s",
