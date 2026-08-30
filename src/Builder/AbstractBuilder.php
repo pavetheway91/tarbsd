@@ -18,7 +18,6 @@ use TarBSD\Process\IPC;
 
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\GlobalConfiguration;
-use TarBSD\Process\Orphanage;
 use TarBSD\Process\Forkable;
 use TarBSD\Configuration;
 use TarBSD\Util\Overlay;
@@ -126,9 +125,7 @@ abstract class AbstractBuilder implements Icons
             $this->q->release();
         });
 
-        $this->fork('wrkFsWorker', true, true, new Orphanage(
-            ($output instanceof StreamOutput) ? $output : $verboseOutput
-        ));
+        $this->fork('wrkFsWorker', true, true);
 
         return $this->doBuild($output, $verboseOutput, $quick, $preservePkgDb);
     }
@@ -225,7 +222,7 @@ abstract class AbstractBuilder implements Icons
         return new SplFileInfo($file);
     }
 
-    private function wrkFsWorker(Orphanage $orphanage) : void
+    private function wrkFsWorker() : void
     {
         $size = 512;
         $afterInstallSize = 128;
@@ -242,7 +239,7 @@ abstract class AbstractBuilder implements Icons
                 }
                 $this->wrkFs->checkSize($size, $size / 2);
                 usleep(250000);
-                if ($n % 7 === 0 && $orphanage->amIorphan())
+                if ($n % 7 === 0 && $this->amIOrpham())
                 {
                     $this->q->release();
                     die;

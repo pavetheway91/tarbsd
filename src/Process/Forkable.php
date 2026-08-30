@@ -84,6 +84,23 @@ trait Forkable
         }
     }
 
+    protected function amIOrpham() : bool
+    {
+        if (!isset($this->parentPid))
+        {
+            throw new \DomainException('not a fork');
+        }
+        try
+        {
+            static::sendSignal($this->parentPid, 0);
+            return false;
+        }
+        catch (\RuntimeException $e)
+        {
+            return true;
+        }
+    }
+
     protected static function sendSignal(int $pid, int $signal) : void
     {
         $success = false;
