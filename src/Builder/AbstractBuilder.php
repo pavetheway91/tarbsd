@@ -239,7 +239,7 @@ abstract class AbstractBuilder implements Icons
                 }
                 $this->wrkFs->checkSize($size, $size / 2);
                 usleep(250000);
-                if ($n % 7 === 0 && $this->amIOrpham())
+                if ($n % 7 === 0 && $this->amIOrphan())
                 {
                     $this->q->release();
                     die;

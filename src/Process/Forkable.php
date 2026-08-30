@@ -84,7 +84,7 @@ trait Forkable
         }
     }
 
-    protected function amIOrpham() : bool
+    protected function amIOrphan() : bool
     {
         if (!isset($this->parentPid))
         {
