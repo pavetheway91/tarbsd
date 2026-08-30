@@ -20,22 +20,22 @@ class DevCompiler extends AbstractCompiler
 {
     public function __invoke(
         OutputInterface $output,
-        #[Option('Compress')] bool $compress = true,
-        #[Option('Minify')] bool $minify = true,
-        #[Option('Iconv polyfill')] bool $iconv = true,
-        #[Option('Bundle Packages', 'bundle')] bool $bundlePackages = true,
+        #[Option('No compress', 'nc')] bool $noCompress = false,
+        #[Option('No minify', 'nm')] bool $noMinify = false,
+        #[Option('No iconv polyfill', 'ni')] bool $noIconv = false,
+        #[Option('No bundled packages', 'nb')] bool $noBundle = false,
         #[Option('Prefix', '', 'p')] string $prefix = '/usr/local'
     ) : int {
         $start = time();
-        $this->phar->compress = $compress;
-        $this->minify = $minify;
-        $this->bundlePackages = $bundlePackages;
+        $this->phar->compress = !$noCompress;
+        $this->minify = !$noMinify;
+        $this->bundlePackages = !$noBundle;
 
         $versionTag = 'dev-' . gmdate('y.m.d H:i:s');
 
         $this->addBootsraptFiles();
         $this->addOwnSrc($output, false, $prefix, $versionTag, false);
-        $this->addPackages($output, $iconv);
+        $this->addPackages($output, !$noIconv);
         $this->write($output, $start, $versionTag);
         return self::SUCCESS;
     }
@@ -63,7 +63,7 @@ class PortCompiler extends AbstractCompiler
     }
 }
 
-#[AsCommand(name: 'github')]
+#[AsCommand(name: 'github', aliases: ['gh'])]
 class GitHubCompiler extends AbstractCompiler
 {
     public function __invoke(
@@ -77,6 +77,10 @@ class GitHubCompiler extends AbstractCompiler
         $this->minify = true;
         $this->bundlePackages = true;
 
+        if (!$key)
+        {
+            throw new \Exception("key required");
+        }
         if (!file_exists($key))
         {
             throw new \Exception("key file does not exist");

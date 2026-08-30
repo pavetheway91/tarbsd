@@ -134,6 +134,8 @@ abstract class AbstractCompiler extends Command
         $output->write("adding files for src ");
         if ($this->bundlePackages)
         {
+            $this->addFile(__DIR__ . '/../src/Util/SysVMessageQueueLogger.php');
+
             $this->phar->addFromString('src/bundle.php', $this->mergeFiles(
                 ClassOrderer::orderClasses($this->root . '/src', 'TarBSD'),
                 true
@@ -635,7 +637,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\ErrorHandler\Debug;
 use Composer\Autoload\ClassLoader;
+use Psr\Log\LoggerInterface;
+
+use TarBSD\Util\SysVMessageQueueLogger;
+
 use Closure;
+use Phar;
 
 if (!class_exists(ClassLoader::class, false))
 {
@@ -659,14 +666,17 @@ return new class() extends ClassLoader
 
     const CLASSMAP = %s;
 
-    public array \$loadedBundles = [];
+    private array \$loadedBundles = [];
 
-    protected ?Closure \$loaderCb = null;
+    private LoggerInterface \$logger;
+
+    private readonly int \$pharLen;
 
     public function __construct()
     {
         parent::__construct(self::__VENDOR__);
-
+        \$this->pharLen = strlen(Phar::running(false));
+    
         \$init = Closure::bind(function (\$that)
         {
             \$that->prefixLengthsPsr4 = \$that::PREFIX_LENGTHS;
@@ -688,6 +698,8 @@ return new class() extends ClassLoader
 
     public function run(?InputInterface \$input = null, ?OutputInterface \$output = null) : int
     {
+        \$logger = null;
+
         if (!defined('TARBSD_DEBUG'))
         {
             if (
@@ -697,6 +709,15 @@ return new class() extends ClassLoader
             ) {
                 Debug::enable();
                 define('TARBSD_DEBUG', true);
+                if (extension_loaded('sysvmsg'))
+                {
+                    try
+                    {
+                        \$this->logger = \$logger = new SysVMessageQueueLogger;
+                    }
+                    catch (\Throwable \$e)
+                    {}
+                }
             }
             else
             {
@@ -705,21 +726,17 @@ return new class() extends ClassLoader
                 define('TARBSD_DEBUG', false);
             }
         }
-        return (new App)->run(\$input, \$output);
-    }
 
-    public function setLoaderCb(?Closure \$loaderCb = null) : void
-    {
-        \$this->loaderCb = \$loaderCb;
+        return (new App(\$logger))->run(\$input, \$output);
     }
 
     public function findFile(\$class)
     {
         if (is_string(\$file = parent::findFile(\$class)))
         {
-            if (\$this->loaderCb)
+            if (isset(\$this->logger))
             {
-                \$this->loaderCb->__invoke(\$class, \$file);
+                \$this->logger->log('loader', \$class . ' found from ' . substr(\$file, \$this->pharLen + 1));
             }
             return \$file;
         }
@@ -730,17 +747,21 @@ return new class() extends ClassLoader
             if (!in_array(\$dir, \$this->loadedBundles) && str_starts_with(\$class, \$ns) && is_file(\$file))
             {
                 \$this->loadedBundles[] = \$dir;
-                if (\$this->loaderCb)
+
+                if (isset(\$this->logger))
                 {
-                    \$this->loaderCb->__invoke(\$class, \$ns);
+                    \$this->logger->log('loader', 'bundle ' . \$ns . ' loaded by ' . \$class);
                 }
+
                 return \$file;
             }
         }
 
-        if (\$this->loaderCb)
-        {
-            \$this->loaderCb->__invoke(\$class, false);
+        if (
+            isset(\$this->logger)
+            && !preg_match('/(SimpleCache|string|bool|array)/', \$class)
+        ) {
+            \$this->logger->log('loader', 'class ' . \$class . ' wasn\'t found');
         }
     }
 };
