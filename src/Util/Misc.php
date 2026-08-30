@@ -6,6 +6,8 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
+use Psr\Log\LoggerInterface;
+
 use phpseclib4\Math\BigInteger;
 use phpseclib4\Crypt\RSA;
 use phpseclib4\Crypt\EC;
@@ -18,6 +20,16 @@ use Phar;
 
 class Misc
 {
+    public static LoggerInterface $logger;
+
+    public static function log($level, string|\Stringable $message, array $context = []) : void
+    {
+        if (isset(static::$logger))
+        {
+            static::$logger->log($level, $message, $context);
+        }
+    }
+
     public static function rootDir() : string
     {
         if (!str_starts_with(__FILE__, 'phar://'))
@@ -175,21 +187,29 @@ class Misc
     {
         if (is_string($fileOrSize))
         {
-            $md = Process::fromShellCommandline(sprintf(
+            $md = trim(Process::fromShellCommandline(sprintf(
                 'mdconfig -f %s',
                 $fileOrSize
-            ))->mustRun()->getOutput();
+            ))->mustRun()->getOutput(), "\n");
+            static::log('md', sprintf(
+                "%s, %s created",
+                $md, $fileOrSize
+            ));
         }
         else
         {
             $type = self::availSwap() > $fileOrSize ? 'swap' : 'malloc';
             try
             {
-                $md = Process::fromShellCommandline(sprintf(
+                $md = trim(Process::fromShellCommandline(sprintf(
                     'mdconfig -t %s -s %sm -S 4096 -o reserve',
                     $type,
                     $fileOrSize
-                ))->mustRun()->getOutput();
+                ))->mustRun()->getOutput(), "\n");
+                static::log('md', sprintf(
+                    "%s, %dm, %s created",
+                    $md, $fileOrSize, $type
+                ));
             }
             catch (\Exception $e)
             {
@@ -202,7 +222,7 @@ class Misc
             }
         }
 
-        return trim($md, "\n");
+        return $md;
     }
 
     public static function mdDestroy(string $device) : void
@@ -211,6 +231,10 @@ class Misc
             'mdconfig -d -u %s',
             $device
         ))->mustRun();
+        static::log('md', sprintf(
+            "%s destroyed",
+            $device
+        ));
     }
 
     public static function availSwap() : int

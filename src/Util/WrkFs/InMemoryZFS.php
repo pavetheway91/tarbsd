@@ -27,10 +27,11 @@ class InMemoryZFS extends WrkFs
                 $dev
             );
         }
-        Process::fromShellCommandline(sprintf(
+        Process::fromShellCommandline($cmd = sprintf(
             "zpool destroy -f %s %s",
             $this->id, implode(' ', $mds)
         ))->mustRun();
+        Misc::log('zfs', $cmd);
     }
 
     public function checkSize(int $size, ?int $devSize = null) : void
@@ -46,10 +47,11 @@ class InMemoryZFS extends WrkFs
 
     private function grow(int $size) : void
     {
-        Process::fromShellCommandline(sprintf(
+        Process::fromShellCommandline($cmd = sprintf(
             'zpool add %s %s',
             $this->id, Misc::mdCreate($size)
         ))->mustRun();
+        Misc::log('zfs', $cmd);
     }
 
     protected static function doGet(GlobalConfiguration $config, string $dir, bool $init) : ?static

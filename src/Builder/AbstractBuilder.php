@@ -238,6 +238,7 @@ abstract class AbstractBuilder implements Icons
                 if ($msg)
                 {
                     $size = $afterInstallSize;
+                    Misc::log('wrkfs', 'install complete');
                 }
                 $this->wrkFs->checkSize($size, $size / 2);
                 usleep(250000);

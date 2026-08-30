@@ -22,6 +22,8 @@ use Symfony\Component\Console\Application;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Cache\CacheItem;
 use Symfony\Component\Finder\Finder;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 use TarBSD\Process\Forkable;
 
@@ -34,11 +36,13 @@ class App extends Application implements EventSubscriberInterface
 
     const CACHE_DIR = '/var/cache/tarbsd';
 
+    public readonly LoggerInterface $logger;
+
     private readonly CacheAdapterInterface $cache;
 
     private readonly HttpClientInterface $httpClient;
 
-    public function __construct()
+    public function __construct(?LoggerInterface $logger = null)
     {
         if (!defined('TARBSD_TEST'))
         {
@@ -50,8 +54,10 @@ class App extends Application implements EventSubscriberInterface
         $this->setDispatcher(
             $this->dispatcher = new EventDispatcher
         );
-
         $this->dispatcher->addSubscriber($this);
+
+        $this->logger = $logger ?: new NullLogger;
+        Util\Misc::$logger = $this->logger;
     }
 
     public static function getReleaseDate() : ?DateTimeImmutable
@@ -99,15 +105,19 @@ class App extends Application implements EventSubscriberInterface
         if (
             static::amIRoot()
             && TARBSD_SELF_UPDATE
-            && $commandName !== 'self-update'
+            && !in_array($commandName, ['self-update', 'debug'])
         ) {
             $item = $this->getVersionCheckItem();
             if (!$item->isHit() || $item->get() !== true)
             {
                 $this->fork(
                     'updateWorker', false, false,
-                    $this->getCache(), $item, $this->getHttpClient()
+                    $this->getCache(), $item, $this->getHttpClient(), $this->logger
                 );
+            }
+            else
+            {
+                $this->logger->info('update check skipped');
             }
         }
 
@@ -271,21 +281,30 @@ class App extends Application implements EventSubscriberInterface
         }
     }
 
-    protected function updateWorker(CacheAdapterInterface $cache, CacheItem $item, HttpClientInterface $client) : void
-    {
+    protected function updateWorker(
+        CacheAdapterInterface $cache,
+        CacheItem $item,
+        HttpClientInterface $client,
+        LoggerInterface $logger
+    ) : void {
         try
         {
             if (is_array(Util\UpdateUtil::getLatest($client, false)))
             {
                 $item->set(true)->expiresAt(new DateTimeImmutable('+1 year'));
+                $logger->info('update available');
             }
             else
             {
                 $item->set(false)->expiresAt(new DateTimeImmutable('+3 hours'));
+                $logger->info('update not available');
             }
-            $cache->save($item);
         }
         catch (\Throwable $e)
-        {}
+        {
+            $item->set(false)->expiresAt(new DateTimeImmutable('+1 hour'));
+            $logger->info('update check fail ' . $e->getMessage());
+        }
+        $cache->save($item);
     }
 }
