@@ -13,7 +13,7 @@ class FileMessageQueue implements MessageQueue
 
     private function __construct(
         private readonly string $baseFile,
-        array $semaforeFactory
+        private readonly array $semaforeFactory
     ) {
         $this->fs = new Filesystem;
         $this->fs->touch($this->baseFile);
@@ -128,6 +128,7 @@ class FileMessageQueue implements MessageQueue
 
     protected function acquireSemaphoreBlock() : Semaphore
     {
-        return IPC::acquireSemaphoreBlock($this->baseFile, 'm');
+        $semaforeFactory = $this->semaforeFactory;
+        return $semaforeFactory($this->baseFile, 'm');
     }
 }
