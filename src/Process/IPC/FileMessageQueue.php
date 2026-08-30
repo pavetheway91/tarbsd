@@ -64,7 +64,7 @@ class FileMessageQueue implements MessageQueue
 
         try
         {
-            $sem = $this->acquireSemaphoreBlock($this->baseFile, 'm');
+            $sem = $this->acquireSemaphoreBlock();
             foreach(range(static::MAX_MESSAGES -1, 0) as $n)
             {
                 try
@@ -97,7 +97,7 @@ class FileMessageQueue implements MessageQueue
 
         try
         {
-            $sem = $this->acquireSemaphoreBlock($this->baseFile, 'm');
+            $sem = $this->acquireSemaphoreBlock();
             foreach(range(static::MAX_MESSAGES, 0) as $n)
             {
                 try
