@@ -23,7 +23,8 @@ class Diagnose extends AbstractCommand
     const SKIP_EXTS = [
         'core', 'date', 'hash', 'json', 'lexbor', 'libxml', 'mysqlnd', 'pcre',
         'random', 'reflection', 'spl', 'standard', 'uri', 'zend opcache',
-        'phar', 'ctype', 'mbstring', 'iconv', 'intl', 'libdeflate', 'posix'
+        'phar', 'ctype', 'mbstring', 'iconv', 'intl',
+        'libdeflate', 'posix', 'sysvmsg', 'sysvsem'
     ];
 
     public function __invoke(
@@ -47,6 +48,8 @@ class Diagnose extends AbstractCommand
         $output->writeln(static::pad('openssl:') . OPENSSL_VERSION_TEXT);
         $output->writeln(static::pad('pigz:') . (Misc::hasPigz() ? '<info>installed</>' : '<comment>not installed</>'));
         $output->writeln(static::pad('libdeflate:') . $this->getExtensionStatus('libdeflate'));
+        $output->writeln(static::pad('sysvmsg:') . $this->getExtensionStatus('sysvmsg'));
+        $output->writeln(static::pad('sysvsem:') . $this->getExtensionStatus('sysvsem'));
         $output->writeln(static::pad('ctype:') . $this->getExtensionStatus('ctype'));
         $output->writeln(static::pad('iconv:') . $this->getExtensionStatus('iconv'));
         $output->writeln(static::pad('mbstring:') . $this->getExtensionStatus('mbstring'));

@@ -4,9 +4,10 @@ namespace TarBSD\Command;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 
+use TarBSD\Process\IPC\SemaphoreAcquireException;
 use TarBSD\Builder\AbstractBuilder;
-use TarBSD\Process\IPC\Semaphore;
 use TarBSD\GlobalConfiguration;
+use TarBSD\Process\IPC;
 use TarBSD\Util\WrkFs;
 use TarBSD\App;
 
@@ -22,9 +23,9 @@ class WrkDestroy extends AbstractCommand
     ) {
         try
         {
-            $s = Semaphore::get($cwd = getcwd(), AbstractBuilder::SEMAPHORE_ID);
+            $q = IPC::getMessageQueue($cwd = getcwd(), AbstractBuilder::SEMAPHORE_ID);
         }
-        catch (\TypeError $e)
+        catch (SemaphoreAcquireException $e)
         {
             throw new \Exception(sprintf(
                 "tarBSD builder already running in %s",
@@ -37,7 +38,7 @@ class WrkDestroy extends AbstractCommand
             try
             {
                 $fs->destroy();
-                $s->release();
+                $q->release();
                 $output->writeln(sprintf(
                     "%s %s destroyed",
                     self::CHECK,
@@ -47,12 +48,12 @@ class WrkDestroy extends AbstractCommand
             }
             catch(\Exception $e)
             {
-                $s->release();
+                $q->release();
                 throw $e;
             }
         }
 
-        $s->release();
+        $q->release();
 
         $output->writeln(sprintf(
             "%s  could not find wrk filesystem from %s",

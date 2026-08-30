@@ -13,9 +13,9 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 
-use TarBSD\Process\IPC\NullMessageQueue;
-use TarBSD\Process\IPC\MessageQueue;
-use TarBSD\Process\IPC\Semaphore;
+use TarBSD\Process\IPC\SemaphoreAcquireException;
+use TarBSD\Process\IPC;
+
 use TarBSD\Util\FreeBSDRelease;
 use TarBSD\GlobalConfiguration;
 use TarBSD\Process\Orphanage;
@@ -104,23 +104,14 @@ abstract class AbstractBuilder implements Icons
 
         try
         {
-            $this->semaphore = Semaphore::get($this->config->getDir(), self::SEMAPHORE_ID);
+            $this->q = IPC::getMessageQueue($this->config->getDir(), self::SEMAPHORE_ID);
         }
-        catch (\TypeError $e)
+        catch (SemaphoreAcquireException $e)
         {
             throw new \Exception(sprintf(
                 "tarBSD builder already running in %s",
                 $this->config->getDir()
             ));
-        }
-
-        if ($this->semaphore instanceof MessageQueue)
-        {
-            $this->q = $this->semaphore;
-        }
-        else
-        {
-            $this->q = new NullMessageQueue;
         }
 
         $output->writeln(sprintf(
@@ -132,7 +123,7 @@ abstract class AbstractBuilder implements Icons
 
         register_shutdown_function(function()
         {
-            $this->semaphore->release();
+            $this->q->release();
         });
 
         $this->fork('wrkFsWorker', true, true, new Orphanage(
@@ -252,7 +243,7 @@ abstract class AbstractBuilder implements Icons
                 usleep(250000);
                 if ($n % 7 === 0 && $orphanage->amIorphan())
                 {
-                    $this->semaphore->release();
+                    $this->q->release();
                     die;
                 }
                 $n++;

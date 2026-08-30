@@ -10,7 +10,6 @@
     "require": {
         "php": ">= 8.2.0",
         "ext-filter": "*",
-        "ext-sysvmsg": "*",
         "ext-openssl": "*",
         "ext-pcntl": "*",
         "ext-zlib": "*",
