@@ -1,3 +1,23 @@
+## UPCOMING ##
+* Builder will automatically default to --quick mode if the system is busy
+  or if it has fewer than 4 processors.
+* Memory allocation for the work file system (in-memory zfs) is more reliable
+  than before.
+* Optional tmpfs work file system. It obviously cannot use snapshots as a
+  cache for subsequent builds, but it is less cpu intensive than zfs and
+  quicker for the initial build. File system type can be changed in
+  /usr/local/etc/tarbsd.conf.
+* If available, libdeflate is used to compress the kernel. It is much quicker
+  than pigz and provides similar compression ratios.
+* Diagnose command output has been redesigned and it shows more information.
+* New cache-purge command, which purges caches from /var/cache/tarbsd.
+* Command and option shortcuts. Build for example, can be shortened to just b
+  and --quick option to -q, see help command for more.
+* Internal commands have been replaced by forked processes.
+* Sysvmsg and posix extensions are now recommended.
+* phpseclib, which is used for SSH key generation and validation has been
+  updated to version 4.
+
 ## 2026-06-28 ##
 * New write command for easily writing tarbsd image to a device. For example,
   to write image to /dev/da0:
