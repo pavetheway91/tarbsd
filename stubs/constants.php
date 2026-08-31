@@ -9,4 +9,6 @@ const TARBSD_VERSION = null;
 
 const TARBSD_PREFIX = '/usr/local';
 
+const TARBSD_SYSV_IPC = true;
+
 define('TARBSD_LICENSE', file_get_contents(__DIR__.'/../LICENSE'));

@@ -23,7 +23,7 @@ class WrkDestroy extends AbstractCommand
     ) {
         try
         {
-            $q = IPC::getMessageQueue($cwd = getcwd(), AbstractBuilder::SEMAPHORE_ID);
+            $sem = IPC::acquireSemaphore($cwd = getcwd(), AbstractBuilder::SEMAPHORE_ID);
         }
         catch (SemaphoreAcquireException $e)
         {
@@ -38,7 +38,7 @@ class WrkDestroy extends AbstractCommand
             try
             {
                 $fs->destroy();
-                $q->release();
+                $sem->release();
                 $output->writeln(sprintf(
                     "%s %s destroyed",
                     self::CHECK,
@@ -48,12 +48,12 @@ class WrkDestroy extends AbstractCommand
             }
             catch(\Exception $e)
             {
-                $q->release();
+                $sem->release();
                 throw $e;
             }
         }
 
-        $q->release();
+        $sem->release();
 
         $output->writeln(sprintf(
             "%s  could not find wrk filesystem from %s",

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Process\IPC;
 
-class FlockSemaphore implements Semaphore
+class FlockSemaphore extends Semaphore
 {
     private readonly string $file;
 
@@ -15,7 +15,7 @@ class FlockSemaphore implements Semaphore
         $file = sprintf(
             "%starbsd.flock.%s",
             $tmpDir = sys_get_temp_dir(),
-            rtrim(str_replace('/', '-', base64_encode(hash_hmac('sha1', $path, $id, true))), '=')
+            rtrim(str_replace('/', '-', base64_encode(hash('xxh128', $path.$id, true))), '=')
         );
 
         $handle = null;
@@ -75,7 +75,8 @@ class FlockSemaphore implements Semaphore
 
     public function release() : bool
     {
+        $ret = @fclose($this->handle);
         @unlink($this->file);
-        return fclose($this->handle);
+        return $ret;
     }
 }

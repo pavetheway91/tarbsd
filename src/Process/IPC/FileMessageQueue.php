@@ -4,45 +4,64 @@ namespace TarBSD\Process\IPC;
 use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 use TarBSD\Process\IPC;
+use TarBSD\Util\Misc;
 
 class FileMessageQueue implements MessageQueue
 {
-    private readonly Semaphore $semaphore;
+    // 2 would actually suffice, some future proofing :D
+    const MAX_MESSAGES = 5;
 
     private readonly Filesystem $fs;
 
     private function __construct(
         private readonly string $baseFile,
-        private readonly array $semaforeFactory
+        private readonly string $semaphoreClass
     ) {
         $this->fs = new Filesystem;
+
+        if (!$this->release())
+        {
+            throw new \RuntimeException(sprintf(
+                'failed to clear old message queue from %s',
+                sys_get_temp_dir()
+            ));
+        }
+
         $this->fs->touch($this->baseFile);
-        $this->semaphore = $semaforeFactory($this->baseFile, 'q');
     }
 
-    public static function acquire(string $path, string $id, array $semaforeFactory = [IPC::class, 'acquireSemaphore']) : static
+    public static function get(string $path, string $id, ?string $semaphoreClass = null) : static
     {
-        try
+        $semaphoreClass = $semaphoreClass ?? IPC::chooseSemaforeClass();
+
+        if (!class_exists($semaphoreClass))
         {
-            return new static(sprintf(
-                "%starbsd.queue.%s.",
-                $tmpDir = sys_get_temp_dir(),
-                rtrim(str_replace('/', '-', base64_encode(hash_hmac('sha1', $path, $id, true))), '=')
-            ), $semaforeFactory);
+            throw new \InvalidArgumentException(sprintf(
+                "class %s does not exist",
+                $semaphoreClass
+            ));
         }
-        catch(SemaphoreAcquireException $e)
+
+        if (!in_array(Semaphore::class, class_parents($semaphoreClass)))
         {
-            throw SemaphoreAcquireException::create(
-                static::class,
-                $path,
-                $id,
-                $e
-            );
+            throw new \InvalidArgumentException(sprintf(
+                "class %s must extend %s",
+                $semaphoreClass,
+                Semaphore::class
+            ));
         }
+
+        return new static(sprintf(
+            "%starbsd.queue.%s.",
+            sys_get_temp_dir(),
+            rtrim(str_replace('/', '-', base64_encode(hash('xxh128', $path.$id, true))), '=')
+        ), $semaphoreClass);
     }
 
     public function release() : bool
     {
+        $ok = true;
+
         foreach(array_merge(range(0, static::MAX_MESSAGES - 1), ['']) as $n)
         {
             try
@@ -50,9 +69,12 @@ class FileMessageQueue implements MessageQueue
                 $this->fs->remove($this->baseFile . $n);
             }
             catch(IOException $e)
-            {}
+            {
+                $ok = false;
+            }
         }
-        return $this->semaphore->release();
+
+        return $ok && !$this->fs->exists($this->baseFile);
     }
 
     public function send(int $type, string $msg) : bool
@@ -64,7 +86,7 @@ class FileMessageQueue implements MessageQueue
 
         try
         {
-            $sem = $this->acquireSemaphoreBlock();
+            $sem = $this->tryAcquire();
             foreach(range(static::MAX_MESSAGES -1, 0) as $n)
             {
                 try
@@ -84,11 +106,13 @@ class FileMessageQueue implements MessageQueue
         }
         catch(SemaphoreAcquireException $e)
         {
+            // these messages aren't actually misson critical
+            Misc::log('msg', 'FileMessageQueue failed to send a message');
             return false;
         }
     }
 
-    public function receive(int $desiredType, ?int &$receivedType, mixed &$msg) : bool
+    public function receive(int $desiredType, string|null &$msg, ?int &$receivedType = null) : bool
     {
         if (1 > $desiredType)
         {
@@ -97,14 +121,14 @@ class FileMessageQueue implements MessageQueue
 
         try
         {
-            $sem = $this->acquireSemaphoreBlock();
-            foreach(range(static::MAX_MESSAGES, 0) as $n)
+            $sem = $this->tryAcquire();
+            foreach(range(static::MAX_MESSAGES - 1, 0) as $n)
             {
                 try
                 {
                     $contents = $this->fs->readFile($file = $this->baseFile . $n);
                     [$readType, $readMsg] = unserialize($contents, ['allowed_classes' => false]);
-                    if ($readType === $desiredType || $desiredType === 0)
+                    if ($readType === $desiredType)
                     {
                         $receivedType = $readType;
                         $msg = $readMsg;
@@ -114,21 +138,22 @@ class FileMessageQueue implements MessageQueue
                     }
                 }
                 catch(IOException $e)
-                {
-                }
+                {}
             }
+            $receivedType = $msg = null;
             $sem->release();
             return false;
         }
         catch(SemaphoreAcquireException $e)
         {
+            $receivedType = $msg = null;
             return false;
         }
     }
 
-    protected function acquireSemaphoreBlock() : Semaphore
+    protected function tryAcquire() : Semaphore
     {
-        $semaforeFactory = $this->semaforeFactory;
-        return $semaforeFactory($this->baseFile, 'm');
+        $class = $this->semaphoreClass;
+        return $class::tryAcquire($this->baseFile, 'm');
     }
 }

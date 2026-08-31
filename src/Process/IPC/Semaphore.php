@@ -1,9 +1,29 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Process\IPC;
 
-interface Semaphore
+abstract class Semaphore
 {
-    public static function acquire(string $path, string $id) : static;
+    final const TRY_MSEC = 20;
 
-    public function release() : bool;
+    abstract public function release() : bool;
+
+    abstract public static function acquire(string $path, string $id) : static;
+
+    public static function tryAcquire(string $path, string $id, int $attempts = 10) : static
+    {
+        $n = 0;
+        do
+        {
+            try
+            {
+                return static::acquire($path, $id);
+            }
+            catch(SemaphoreAcquireException $e)
+            {
+                usleep(self::TRY_MSEC * 1000);
+            }
+        } while($n++ <= $attempts - 1);
+
+        return static::acquire($path, $id);
+    }
 }

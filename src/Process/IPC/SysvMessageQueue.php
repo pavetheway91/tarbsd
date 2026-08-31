@@ -1,9 +1,11 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Process\IPC;
 
+use TarBSD\Util\Misc;
+
 class SysvMessageQueue implements MessageQueue
 {
-    const MAX_MESSAGE_SIZE = 1024;
+    const MAX_MESSAGE_SIZE = 256;
 
     private readonly bool $libdeflate;
 
@@ -12,21 +14,21 @@ class SysvMessageQueue implements MessageQueue
         private readonly \SysvMessageQueue $wrapped
     ) {
         $this->libdeflate = extension_loaded('libdeflate');
+
+        while(msg_receive($wrapped, 0, $type, 1024, $msg, false, MSG_IPC_NOWAIT))
+        {
+            /**
+             * clear existing messages if the previous run failed
+             * to clear for some reason
+             */
+        }
     }
 
-    public static function acquire(string $path, string $id) : static
+    public static function get(string $path, string $id) : static
     {
-        if (msg_queue_exists($ftok = ftok($path, $id)))
-        {
-            throw SemaphoreAcquireException::create(
-                static::class,
-                $path,
-                $id
-            );
-        }
         try
         {
-            return new static($ftok, msg_get_queue($ftok));
+            return new static($ftok = ftok($path, $id), msg_get_queue($ftok));
         }
         catch (\Throwable $e)
         {
@@ -40,47 +42,49 @@ class SysvMessageQueue implements MessageQueue
         {
             throw new \InvalidArgumentException;
         }
-
         $msg = $this->libdeflate ? libdeflate_deflate_compress($msg) : gzdeflate($msg);
 
+        // just one overly long exception message from pkg could fill the queue
         if (strlen($msg) > static::MAX_MESSAGE_SIZE)
         {
+            Misc::log('msg', 'SysvMessageQueue refused to send a long message');
             return false;
         }
 
-        $stat = msg_stat_queue($this->wrapped);
-        while($stat['msg_qnum'] > static::MAX_MESSAGES)
+        $out = @msg_send($this->wrapped, $type, $msg, false, false);
+        if (!$out)
         {
-            msg_receive($this->q, 0, $type, static::MAX_MESSAGE_SIZE, $msg, false, MSG_IPC_NOWAIT);
-            $stat = msg_stat_queue($this->wrapped);
+            // these messages aren't actually misson critical
+            Misc::log('msg', 'SysvMessageQueue failed to send a message');
         }
 
-        return @msg_send($this->wrapped, $type, $msg, false, false);
+        return $out;
     }
 
-    public function receive(int $desiredType, ?int &$receivedType, mixed &$msg) : bool
+    public function receive(int $desiredType, string|null &$msg, ?int &$receivedType = null) : bool
     {
         if (1 > $desiredType)
         {
             throw new \InvalidArgumentException;
         }
-
         $ret = @msg_receive(
             $this->wrapped, $desiredType, $receivedType,
-            static::MAX_MESSAGE_SIZE, $msg, false, MSG_IPC_NOWAIT
+            1024, $msg, false, MSG_IPC_NOWAIT
         );
-
         if ($ret && is_string($msg))
         {
             $msg = gzinflate($msg);
         }
-
+        if (!$ret)
+        {
+            $receivedType = $msg = null;
+        }
         return $ret;
     }
 
     public function release() : bool
     {
-        return msg_remove_queue($this->wrapped);
+        return @msg_remove_queue($this->wrapped);
     }
 
     public function __debugInfo() : array

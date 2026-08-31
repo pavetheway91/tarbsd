@@ -14,6 +14,7 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\Finder\Finder;
 
 use TarBSD\Process\IPC\SemaphoreAcquireException;
+use TarBSD\Process\IPC\Semaphore;
 use TarBSD\Process\IPC;
 
 use TarBSD\Util\FreeBSDRelease;
@@ -103,7 +104,7 @@ abstract class AbstractBuilder implements Icons
 
         try
         {
-            $this->q = IPC::getMessageQueue($this->config->getDir(), self::SEMAPHORE_ID);
+            $this->semaphore = IPC::acquireSemaphore($this->config->getDir(), self::SEMAPHORE_ID);
         }
         catch (SemaphoreAcquireException $e)
         {
@@ -112,6 +113,8 @@ abstract class AbstractBuilder implements Icons
                 $this->config->getDir()
             ));
         }
+
+        $this->q = IPC::getMessageQueue($this->config->getDir(), self::SEMAPHORE_ID);
 
         $output->writeln(sprintf(
             self::CHECK . ' %s: (%s) %s',
@@ -123,6 +126,7 @@ abstract class AbstractBuilder implements Icons
         register_shutdown_function(function()
         {
             $this->q->release();
+            $this->semaphore->release();
         });
 
         $this->fork('wrkFsWorker', true, true);
@@ -231,7 +235,7 @@ abstract class AbstractBuilder implements Icons
         {
             try
             {
-                $this->q->receive(self::MSG_TYPE_INSTALL_COMPLETE, $type, $msg);
+                $this->q->receive(self::MSG_TYPE_INSTALL_COMPLETE, $msg);
                 if ($msg)
                 {
                     $size = $afterInstallSize;
@@ -241,7 +245,6 @@ abstract class AbstractBuilder implements Icons
                 usleep(250000);
                 if ($n % 7 === 0 && $this->amIOrphan())
                 {
-                    $this->q->release();
                     die;
                 }
                 $n++;
@@ -257,17 +260,18 @@ abstract class AbstractBuilder implements Icons
 
     final public function handleSignal(ConsoleSignalEvent $event) : void
     {
-        $msg = null;
         $output = $event->getOutput();
         switch($event->getHandlingSignal())
         {
             case \SIGTERM:
             case \SIGINT:
-                $this->q->receive(self::MSG_TYPE_SIGNAL, $type, $msg);
+                $this->q->receive(self::MSG_TYPE_SIGNAL, $msg);
+
                 $msg = $msg ?: sprintf(
                     "received %s signal",
                     SignalMap::getSignalName($event->getHandlingSignal())
                 );
+
                 $output->writeln(sprintf(
                     "\n%s %s, cleaning things up...",
                     self::ERR,

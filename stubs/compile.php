@@ -20,11 +20,12 @@ class DevCompiler extends AbstractCompiler
 {
     public function __invoke(
         OutputInterface $output,
-        #[Option('No compress', 'nc')] bool $noCompress = false,
-        #[Option('No minify', 'nm')] bool $noMinify = false,
-        #[Option('No iconv polyfill', 'ni')] bool $noIconv = false,
+        #[Option('No compress',         'nc')] bool $noCompress = false,
+        #[Option('No minify',           'nm')] bool $noMinify = false,
         #[Option('No bundled packages', 'nb')] bool $noBundle = false,
-        #[Option('Prefix', '', 'p')] string $prefix = '/usr/local'
+        #[Option('No iconv polyfill',   'ni')] bool $noIconv = false,
+        #[Option('No System V IPC',     'ns')] bool $noSysV = false,
+        #[Option('Prefix',              '', 'p')] string $prefix = '/usr/local',
     ) : int {
         $start = time();
         $this->phar->compress = !$noCompress;
@@ -34,7 +35,7 @@ class DevCompiler extends AbstractCompiler
         $versionTag = 'dev-' . gmdate('y.m.d H:i:s');
 
         $this->addBootsraptFiles();
-        $this->addOwnSrc($output, false, $prefix, $versionTag, false);
+        $this->addOwnSrc($output, false, $prefix, $versionTag, false, !$noSysV);
         $this->addPackages($output, !$noIconv);
         $this->write($output, $start, $versionTag);
         return self::SUCCESS;
@@ -46,8 +47,9 @@ class PortCompiler extends AbstractCompiler
 {
     public function __invoke(
         OutputInterface $output,
-        #[Option('Version tag', '', 't')] ?string $versionTag = null,
-        #[Option('Prefix', '', 'p')] string $prefix = '/usr/local',
+        #[Option('Version tag',     '', 't')] ?string $versionTag = null,
+        #[Option('Prefix',          '', 'p')] string $prefix = '/usr/local',
+        #[Option('System V IPC',    '', 's')] bool $sysv = true
     ) : int {
         $start = time();
         $this->phar->compress = true;
@@ -55,7 +57,7 @@ class PortCompiler extends AbstractCompiler
         $this->bundlePackages = true;
 
         $this->addBootsraptFiles();
-        $this->addOwnSrc($output, true, $prefix, $versionTag, true);
+        $this->addOwnSrc($output, true, $prefix, $versionTag, true, $sysv);
         $this->addPackages($output, false);
         $this->write($output, $start, $versionTag);
 
@@ -68,9 +70,9 @@ class GitHubCompiler extends AbstractCompiler
 {
     public function __invoke(
         OutputInterface $output,
-        #[Option('Signature key file', '', 'k')] ?string $key = null,
-        #[Option('Signature key password', '', 'pw')] ?string $pw = null,
-        #[Option('Version tag', '', 't')] ?string $versionTag = null
+        #[Option('Signature key file',      '', 'k')] ?string $key = null,
+        #[Option('Signature key password',  '', 'pw')] ?string $pw = null,
+        #[Option('Version tag',             '', 't')] ?string $versionTag = null
     ) : int {
         $start = time();
         $this->phar->compress = true;
@@ -94,7 +96,7 @@ class GitHubCompiler extends AbstractCompiler
         $versionTag = $versionTag ?: gmdate('y.m.d');
 
         $this->addBootsraptFiles();
-        $this->addOwnSrc($output, false, '/usr/local', $versionTag, true);
+        $this->addOwnSrc($output, false, '/usr/local', $versionTag, true, true);
         $this->addPackages($output, true);
         $phar = $this->write($output, $start, $versionTag, $key);
 

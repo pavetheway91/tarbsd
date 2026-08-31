@@ -41,7 +41,7 @@ trait Forkable
                 if (isset($this->q))
                 {
                     $this->q->send(self::MSG_TYPE_SIGNAL, sprintf(
-                        "%s::%s process terminated with %s signal",
+                        "%s::%s process\n   terminated with %s signal",
                         static::class,
                         $this->workerFunc,
                         SignalMap::getSignalName($event->getHandlingSignal())

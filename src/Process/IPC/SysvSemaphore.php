@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Process\IPC;
 
-class SysvSemaphore implements Semaphore
+class SysvSemaphore extends Semaphore
 {
     private function __construct(
         public readonly int $ftok,
@@ -35,6 +35,6 @@ class SysvSemaphore implements Semaphore
 
     public function release() : bool
     {
-        return sem_remove($this->wrapped);
+        return @sem_remove($this->wrapped);
     }
 }
