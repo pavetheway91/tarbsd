@@ -105,7 +105,7 @@ trait Forkable
     {
         $success = false;
 
-        if (extension_loaded('posix'))
+        if (TARBSD_POSIX && extension_loaded('posix'))
         {
             $success = @posix_kill($pid, $signal);
         }

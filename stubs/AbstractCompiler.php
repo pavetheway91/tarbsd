@@ -126,7 +126,8 @@ abstract class AbstractCompiler extends Command
         string $prefix,
         ?string $versionTag,
         bool $production,
-        bool $sysV
+        bool $sysV,
+        bool $posix
     ) : void {
         $this->addFile(__DIR__ . '/../LICENSE');
         $this->addFile(__DIR__ . '/../composer.json');
@@ -160,6 +161,7 @@ abstract class AbstractCompiler extends Command
         $constants['TARBSD_VERSION'] = $versionTag;
         $constants['TARBSD_PREFIX'] = $prefix;
         $constants['TARBSD_SYSV_IPC'] = $sysV;
+        $constants['TARBSD_POSIX'] = $posix;
         $constantsStr = $this->stringifyConstants($constants);
         $this->phar->addFromString('stubs/constants.php', "<?php\n" . $constantsStr);
 

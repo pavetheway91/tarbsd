@@ -219,7 +219,7 @@ class App extends Application implements EventSubscriberInterface
 
         if (null === $amI)
         {
-            if (extension_loaded('posix'))
+            if (TARBSD_POSIX && extension_loaded('posix'))
             {
                 $amI = posix_getuid() == 0;
             }

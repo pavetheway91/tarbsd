@@ -398,7 +398,7 @@ class Misc
         if (null === $n)
         {
             // this was added in php 8.3
-            if (function_exists('posix_sysconf'))
+            if (TARBSD_POSIX && function_exists('posix_sysconf'))
             {
                 $n = posix_sysconf(POSIX_SC_NPROCESSORS_ONLN);
             }
