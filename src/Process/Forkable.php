@@ -15,9 +15,9 @@ trait Forkable
 
     protected array $childPids = [];
 
-    private readonly string $workerFunc;
+    private readonly string $workerMethod;
 
-    protected readonly IPC\MessageQueue $q;
+    protected readonly IPC\MessageQueue $queue;
 
     protected readonly EventDispatcherInterface $dispatcher;
 
@@ -38,12 +38,12 @@ trait Forkable
         {
             case \SIGTERM:
             case \SIGINT:
-                if (isset($this->q))
+                if (isset($this->queue))
                 {
-                    $this->q->send(self::MSG_TYPE_SIGNAL, sprintf(
+                    $this->queue->send(self::MSG_TYPE_SIGNAL, sprintf(
                         "%s::%s process\n   terminated with %s signal",
                         static::class,
-                        $this->workerFunc,
+                        $this->workerMethod,
                         SignalMap::getSignalName($event->getHandlingSignal())
                     ), false);
                 }
@@ -52,7 +52,7 @@ trait Forkable
         }
     }
 
-    protected function fork(string $workerFunc, bool $autoKill, bool $registerSignalHandler, ...$args) : int
+    protected function fork(string $workerMethod, bool $autoKill, bool $registerSignalHandler, ...$args) : int
     {
         $parentPid = getmypid();
 
@@ -62,11 +62,11 @@ trait Forkable
                 throw new \RuntimeException(sprintf(
                     "%s::%s fork failed",
                     static::class,
-                    $func
+                    $workerMethod
                 ));
             case 0:
                 $this->parentPid = $parentPid;
-                $this->workerFunc = $workerFunc;
+                $this->workerMethod = $workerMethod;
                 if ($registerSignalHandler)
                 {
                     $this->dispatcher->addListener(ConsoleEvents::SIGNAL, [$this, 'handleSignalChild']);
@@ -74,9 +74,9 @@ trait Forkable
                 cli_set_process_title(sprintf(
                     "%s::%s",
                     static::class,
-                    $workerFunc
+                    $workerMethod
                 ));
-                $this->$workerFunc(...$args);
+                $this->$workerMethod(...$args);
                 exit;
             default:
                 $this->childPids[$pid] = $autoKill;

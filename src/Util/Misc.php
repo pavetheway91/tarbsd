@@ -424,7 +424,7 @@ class Misc
     /**
      * Copies contents of one directory to another using tar.
      */
-    public static function tarStream(string $from, string $to, OutputInterface $verboseOutput) : void
+    public static function tarCopy(string $from, string $to, OutputInterface $verboseOutput) : void
     {
         Process::fromShellCommandline(
             'tar cf - . | (cd ' . $to . ' && tar xvf -)',

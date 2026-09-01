@@ -114,7 +114,7 @@ abstract class AbstractBuilder implements Icons
             ));
         }
 
-        $this->q = IPC::getMessageQueue($this->config->getDir(), self::SEMAPHORE_ID);
+        $this->queue = IPC::getMessageQueue($this->config->getDir(), self::SEMAPHORE_ID);
 
         $output->writeln(sprintf(
             self::CHECK . ' %s: (%s) %s',
@@ -125,7 +125,7 @@ abstract class AbstractBuilder implements Icons
 
         register_shutdown_function(function()
         {
-            $this->q->release();
+            $this->queue->release();
             $this->semaphore->release();
         });
 
@@ -192,9 +192,9 @@ abstract class AbstractBuilder implements Icons
 
         $installer->installPKGs($output, $verboseOutput, $arch);
 
-        $this->q->send(self::MSG_TYPE_INSTALL_COMPLETE, '1');
+        $this->queue->send(self::MSG_TYPE_INSTALL_COMPLETE, '1');
 
-        Misc::tarStream($this->filesDir, $this->root, $verboseOutput);
+        Misc::tarCopy($this->filesDir, $this->root, $verboseOutput);
         $output->writeln(self::CHECK . ' copied overlay directory to the image');
 
         $this->prepare($output, $verboseOutput, $quick, $platform);
@@ -235,7 +235,7 @@ abstract class AbstractBuilder implements Icons
         {
             try
             {
-                $this->q->receive(self::MSG_TYPE_INSTALL_COMPLETE, $msg);
+                $this->queue->receive(self::MSG_TYPE_INSTALL_COMPLETE, $msg);
                 if ($msg)
                 {
                     $size = $afterInstallSize;
@@ -251,7 +251,7 @@ abstract class AbstractBuilder implements Icons
             }
             catch(\Throwable $e)
             {
-                $this->q->send(self::MSG_TYPE_SIGNAL, $e->getMessage());
+                $this->queue->send(self::MSG_TYPE_SIGNAL, $e->getMessage());
                 static::sendSignal($this->parentPid, \SIGTERM);
                 die;
             }
@@ -265,7 +265,7 @@ abstract class AbstractBuilder implements Icons
         {
             case \SIGTERM:
             case \SIGINT:
-                $this->q->receive(self::MSG_TYPE_SIGNAL, $msg);
+                $this->queue->receive(self::MSG_TYPE_SIGNAL, $msg);
 
                 $msg = $msg ?: sprintf(
                     "received %s signal",
