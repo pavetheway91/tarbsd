@@ -90,18 +90,10 @@ trait Forkable
         {
             throw new \DomainException('not a fork');
         }
-        try
-        {
-            static::sendSignal($this->parentPid, 0);
-            return false;
-        }
-        catch (\RuntimeException $e)
-        {
-            return true;
-        }
+        return !static::sendSignal($this->parentPid, 0);
     }
 
-    protected static function sendSignal(int $pid, int $signal) : void
+    protected static function sendSignal(int $pid, int $signal) : bool
     {
         $success = false;
 
@@ -123,12 +115,6 @@ trait Forkable
             {}
         }
 
-        if (!$success)
-        {
-            throw new \RuntimeException(sprintf(
-                'failed to kill pid %d',
-                $pid
-            ));
-        }
+        return $success;
     }
 }
