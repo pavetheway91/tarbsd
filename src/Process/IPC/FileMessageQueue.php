@@ -1,33 +1,16 @@
 <?php declare(strict_types=1);
 namespace TarBSD\Process\IPC;
 
-use Symfony\Component\Filesystem\Exception\IOException;
-use Symfony\Component\Filesystem\Filesystem;
 use TarBSD\Process\IPC;
-use TarBSD\Util\Misc;
 
 class FileMessageQueue implements MessageQueue
 {
-    // 2 would actually suffice, some future proofing :D
-    const MAX_MESSAGES = 5;
-
-    private readonly Filesystem $fs;
-
     private function __construct(
-        private readonly string $baseFile,
+        private readonly string $file,
         private readonly string $semaphoreClass
     ) {
-        $this->fs = new Filesystem;
-
-        if (!$this->release())
-        {
-            throw new \RuntimeException(sprintf(
-                'failed to clear old message queue from %s',
-                sys_get_temp_dir()
-            ));
-        }
-
-        $this->fs->touch($this->baseFile);
+        @unlink($this->file);
+        touch($this->file);
     }
 
     public static function get(string $path, string $id, ?string $semaphoreClass = null) : static
@@ -52,7 +35,7 @@ class FileMessageQueue implements MessageQueue
         }
 
         return new static(sprintf(
-            "%starbsd.queue.%s.",
+            "%starbsd.queue.%s",
             sys_get_temp_dir(),
             rtrim(str_replace('/', '-', base64_encode(hash('xxh128', $path.$id, true))), '=')
         ), $semaphoreClass);
@@ -60,21 +43,7 @@ class FileMessageQueue implements MessageQueue
 
     public function release() : bool
     {
-        $ok = true;
-
-        foreach(array_merge(range(0, static::MAX_MESSAGES - 1), ['']) as $n)
-        {
-            try
-            {
-                $this->fs->remove($this->baseFile . $n);
-            }
-            catch(IOException $e)
-            {
-                $ok = false;
-            }
-        }
-
-        return $ok && !$this->fs->exists($this->baseFile);
+        return @unlink($this->file);
     }
 
     public function send(int $type, string $msg) : bool
@@ -87,27 +56,20 @@ class FileMessageQueue implements MessageQueue
         try
         {
             $sem = $this->tryAcquire();
-            foreach(range(static::MAX_MESSAGES -1, 0) as $n)
-            {
-                try
-                {
-                    $this->fs->rename(
-                        $this->baseFile . $n,
-                        $this->baseFile . $n+1,
-                        true
-                    );
-                }
-                catch(IOException $e)
-                {}
+            if (
+                is_resource($h = fopen($this->file, 'a'))
+                &&
+                fwrite($h, serialize([$type, $msg]) . "\n")
+            ) {
+                fclose($h);
+                $sem->release();
+                return true;
             }
-            $this->fs->dumpFile($this->baseFile . '0' , serialize([$type, $msg]));
             $sem->release();
-            return true;
+            return false;
         }
         catch(SemaphoreAcquireException $e)
         {
-            // these messages aren't actually misson critical
-            Misc::log('msg', 'FileMessageQueue failed to send a message');
             return false;
         }
     }
@@ -119,34 +81,50 @@ class FileMessageQueue implements MessageQueue
             throw new \InvalidArgumentException;
         }
 
+        $receivedType = $msg = null;
+        $out = false;
+
         try
         {
             $sem = $this->tryAcquire();
-            foreach(range(static::MAX_MESSAGES - 1, 0) as $n)
-            {
-                try
+            $tmpFile = $this->file . '.' . bin2hex(random_bytes(8));
+
+            if (
+                is_resource($in = fopen($this->file, 'r'))
+                &&
+                is_resource($tmp = fopen($tmpFile, 'w'))
+            ) {
+                while($buf = fgets($in))
                 {
-                    $contents = $this->fs->readFile($file = $this->baseFile . $n);
-                    [$readType, $readMsg] = unserialize($contents, ['allowed_classes' => false]);
-                    if ($readType === $desiredType)
+                    $writeBack = true;
+                    if (!$out)
                     {
-                        $receivedType = $readType;
-                        $msg = $readMsg;
-                        $this->fs->remove($file);
-                        $sem->release();
-                        return true;
+                        [$readType, $readMsg] = unserialize(
+                            substr($buf, 0, strlen($buf) - 1),
+                            ['allowed_classes' => false]
+                        );
+                        if ($readType === $desiredType)
+                        {
+                            $out = true;
+                            $msg = $readMsg;
+                            $receivedType = $readType;
+                            $writeBack = false;
+                        }
+                    }
+                    if ($writeBack)
+                    {
+                        fwrite($tmp, $buf);
                     }
                 }
-                catch(IOException $e)
-                {}
+                fclose($in);
+                fclose($tmp);
+                rename($tmpFile, $this->file);
             }
-            $receivedType = $msg = null;
             $sem->release();
-            return false;
+            return $out;
         }
         catch(SemaphoreAcquireException $e)
         {
-            $receivedType = $msg = null;
             return false;
         }
     }
@@ -154,6 +132,6 @@ class FileMessageQueue implements MessageQueue
     protected function tryAcquire() : Semaphore
     {
         $class = $this->semaphoreClass;
-        return $class::tryAcquire($this->baseFile, 'm');
+        return $class::tryAcquire($this->file, 'm');
     }
 }
