@@ -116,6 +116,9 @@ abstract class AbstractBuilder implements Icons
 
         $this->queue = IPC::getMessageQueue($this->config->getDir(), self::SEMAPHORE_ID);
 
+        Misc::log('builder', $this->queue::class);
+        Misc::log('builder', $this->semaphore::class);
+
         $output->writeln(sprintf(
             self::CHECK . ' %s: (%s) %s',
             $this->config->getDir() . '/wrk',
@@ -245,6 +248,7 @@ abstract class AbstractBuilder implements Icons
                 usleep(250000);
                 if ($n % 7 === 0 && $this->amIOrphan())
                 {
+                    Misc::log('wrkfs', 'orphan detected, exiting...');
                     die;
                 }
                 $n++;
